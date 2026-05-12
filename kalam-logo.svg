@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#F5F0E8"/>
+  <!-- Pen nib shape -->
+  <path d="M256 80 L340 180 L256 440 L172 180 Z" fill="#B5472A" opacity="0.15"/>
+  <!-- Main nib -->
+  <path d="M256 88 L332 185 L256 420 L180 185 Z" fill="none" stroke="#B5472A" stroke-width="18" stroke-linejoin="round"/>
+  <!-- Nib split line -->
+  <line x1="256" y1="200" x2="256" y2="420" stroke="#B5472A" stroke-width="10" stroke-linecap="round"/>
+  <!-- Nib tip dot (ink drop) -->
+  <circle cx="256" cy="430" r="14" fill="#B5472A"/>
+  <!-- Top cap -->
+  <path d="M208 188 Q256 155 304 188" fill="none" stroke="#B5472A" stroke-width="14" stroke-linecap="round"/>
+</svg>
