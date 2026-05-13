@@ -2194,6 +2194,23 @@ let state = {
   taskTags: ['study','health','personal'],
 };
 
+if(!localStorage.getItem('kalamInitialized')){
+  localStorage.setItem('kalamInitialized','true');
+
+  appData = {
+    tasks: [],
+    habits: [],
+    notes: [],
+    journalEntries: [],
+    goals: [],
+    flashcards: [],
+    quizzes: [],
+    sources: []
+  };
+
+  saveData();
+}
+
 // ===================== UTILS =====================
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function today(){ return new Date().toISOString().slice(0,10); }
