@@ -33,7 +33,7 @@ window.addEventListener('load',function(){
   --accent-light: rgba(181,71,42,0.12);
   --accent-mid: rgba(181,71,42,0.25);
   --border: rgba(107,94,74,0.18);
-  --shadow: var(--shadow);
+  --shadow: rgba(0,0,0,0.08);
   --font: 'DM Sans', sans-serif;
   --font-size: 14px;
   --sidebar-width: 220px;
@@ -57,8 +57,8 @@ window.addEventListener('load',function(){
   --info-light: rgba(37,99,168,0.12);
   --info-mid: rgba(37,99,168,0.25);
   --neutral: rgba(107,94,74,0.12);
-  --neutral-dark: var(--neutral-dark);
-  --neutral-shadow: var(--neutral-shadow);
+  --neutral-dark: rgba(0,0,0,0.4);
+  --neutral-shadow: rgba(0,0,0,0.15);
 }
 
 /* ===== RESET ===== */
@@ -1080,11 +1080,142 @@ select.modal-input { cursor: pointer; }
   .dash-main-row { grid-template-columns: 1fr !important; }
 }
 
-/* ===== RESPONSIVE FIXES ===== */
+
+/* ===== GOALS ===== */
+.goal-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: var(--card);
+  transition: border-color 0.15s;
+}
+.goal-card:hover { border-color: var(--accent-mid); }
+.goal-card.done-card { opacity: 0.55; }
+.goal-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.goal-name { font-weight: 600; font-size: 14px; font-family: 'Lora',serif; }
+.goal-cat-badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: var(--accent-light); color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.goal-checkin-grid { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
+.goal-ci-dot {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1.5px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+  title: attr(data-date);
+}
+.goal-ci-dot.done { background: var(--accent); border-color: var(--accent); }
+.goal-ci-dot:hover:not(.done) { border-color: var(--accent); background: var(--accent-light); }
+.goal-meta-row { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--faint); }
+.goal-streak { font-weight: 600; color: var(--accent); }
+
+/* ===== NOTEBOOK STUDY STYLE ===== */
+.notebook-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: 0;
+  height: calc(100vh - 170px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+}
+.notebook-sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notebook-sidebar:last-child { border-right: none; border-left: 1px solid var(--border); }
+.notebook-sidebar-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.notebook-sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.notebook-source-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.notebook-source-item:hover, .notebook-source-item.active { background: var(--accent-light); }
+.notebook-source-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.notebook-source-name { font-size: 12px; font-weight: 500; line-height: 1.4; }
+.notebook-source-meta { font-size: 10px; color: var(--faint); }
+.notebook-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notebook-toolbar {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--card);
+  flex-shrink: 0;
+}
+.notebook-editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notebook-note-title {
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.notebook-note-title:focus { border-bottom-color: var(--accent); }
+.notebook-note-body {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.85;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  resize: none;
+  padding: 14px 16px;
+  font-family: var(--font);
+  overflow-y: auto;
+}
+.notebook-editor-area.lined { background-image: repeating-linear-gradient(transparent, transparent 31px, var(--border) 31px, var(--border) 32px); background-size: 100% 32px; }
+.notebook-empty { display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--faint);gap:12px;font-size:13px; }
+.study-tool-panel { display: none !important; }
+.study-tool-panel.active { display: flex !important; }
+
 @media (max-width: 900px) {
   :root { --sidebar-width: 180px; }
   .grid-4 { grid-template-columns: repeat(2,1fr); }
   .pomodoro-layout { grid-template-columns: 1fr; }
+  .notebook-layout { grid-template-columns: 1fr; height: auto; }
+  .notebook-sidebar { max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
+  .notebook-sidebar:last-child { border-left: none; border-top: 1px solid var(--border); }
 }
 </style>
 </head>
@@ -1142,6 +1273,15 @@ select.modal-input { cursor: pointer; }
     <span class="nav-label">AI Assistant</span>
   </div>
 
+  
+  <div class="nav-item" data-page="spotify" data-label="Spotify">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.521 17.34a.75.75 0 0 1-1.032.247c-2.827-1.728-6.386-2.12-10.577-1.166a.75.75 0 1 1-.333-1.462c4.584-1.044 8.51-.597 11.693 1.348a.75.75 0 0 1 .249 1.033zm1.474-3.28a.937.937 0 0 1-1.289.308c-3.237-1.99-8.17-2.566-11.998-1.401a.937.937 0 0 1-.545-1.793c4.371-1.326 9.801-.687 13.523 1.6a.937.937 0 0 1 .309 1.287zm.126-3.417C15.24 8.34 8.84 8.126 5.136 9.25a1.125 1.125 0 0 1-.654-2.153c4.251-1.29 11.322-1.04 15.816 1.627a1.125 1.125 0 0 1-1.177 1.919z"/>
+    </svg>
+    <span class="nav-label">Spotify</span>
+  </div>
+
+
   <div class="sidebar-spacer"></div>
   <div class="nav-item" data-page="settings" data-label="Settings">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
@@ -1154,10 +1294,11 @@ select.modal-input { cursor: pointer; }
   <div id="topbar">
     <div class="topbar-title">
       <h2 id="page-title">Dashboard</h2>
-      <p id="page-subtitle">Good morning, Pradhan ✨</p>
+      <p id="page-subtitle">Good morning ✨</p>
     </div>
     <div class="topbar-actions" id="topbar-actions">
       <button class="btn btn-ghost btn-sm" onclick="openEdmingle()" style="font-size:11px;padding:5px 10px;" title="Open LME NEET JEE portal">🌐 LME</button>
+      <button class="btn btn-ghost btn-sm" id="topbar-profile-btn" onclick="navigate('settings')" style="font-size:11px;padding:5px 10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Switch profile">👤 <span id="topbar-profile-name">Kalam</span></button>
       <div id="focus-lock-indicator" style="display:none;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:4px 10px;border-radius:99px;border:1px solid var(--accent-mid);">⏱ Focus active</div>
       <div class="sync-dot" id="sync-dot"></div>
       <span class="sync-label" id="sync-label">Offline</span>
@@ -1186,9 +1327,9 @@ select.modal-input { cursor: pointer; }
         <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0</div></div>
       </div>
 
-      <!-- TOP ROW: Compact Habits + Inline Todo side by side -->
-      <div class="grid-2" style="margin-bottom:16px;">
-        <!-- Compact habits - collapsable -->
+      <!-- TOP ROW: Habits + Todo + Today's Agenda -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;" class="dash-top-row">
+        <!-- Habits -->
         <div class="dash-section card" id="dash-habits-widget">
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Habits Today</div>
@@ -1197,16 +1338,25 @@ select.modal-input { cursor: pointer; }
             <div id="dash-habits-list"></div>
           </div>
         </div>
-        <!-- Todo - compact inline -->
+        <!-- Todo -->
         <div class="dash-section card" id="dash-todo-widget">
           <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;">Today's To-Do <span id="dash-todo-progress" style="font-size:10px;color:var(--faint);font-family:inherit;font-weight:400;"></span></div>
+            <div class="card-title" style="margin-bottom:0;">To-Do <span id="dash-todo-progress" style="font-size:10px;color:var(--faint);font-family:inherit;font-weight:400;"></span></div>
           </div>
           <div class="dash-section-body" id="dash-todo-body">
             <div style="display:flex;gap:6px;margin-bottom:8px;">
-              <input class="search-input" id="dash-todo-input" placeholder="Add todo — press Enter…" style="margin-bottom:0;flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')addDashTodo()"/>
+              <input class="search-input" id="dash-todo-input" placeholder="Add — press Enter…" style="margin-bottom:0;flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')addDashTodo()"/>
             </div>
             <div id="dash-todo-list"></div>
+          </div>
+        </div>
+        <!-- Today's full agenda -->
+        <div class="dash-section card" id="dash-agenda-widget">
+          <div class="dash-section-header">
+            <div class="card-title" style="margin-bottom:0;">Today</div>
+          </div>
+          <div class="dash-section-body" id="dash-agenda-body">
+            <div id="dash-agenda-list"></div>
           </div>
         </div>
       </div>
@@ -1238,12 +1388,12 @@ select.modal-input { cursor: pointer; }
           </div>
         </div>
 
-        <!-- Right column: Tasks + Agenda stacked -->
+        <!-- Right column: Tasks only -->
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div class="dash-section card" id="dash-tasks-widget">
             <div class="dash-section-header">
               <div class="card-title" style="margin-bottom:0;">Tasks</div>
-              <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
+              <div style="display:flex;gap:6px;align-items:center;">
                 <button class="btn btn-primary btn-sm" onclick="openAddTaskModal();setTimeout(()=>{if(currentPage==='dashboard')renderDashboard();},100)">+</button>
               </div>
             </div>
@@ -1251,22 +1401,58 @@ select.modal-input { cursor: pointer; }
               <div id="dash-tasks-list"></div>
             </div>
           </div>
-          <div class="dash-section card" id="dash-agenda-widget">
-            <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;">Today's Agenda</div>
-              <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-                <button class="btn btn-primary btn-sm" onclick="openAddAssignmentModal();setTimeout(()=>{if(currentPage==='dashboard')renderDashboard();},100)">+</button>
-              </div>
-            </div>
-            <div class="dash-section-body" id="dash-agenda-body">
-              <div id="dash-agenda-list"></div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- HABITS -->
+    
+      
+
+
+    
+    
+    <!-- SPOTIFY -->
+    <div class="page" id="page-spotify">
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Spotify</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="padding:24px;border:1.5px dashed var(--border);border-radius:var(--radius);text-align:center;background:var(--bg);">
+            <div style="font-size:42px;margin-bottom:12px;">🎵</div>
+            <div style="font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:8px;">
+              Add Your Spotify Playlist
+            </div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:520px;margin:auto;">
+              Open Spotify → Share → Embed playlist/song → paste the embed link here.
+            </div>
+          </div>
+
+          <input 
+            id="spotify-link-input"
+            class="settings-input"
+            placeholder="Paste Spotify embed URL here..."
+            style="width:100%;padding:12px 14px;font-size:13px;"
+          />
+
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary" onclick="loadSpotifyEmbed()">
+              Load Player
+            </button>
+
+            <button class="btn btn-ghost" onclick="clearSpotifyEmbed()">
+              Clear
+            </button>
+          </div>
+
+          <div id="spotify-player-container"></div>
+        </div>
+      </div>
+    </div>
+
+
+<!-- HABITS -->
     <div class="page" id="page-habits">
       <div class="card">
         <!-- Week navigation -->
@@ -1312,7 +1498,14 @@ select.modal-input { cursor: pointer; }
           <div class="card">
             <div class="section-header">
               <div class="section-title">Goals</div>
-              <button class="btn btn-primary btn-sm" onclick="openAddGoalModal()">+ Goal</button>
+              <div style="display:flex;gap:6px;">
+                <select class="settings-select" id="goal-filter" onchange="renderGoals()" style="font-size:11px;padding:4px 8px;">
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="done">Completed</option>
+                </select>
+                <button class="btn btn-primary btn-sm" onclick="openAddGoalModal()">+ Goal</button>
+              </div>
             </div>
             <div id="goals-list"></div>
           </div>
@@ -1391,113 +1584,128 @@ select.modal-input { cursor: pointer; }
       </div>
     </div>
 
-    <!-- STUDY SPACE -->
+    <!-- STUDY SPACE - NotebookLM style -->
     <div class="page" id="page-study">
+      <!-- Subject bar -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
         <div class="subject-tabs" id="subject-tabs-list"></div>
         <button class="btn btn-ghost btn-sm" onclick="openManageSubjectsModal()">⚙ Manage</button>
       </div>
-      <div class="study-tabs" id="study-tabs">
-        <div class="study-tab active" data-tab="notes">Notes</div>
-        <div class="study-tab" data-tab="flashcards">Flashcards</div>
-        <div class="study-tab" data-tab="quiz">Quiz</div>
-        <div class="study-tab" data-tab="mindmap">Mind Map</div>
-        <div class="study-tab" data-tab="sources">Sources</div>
-      </div>
 
-      <div class="study-panel active" id="panel-notes">
-        <div class="notes-layout">
-          <div class="notes-list" id="notes-list">
-            <div style="padding:10px;">
-              <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="newNote()">+ New</button>
-                <button class="btn btn-ghost btn-sm" title="Record voice note" id="record-btn" onclick="toggleRecording()">🎙 Record</button>
-                <button class="btn btn-ghost btn-sm" title="Upload text file" onclick="document.getElementById('note-upload-input').click()">↑</button>
-                <input type="file" id="note-upload-input" accept=".txt,.md" style="display:none" onchange="uploadNote(this)"/>
-              </div>
-              <div id="recording-status" style="display:none;font-size:11px;color:var(--accent);padding:4px 8px;background:var(--accent-light);border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-                <span id="rec-dot" style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;"></span>
+      <!-- Main 3-column notebook layout -->
+      <div class="notebook-layout">
+
+        <!-- LEFT: Sources panel -->
+        <div class="notebook-sidebar" id="notebook-sources-panel">
+          <div class="notebook-sidebar-header">
+            <div class="notebook-sidebar-title">Sources</div>
+            <div style="display:flex;gap:5px;">
+              <button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="openAddSourceModal()">+ Paste</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px;" onclick="document.getElementById('source-file-input').click()">↑</button>
+              <input type="file" id="source-file-input" accept=".txt,.md,.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mkv,.webm,.mp3,.wav" style="display:none" multiple onchange="uploadMultipleSourceFiles(this)"/>
+            </div>
+          </div>
+          <div id="notebook-sources-list" style="overflow-y:auto;flex:1;"></div>
+          <div style="padding:8px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--faint);">PDF, DOCX, TXT, MP4 supported</div>
+        </div>
+
+        <!-- MIDDLE: Notes editor -->
+        <div class="notebook-main">
+          <div class="notebook-toolbar">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="newNote()">+ Note</button>
+              <button class="btn btn-ghost btn-sm" id="record-btn" onclick="toggleRecording()">🎙</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('note-upload-input').click()">↑</button>
+              <input type="file" id="note-upload-input" accept=".txt,.md" style="display:none" onchange="uploadNote(this)"/>
+              <div id="recording-status" style="display:none;font-size:11px;color:var(--accent);padding:3px 8px;background:var(--accent-light);border-radius:6px;align-items:center;gap:5px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;display:inline-block;"></span>
                 <span id="rec-label">Listening…</span>
-                <span id="rec-time" style="margin-left:auto;font-weight:600;"></span>
-              </div>
-              <div id="notes-items"></div>
-            </div>
-          </div>
-          <div class="note-editor">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              <input class="note-title-input" id="note-title" placeholder="Note title…" oninput="noteChanged()" style="flex:1;border-bottom-width:2px;"/>
-              <button class="btn-icon" onclick="deleteActiveNote()" title="Delete note" style="color:var(--accent);flex-shrink:0;">✕</button>
-            </div>
-            <textarea class="note-textarea" id="note-content" placeholder="Write your notes here…" oninput="noteChanged()"></textarea>
-            <div class="ai-buttons" style="flex-wrap:wrap;">
-              <button class="ai-btn" onclick="aiGenerateNote()">⚡ Generate Note</button>
-              <button class="ai-btn" onclick="aiGenerateNoteFromSources()">⚡ From Sources</button>
-              <button class="ai-btn" onclick="aiAction('flashcards')">⚡ Flashcards</button>
-              <button class="ai-btn" onclick="aiAction('quiz')">⚡ Quiz</button>
-              <button class="ai-btn" onclick="aiAction('summary')">⚡ Summarise</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="study-panel" id="panel-flashcards">
-        <div class="flashcard-container">
-          <div id="flashcard-display">
-            <div class="flashcard" id="fc-card" onclick="flipCard()">
-              <div class="flashcard-inner">
-                <div class="flashcard-front" id="fc-front">Click + to add flashcards</div>
-                <div class="flashcard-back" id="fc-back"></div>
+                <span id="rec-time" style="margin-left:4px;font-weight:600;"></span>
               </div>
             </div>
-            <div style="text-align:center;margin-top:8px;" class="flashcard-hint">Click card to flip</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="ai-btn" style="font-size:11px;" onclick="aiGenerateNote()">⚡ Generate</button>
+              <button class="ai-btn" style="font-size:11px;" onclick="aiGenerateNoteFromSources()">⚡ From Sources</button>
+              <button class="ai-btn" style="font-size:11px;" onclick="aiAction('summary')">⚡ Summarise</button>
+              <button class="btn-icon" onclick="deleteActiveNote()" title="Delete note" style="color:var(--accent);">✕</button>
+            </div>
           </div>
-          <div class="flashcard-nav">
-            <button class="btn btn-ghost btn-sm" onclick="fcPrev()">← Prev</button>
-            <span class="flashcard-counter" id="fc-counter">0 / 0</span>
-            <button class="btn btn-ghost btn-sm" onclick="fcNext()">Next →</button>
+          <!-- Notes list + editor side by side -->
+          <div style="display:grid;grid-template-columns:200px 1fr;gap:0;flex:1;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius);">
+            <div style="border-right:1px solid var(--border);overflow-y:auto;background:var(--card);" id="notes-list">
+              <div style="padding:8px;" id="notes-items"></div>
+            </div>
+            <div class="notebook-editor-area" id="notebook-editor">
+              <input class="notebook-note-title" id="note-title" placeholder="Note title…" oninput="noteChanged()"/>
+              <textarea class="notebook-note-body" id="note-content" placeholder="Write your notes here…&#10;&#10;Use ⚡ Generate to create notes from sources automatically." oninput="noteChanged()"></textarea>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" onclick="openAddFlashcardModal()">+ Add Card</button>
-            <button class="btn btn-ghost btn-sm" onclick="triggerFlashcardUpload()">↑ Upload File</button>
-            <button class="btn btn-ghost btn-sm" onclick="aiAction('flashcards')">⚡ Generate from Notes</button>
-            <button class="btn btn-ghost btn-sm" onclick="deleteCurrCard()" style="color:var(--accent);border-color:var(--accent-mid)">Delete Card</button>
-          </div>
-          <input type="file" id="fc-upload-input" accept=".csv,.json,.txt" style="display:none" onchange="handleFlashcardUpload(this)"/>
-          <div style="font-size:11px;color:var(--faint);margin-top:4px;">Supports CSV (question,answer per row), JSON ([{"q":"...","a":"..."}]), or Anki-style TXT (tab-separated)</div>
         </div>
-      </div>
 
-      <div class="study-panel" id="panel-quiz">
-        <div style="max-width:560px;">
-          <div class="quiz-question" id="quiz-question">Add quiz questions to get started.</div>
-          <div id="quiz-options"></div>
-          <div class="quiz-nav">
-            <button class="btn btn-ghost btn-sm" onclick="quizPrev()">← Prev</button>
-            <span class="quiz-counter" id="quiz-counter">0 / 0</span>
-            <button class="btn btn-ghost btn-sm" onclick="quizNext()">Next →</button>
+        <!-- RIGHT: AI + Tools panel -->
+        <div class="notebook-sidebar" id="notebook-tools-panel">
+          <div class="notebook-sidebar-header">
+            <div class="notebook-sidebar-title">Study Tools</div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:16px;">
-            <button class="btn btn-primary btn-sm" onclick="openAddQuizModal()">+ Add Question</button>
-            <button class="btn btn-ghost btn-sm" onclick="aiAction('quiz')">⚡ Generate from Notes</button>
+          <!-- Tabs within tools -->
+          <div style="display:flex;border-bottom:1px solid var(--border);">
+            <button class="study-tab active" data-stab="flashcards" style="flex:1;font-size:11px;padding:7px 0;" onclick="setStudyToolTab('flashcards',this)">Cards</button>
+            <button class="study-tab" data-stab="quiz" style="flex:1;font-size:11px;padding:7px 0;" onclick="setStudyToolTab('quiz',this)">Quiz</button>
+            <button class="study-tab" data-stab="mindmap" style="flex:1;font-size:11px;padding:7px 0;" onclick="setStudyToolTab('mindmap',this)">Map</button>
+            <button class="study-tab" data-stab="chat" style="flex:1;font-size:11px;padding:7px 0;" onclick="setStudyToolTab('chat',this)">Chat</button>
+          </div>
+
+          <!-- Flashcards tool -->
+          <div class="study-tool-panel active" id="stab-flashcards" style="padding:12px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;">
+            <div class="flashcard" id="fc-card" onclick="flipCard()" style="min-height:180px;max-width:100%;cursor:pointer;">
+              <div class="flashcard-inner" style="min-height:180px;">
+                <div class="flashcard-front" id="fc-front" style="min-height:180px;font-size:15px;padding:20px;">No flashcards yet</div>
+                <div class="flashcard-back" id="fc-back" style="min-height:180px;font-size:13px;padding:20px;"></div>
+              </div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--faint);">Tap to flip</div>
+            <div style="display:flex;justify-content:center;align-items:center;gap:10px;">
+              <button class="btn btn-ghost btn-sm" onclick="fcPrev()">←</button>
+              <span class="flashcard-counter" id="fc-counter" style="font-size:12px;">0 / 0</span>
+              <button class="btn btn-ghost btn-sm" onclick="fcNext()">→</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px;" onclick="openAddFlashcardModal()">+ Card</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="triggerFlashcardUpload()">↑ Upload</button>
+              <input type="file" id="fc-upload-input" accept=".csv,.json,.txt" style="display:none" onchange="handleFlashcardUpload(this)"/>
+            </div>
+            <button class="ai-btn" style="width:100%;font-size:11px;" onclick="aiAction('flashcards')">⚡ Generate from Notes</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px;color:var(--accent);" onclick="deleteCurrCard()">Delete Card</button>
+          </div>
+
+          <!-- Quiz tool -->
+          <div class="study-tool-panel" id="stab-quiz" style="padding:12px;overflow-y:auto;flex:1;display:none;flex-direction:column;gap:10px;">
+            <div class="quiz-question" id="quiz-question" style="font-size:14px;min-height:60px;">Add questions to get started.</div>
+            <div id="quiz-options"></div>
+            <div style="display:flex;justify-content:center;align-items:center;gap:10px;">
+              <button class="btn btn-ghost btn-sm" onclick="quizPrev()">←</button>
+              <span class="quiz-counter" id="quiz-counter" style="font-size:12px;">0 / 0</span>
+              <button class="btn btn-ghost btn-sm" onclick="quizNext()">→</button>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openAddQuizModal()">+ Question</button>
+            <button class="ai-btn" style="width:100%;font-size:11px;" onclick="aiAction('quiz')">⚡ Generate from Notes</button>
+          </div>
+
+          <!-- Mind Map tool -->
+          <div class="study-tool-panel" id="stab-mindmap" style="padding:12px;overflow-y:auto;flex:1;display:none;flex-direction:column;gap:10px;">
+            <svg id="mind-map-svg" viewBox="0 0 400 300" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);min-height:200px;"></svg>
+            <button class="ai-btn" style="width:100%;font-size:11px;" onclick="aiAction('mindmap')">⚡ Generate from Notes</button>
+          </div>
+
+          <!-- Study Chat -->
+          <div class="study-tool-panel" id="stab-chat" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+            <div id="study-chat-messages" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:320px;"></div>
+            <div style="padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;">
+              <textarea id="study-chat-input" class="chat-input" placeholder="Ask about your notes…" rows="1" style="font-size:12px;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendStudyChat()}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+              <button class="btn btn-primary btn-sm" onclick="sendStudyChat()">↑</button>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div class="study-panel" id="panel-mindmap">
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <button class="btn btn-primary btn-sm" onclick="aiAction('mindmap')">⚡ Generate from Notes</button>
-        </div>
-        <svg id="mind-map-svg" viewBox="0 0 700 400" style="min-height:380px;"></svg>
-      </div>
-
-      <div class="study-panel" id="panel-sources">
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" onclick="openAddSourceModal()">+ Paste Text</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('source-file-input').click()">↑ Upload File</button>
-          <input type="file" id="source-file-input" accept=".txt,.md,.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mkv,.webm,.mp3,.wav" style="display:none" multiple onchange="uploadMultipleSourceFiles(this)"/>
-        </div>
-        <div style="font-size:11px;color:var(--faint);margin-bottom:12px;">Supports: TXT, MD, PDF*, DOCX*, PPTX*, MP4/audio* &nbsp;·&nbsp; *text extraction from binary files requires copy-paste instead; file name and metadata are saved</div>
-        <div id="sources-list"></div>
       </div>
     </div>
 
@@ -1528,6 +1736,7 @@ select.modal-input { cursor: pointer; }
             <button class="btn btn-ghost" onclick="pomoReset()">↺ Reset</button>
             <button class="btn btn-primary" id="pomo-start-btn" onclick="pomoToggle()">▶ Start</button>
             <button class="btn btn-ghost btn-sm" id="focus-lock-btn" onclick="toggleFocusLock()" title="Lock to current page during focus">🔒 Lock Page</button>
+            <button class="btn btn-ghost btn-sm" onclick="openBinaural()" title="Binaural Beats">🎧 Beats</button>
           </div>
           <div class="pomo-session-dots" id="pomo-dots"></div>
           <div class="pomo-today" id="pomo-today">0 sessions today</div>
@@ -1554,7 +1763,7 @@ select.modal-input { cursor: pointer; }
             <div class="pomo-setting-label"><span>Eye Break Interval</span><span id="lbl-eye">20 min</span></div>
             <input type="range" min="5" max="60" step="5" value="20" id="rng-eye" oninput="updatePomoSettings()"/>
           </div>
-          <div class="pomo-rule-note">👁 20-20-20 rule: every <strong id="eye-interval-text">20</strong> min, look 20 feet away for 20 seconds. Reduces eye strain for -6 power.</div>
+          <div class="pomo-rule-note">👁 20-20-20 rule: every <strong id="eye-interval-text">20</strong> min, look 20 feet away for 20 seconds.</div>
         </div>
       </div>
     </div>
@@ -1593,7 +1802,7 @@ select.modal-input { cursor: pointer; }
         <div class="settings-section-title">General</div>
         <div class="settings-row">
           <div><div class="settings-label">Your Name</div><div class="settings-desc">Used in greetings throughout the app</div></div>
-          <div class="settings-control"><input class="settings-input" id="s-name" placeholder="Pradhan" oninput="saveSetting('name',this.value)"/></div>
+          <div class="settings-control"><input class="settings-input" id="s-name" placeholder="Your name" oninput="saveSetting('name',this.value)"/></div>
         </div>
         <div class="settings-row">
           <div><div class="settings-label">Data Storage</div><div class="settings-desc">Where your data is saved</div></div>
@@ -1808,7 +2017,7 @@ select.modal-input { cursor: pointer; }
           </div>
         </div>
         <div style="font-size:12px;color:var(--faint);padding:8px 0;line-height:1.7;">
-          Designed for -6 eye power: warm paper background, soft brown ink, Lora serif for reading, and 20-20-20 eye break reminders. Interval is set in Pomodoro settings.
+          20-20-20 rule reminders help reduce eye strain. Set the interval in Pomodoro settings.
         </div>
       </div>
     </div>
@@ -1828,26 +2037,126 @@ select.modal-input { cursor: pointer; }
   </div>
 </div>
 
-<!-- TOAST CONTAINER -->
+<!-- AI FLOATING BUTTON -->
+<button id="ai-fab" onclick="toggleAIFab()" title="Open AI Assistant" style="
+  position:fixed;bottom:24px;right:24px;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:var(--bg);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px var(--neutral-shadow);
+  z-index:900;transition:transform 0.2s,box-shadow 0.2s;
+  font-size:22px;">
+  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 1l1.5 3.5L13 6l-3.5 1.5L8 11l-1.5-3.5L3 6l3.5-1.5z"/>
+    <path d="M12.5 10l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/>
+  </svg>
+</button>
+
+<!-- AI FAB POPUP -->
+<div id="ai-fab-popup" style="
+  display:none;position:fixed;bottom:86px;right:24px;
+  width:380px;max-height:520px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;box-shadow:0 8px 40px var(--neutral-shadow);
+  z-index:901;flex-direction:column;overflow:hidden;">
+  <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-family:'Lora',serif;font-size:14px;font-weight:600;">AI Assistant</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="navigate('ai');toggleAIFab()" style="font-size:11px;">Open full →</button>
+      <button class="btn-icon" onclick="toggleAIFab()">✕</button>
+    </div>
+  </div>
+  <div id="ai-fab-messages" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;max-height:360px;"></div>
+  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;">
+    <input id="ai-fab-input" class="chat-input" placeholder="Ask anything…" style="max-height:60px;font-size:13px;"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendFabChat()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"/>
+    <button class="btn btn-primary btn-sm" onclick="sendFabChat()">→</button>
+  </div>
+</div>
+
+<!-- BINAURAL BEATS PANEL -->
+<div id="binaural-panel" style="
+  display:none;position:fixed;bottom:86px;right:90px;
+  width:280px;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;box-shadow:0 8px 32px var(--neutral-shadow);
+  z-index:899;padding:16px;">
+  <div style="font-family:'Lora',serif;font-size:14px;font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+    🎵 Binaural Beats
+    <button class="btn-icon" onclick="toggleBinaural()">✕</button>
+  </div>
+  <div id="bin-beat-btns" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span style="font-size:11px;color:var(--faint);">Volume</span>
+    <input type="range" min="0" max="1" step="0.05" value="0.3" id="bin-volume" oninput="setBinauralVolume(this.value)" style="flex:1;accent-color:var(--accent);"/>
+  </div>
+  <div id="bin-status" style="font-size:11px;color:var(--faint);text-align:center;">Not playing</div>
+</div>
+<button id="binaural-fab" onclick="toggleBinaural()" title="Binaural Beats" style="
+  position:fixed;bottom:24px;right:86px;
+  width:42px;height:42px;border-radius:50%;
+  background:var(--card);color:var(--muted);
+  border:1.5px solid var(--border);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 12px var(--shadow);
+  z-index:900;transition:all 0.2s;font-size:17px;">🎵</button>
+
+<!-- AI FLOATING BUTTON -->
+<div id="ai-float-btn" onclick="toggleAIFloat()" title="AI Assistant" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:900;box-shadow:0 4px 20px var(--neutral-shadow);transition:transform 0.2s,box-shadow 0.2s;">
+  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l1.5 3.5L13 6l-3.5 1.5L8 11l-1.5-3.5L3 6l3.5-1.5z"/><path d="M12.5 10l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/></svg>
+</div>
+<!-- AI FLOAT POPUP -->
+<div id="ai-float-popup" style="display:none;position:fixed;bottom:88px;right:24px;width:380px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 40px var(--neutral-shadow);z-index:900;display:none;flex-direction:column;overflow:hidden;">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-family:Lora,serif;font-size:14px;font-weight:600;">AI Assistant</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="navigate('ai')" style="font-size:11px;">Full view</button>
+      <button class="btn-icon" onclick="toggleAIFloat()">✕</button>
+    </div>
+  </div>
+  <div class="chat-messages" id="float-chat-messages" style="flex:1;overflow-y:auto;padding:12px;gap:10px;display:flex;flex-direction:column;max-height:360px;"></div>
+  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;">
+    <textarea class="chat-input" id="float-chat-input" placeholder="Ask anything…" rows="1" style="font-size:12.5px;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendFloatChat()}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button class="btn btn-primary btn-sm" onclick="sendFloatChat()">↑</button>
+  </div>
+</div>
+
+<!-- BINAURAL BEATS PLAYER -->
+<div id="binaural-player" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;z-index:800;box-shadow:0 4px 20px var(--neutral-shadow);display:none;align-items:center;gap:16px;min-width:340px;">
+  <div style="font-size:12px;font-weight:600;color:var(--muted);" id="bb-label">Focus — 40Hz Gamma</div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button id="bb-play-btn" class="btn btn-primary btn-sm" onclick="toggleBinaural()">▶ Play</button>
+    <input type="range" id="bb-vol" min="0" max="1" step="0.05" value="0.3" style="width:80px;accent-color:var(--accent);" oninput="setBinauralVol(this.value)"/>
+    <select id="bb-mode" class="settings-select" style="font-size:11px;padding:4px 6px;" onchange="setBinauralMode(this.value)">
+      <option value="focus">Focus 40Hz</option>
+      <option value="relax">Relax 10Hz</option>
+      <option value="sleep">Sleep 4Hz</option>
+      <option value="creative">Creative 7Hz</option>
+      <option value="memory">Memory 14Hz</option>
+    </select>
+    <button class="btn-icon" onclick="closeBinaural()">✕</button>
+  </div>
+</div>
+<!-- EYE BREAK FULL-SCREEN OVERLAY -->
+<div id="eye-break-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,35,15,0.97);z-index:9999;flex-direction:column;align-items:center;justify-content:center;color:#a8d5a2;text-align:center;font-family:Lora,serif;">
+  <div style="font-size:72px;margin-bottom:20px;">👁</div>
+  <div style="font-size:32px;font-weight:600;margin-bottom:12px;">Time for an Eye Break</div>
+  <div style="font-size:17px;opacity:0.8;margin-bottom:36px;line-height:1.8;">Look at something <strong style="color:#c8f0c8;">20 feet away</strong><br>for the next <strong style="color:#c8f0c8;">20 seconds</strong></div>
+  <div style="font-size:100px;font-weight:700;line-height:1;font-family:DM Sans,sans-serif;" id="eye-countdown">20</div>
+  <div style="font-size:14px;opacity:0.5;margin-top:8px;">seconds remaining</div>
+  <div style="margin-top:24px;width:280px;height:6px;background:rgba(168,213,162,0.2);border-radius:99px;overflow:hidden;">
+    <div id="eye-progress-bar" style="height:100%;background:#a8d5a2;border-radius:99px;width:100%;transition:width 1s linear;"></div>
+  </div>
+  <button onclick="document.getElementById('eye-break-overlay').style.display='none'" style="margin-top:40px;background:rgba(168,213,162,0.12);border:1.5px solid rgba(168,213,162,0.25);color:#a8d5a2;padding:10px 28px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;transition:background 0.15s;">Skip</button>
+</div>
+
 <div id="toast-container"></div>
 
 <script>
 // ===================== STATE =====================
-const defaultHabits = [
-  {id:uid(),name:'Eye Exercise',color:'var(--accent)',freq:'daily',completions:{}},
-  {id:uid(),name:'Meditation',color:'var(--info)',freq:'daily',completions:{}},
-  {id:uid(),name:'Exercise',color:'var(--success)',freq:'daily',completions:{}},
-  {id:uid(),name:'Affirmations',color:'var(--warn)',freq:'daily',completions:{}},
-  {id:uid(),name:'Visualization',color:'var(--accent)',freq:'daily',completions:{}},
-  {id:uid(),name:'Reading',color:'var(--success)',freq:'daily',completions:{}},
-  {id:uid(),name:'Journalling',color:'var(--accent)',freq:'daily',completions:{}},
-];
-const defaultSubjects = [
-  {id:uid(),name:'Physics',icon:'⚛',color:'var(--info)'},
-  {id:uid(),name:'Chemistry',icon:'⚗',color:'var(--success)'},
-  {id:uid(),name:'Mathematics',icon:'∑',color:'var(--warn)'},
-  {id:uid(),name:'Biology',icon:'🌿',color:'var(--accent)'},
-];
+const defaultHabits = [];
+const defaultSubjects = [];
 const quotes = [
   {text:"The man who does not read has no advantage over the man who cannot read.",author:"Mark Twain"},
   {text:"Education is not the filling of a pail, but the lighting of a fire.",author:"W.B. Yeats"},
@@ -1869,7 +2178,7 @@ let state = {
   study: {}, // {subjectId: {notes:[], flashcards:[], quiz:[], sources:[]}}
   pomodoro: { sessionsToday: 0, focusMinutesToday: 0, lastDate: '' },
   settings: {
-    name: 'Pradhan',
+    name: '',
     apikey: '',
     storage: 'local',
     bg: '#F5F0E8',
@@ -1939,7 +2248,7 @@ function navigate(page){
   if(typeof closeBnavMore==='function') closeBnavMore();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('page-'+page)?.classList.add('active');
   document.querySelector('.nav-item[data-page="'+page+'"]')?.classList.add('active');
   currentPage = page;
   renderPage(page);
@@ -1985,8 +2294,11 @@ document.querySelectorAll('.nav-item').forEach(item=>{
   item.addEventListener('click',()=>navigate(item.dataset.page));
 });
 function updateTopbar(page){
+  // Update profile name in topbar
+  const pn=document.getElementById('topbar-profile-name');
+  if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
   const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',pomodoro:'Pomodoro',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:getGreeting()+', '+state.settings.name+' ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',pomodoro:'Stay focused',ai:'Your study companion',settings:'Customise your experience'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+' ✨':getGreeting()+' — welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',pomodoro:'Stay focused',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2031,8 +2343,7 @@ function renderDashboard(){
   const q=quotes[Math.floor(Date.now()/86400000)%quotes.length];
   document.getElementById('quote-text').textContent='"'+q.text+'"';
   document.getElementById('quote-author').textContent='— '+q.author;
-  const banner=document.getElementById('eye-break-banner');
-  banner.style.display=state.settings.eyeNotif?'flex':'none';
+  // Eye break handled by full-screen overlay (showEyeBreakOverlay)
 }
 function renderDashStats(){
   const td=today();
@@ -2097,17 +2408,34 @@ function renderDashJournal(){
 }
 function renderDashAgenda(){
   const el=document.getElementById('dash-agenda-list');
+  if(!el) return;
   const td=today();
-  const due=state.assignments.filter(a=>a.due===td&&!a.done);
-  if(!due.length){ el.innerHTML='<div class="empty-state">Nothing due today 🎉</div>'; return; }
-  el.innerHTML=due.map(a=>`
-    <div class="task-item">
-      <div class="task-body">
-        <div class="task-text">${a.title}</div>
-        <div class="task-meta"><span class="tag-pill study">${a.subject||'General'}</span></div>
-      </div>
-    </div>
-  `).join('');
+  const items=[];
+  // Assignments due today
+  state.assignments.filter(a=>a.due===td&&!a.done).forEach(a=>{
+    items.push({type:'assignment',icon:'📋',title:a.title,meta:a.subject||'',time:'',color:'var(--warn)'});
+  });
+  // Events today (including recurring)
+  getEventsOnDate(td).forEach(ev=>{
+    items.push({type:ev.type==='zoom'?'zoom':'event',icon:ev.type==='zoom'?'📹':'📅',title:ev.title,meta:ev.time||'',time:ev.time||'',link:ev.link||'',color:ev.type==='zoom'?'var(--success)':'var(--info)'});
+  });
+  // Tasks due today
+  state.tasks.filter(t=>!t.done&&t.due===td).forEach(t=>{
+    items.push({type:'task',icon:'✓',title:t.text,meta:t.tag||'',time:'',color:'var(--accent)'});
+  });
+  // Sort by time
+  items.sort((a,b)=>(a.time||'99:99')>(b.time||'99:99')?1:-1);
+  if(!items.length){ el.innerHTML='<div class="empty-state">Nothing scheduled today 🎉</div>'; return; }
+  el.innerHTML=items.map(item=>
+    '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">'+
+    '<span style="font-size:13px;">'+item.icon+'</span>'+
+    '<div style="flex:1;min-width:0;">'+
+      '<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.title+'</div>'+
+      (item.meta?'<div style="font-size:10px;color:var(--faint);">'+item.meta+'</div>':'')+
+    '</div>'+
+    (item.link?'<a href="'+item.link+'" target="_blank" style="font-size:10px;background:var(--success);color:var(--bg);padding:2px 7px;border-radius:5px;font-weight:600;text-decoration:none;">Join</a>':'')+
+    '</div>'
+  ).join('');
 }
 function isDue(d){ return d && d < today(); }
 
@@ -2332,42 +2660,83 @@ function saveTask(){
 }
 function renderGoals(){
   const el=document.getElementById('goals-list');
-  if(!state.goals.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">🎯</div>Set your first goal!</div>'; return; }
-  el.innerHTML=state.goals.map(g=>`
-    <div class="goal-item">
-      <div class="goal-header">
-        <div class="goal-title">${g.title}</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="goal-pct">${g.progress||0}%</div>
-          <button class="btn-icon" onclick="openEditGoalModal('${g.id}')">✎</button>
-          <button class="btn-icon" style="color:var(--accent)" onclick="deleteGoal('${g.id}')">✕</button>
-        </div>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${g.progress||0}%"></div></div>
-      ${g.due?`<div class="goal-due">Due: ${fmtDate(g.due)}</div>`:''}
-    </div>
-  `).join('');
+  if(!el) return;
+  const filter=document.getElementById('goal-filter')?.value||'all';
+  let goals=state.goals;
+  if(filter==='active') goals=goals.filter(g=>!g.done);
+  if(filter==='done') goals=goals.filter(g=>g.done);
+  if(!goals.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">🎯</div>No goals yet. Add your first goal!</div>'; return; }
+  el.innerHTML=goals.map(g=>{
+    const streak=calcGoalStreak(g);
+    const totalCI=Object.values(g.checkins||{}).filter(Boolean).length;
+    // Show last 14 days of check-in dots
+    const dots=[];
+    for(let i=13;i>=0;i--){
+      const dt=new Date(); dt.setDate(dt.getDate()-i);
+      const ds=dt.toISOString().slice(0,10);
+      const done=(g.checkins||{})[ds];
+      dots.push('<div class="goal-ci-dot '+(done?'done':'')+'" onclick="toggleGoalCheckin(\''+g.id+'\',\''+ds+'\')" title="'+ds+'"></div>');
+    }
+    return '<div class="goal-card '+(g.done?'done-card':'')+'">'+
+      '<div class="goal-header-row">'+
+        '<div>'+
+          '<div class="goal-name">'+(g.done?'✓ ':'')+g.title+'</div>'+
+          (g.category?'<span class="goal-cat-badge">'+g.category+'</span>':'')+ 
+        '</div>'+
+        '<div style="display:flex;gap:4px;align-items:center;">'+
+          '<button class="btn-icon" onclick="openEditGoalModal(\''+g.id+'\')" title="Edit">✎</button>'+
+          '<button class="btn-icon" style="color:var(--accent)" onclick="deleteGoal(\''+g.id+'\')" title="Delete">✕</button>'+
+        '</div>'+
+      '</div>'+
+      (g.description?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+g.description+'</div>':'')+
+      '<div style="font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Last 14 days</div>'+
+      '<div class="goal-checkin-grid">'+dots.join('')+'</div>'+
+      '<div class="goal-meta-row">'+
+        '<span class="goal-streak">🔥 '+streak+' day streak</span>'+
+        '<span>'+totalCI+' total check-ins</span>'+
+        (g.due?'<span>Due: '+fmtDate(g.due)+'</span>':'')+
+        '<button class="btn btn-primary btn-sm" style="padding:3px 10px;font-size:11px;" onclick="toggleGoalCheckin(\''+g.id+'\',\''+today()+'\')">'+(( g.checkins||{})[today()]?'✓ Done today':'Check in')+'</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
-let editingGoalId=null;
+function calcGoalStreak(g){
+  let streak=0; const dt=new Date();
+  for(let i=0;i<365;i++){
+    const ds=dt.toISOString().slice(0,10);
+    if((g.checkins||{})[ds]) streak++;
+    else break;
+    dt.setDate(dt.getDate()-1);
+  }
+  return streak;
+}
+function toggleGoalCheckin(id,date){
+  const g=state.goals.find(x=>x.id===id);
+  if(!g) return;
+  if(!g.checkins) g.checkins={};
+  g.checkins[date]=!g.checkins[date];
+  saveState(); renderGoals();
+}
 function openAddGoalModal(){ editingGoalId=null; openModal('Add Goal',goalModalBody(),'addGoal'); }
 function openEditGoalModal(id){ editingGoalId=id; const g=state.goals.find(x=>x.id===id); openModal('Edit Goal',goalModalBody(g),'saveGoal'); }
 function goalModalBody(g){
-  return `
-    <div class="modal-field"><div class="modal-label">Goal Title</div><input class="modal-input" id="gm-title" value="${g?g.title:''}"/></div>
-    <div class="modal-field"><div class="modal-label">Progress (${g?g.progress||0:0}%)</div><input type="range" min="0" max="100" value="${g?g.progress||0:0}" id="gm-progress" style="width:100%;accent-color:var(--accent);" oninput="document.querySelector('#gm-progress').previousElementSibling.textContent='Progress ('+this.value+'%)'"/></div>
-    <div class="modal-field"><div class="modal-label">Due Date</div><input type="date" class="modal-input" id="gm-due" value="${g&&g.due?g.due:''}"/></div>`;
+  return '<div class="modal-field"><div class="modal-label">Goal Title</div><input class="modal-input" id="gm-title" value="'+(g?g.title:'')+'"/></div>'+
+    '<div class="modal-field"><div class="modal-label">Category (optional)</div><input class="modal-input" id="gm-cat" value="'+(g&&g.category?g.category:'')+'" placeholder="e.g. Health, Study, Personal"/></div>'+
+    '<div class="modal-field"><div class="modal-label">Description (optional)</div><input class="modal-input" id="gm-desc" value="'+(g&&g.description?g.description:'')+'" placeholder="What does achieving this look like?"/></div>'+
+    '<div class="modal-field"><div class="modal-label">Due Date (optional)</div><input type="date" class="modal-input" id="gm-due" value="'+(g&&g.due?g.due:'')+'"/></div>'+
+    (g?'<div class="modal-field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="gm-done" '+(g.done?'checked':'')+' style="accent-color:var(--accent);"/><label for="gm-done" style="font-size:13px;cursor:pointer;">Mark as completed</label></div>':'');
 }
 function addGoal(){
   const title=document.getElementById('gm-title')?.value.trim();
   if(!title){ toast('Enter a goal title','error'); return; }
-  state.goals.push({id:uid(),title,progress:parseInt(document.getElementById('gm-progress').value),due:document.getElementById('gm-due').value});
+  state.goals.push({id:uid(),title,category:document.getElementById('gm-cat').value.trim(),description:document.getElementById('gm-desc').value.trim(),due:document.getElementById('gm-due').value,checkins:{},done:false});
   saveState(); closeModal(); renderGoals(); toast('Goal added!','success');
 }
 function saveGoal(){
   const title=document.getElementById('gm-title')?.value.trim();
   if(!title){ toast('Enter a goal title','error'); return; }
   const g=state.goals.find(x=>x.id===editingGoalId);
-  if(g){ g.title=title;g.progress=parseInt(document.getElementById('gm-progress').value);g.due=document.getElementById('gm-due').value; }
+  if(g){ g.title=title; g.category=document.getElementById('gm-cat').value.trim(); g.description=document.getElementById('gm-desc').value.trim(); g.due=document.getElementById('gm-due').value; g.done=document.getElementById('gm-done')?.checked||false; }
   saveState(); closeModal(); renderGoals(); toast('Goal updated!','success');
 }
 function deleteGoal(id){ state.goals=state.goals.filter(g=>g.id!==id); saveState(); renderGoals(); toast('Goal deleted'); }
@@ -2806,27 +3175,21 @@ function renderAssignments(){
   if(!el) return;
   const sorted=[...state.assignments].sort((a,b)=>a.due>b.due?1:-1);
   if(!sorted.length){ el.innerHTML='<div class="empty-state">No assignments.</div>'; return; }
-  const sections={school:[],jee:[],other:[]};
-  sorted.forEach(a=>{ const sec=a.section||'school'; if(sections[sec]) sections[sec].push(a); else sections.other.push(a); });
-  const secLabels={school:'🏫 School',jee:'🎯 JEE Coaching',other:'📌 Other'};
-  const secColors={school:'var(--warn)',jee:'var(--accent)',other:'var(--info)'};
-  let html='';
-  for(const [sec,items] of Object.entries(sections)){
-    if(!items.length) continue;
-    html+='<div style="font-size:10px;font-weight:700;color:'+secColors[sec]+';text-transform:uppercase;letter-spacing:0.06em;padding:8px 0 4px;">'+secLabels[sec]+'</div>';
-    html+=items.map(a=>{
-      const dateStr=a.start&&a.due?fmtDate(a.start)+' → '+fmtDate(a.due):a.due?fmtDate(a.due):'';
-      return '<div class="assignment-item">'+
-        '<div class="assignment-check '+(a.done?'done':'')+'" onclick="toggleAssignment(\''+a.id+'\')"></div>'+
-        '<div style="flex:1;min-width:0;">'+
-          '<div class="assignment-title '+(a.done?'done':'')+'">'+a.title+'</div>'+
-          '<div class="assignment-meta">'+(a.subject?'<span>'+a.subject+'</span>':'')+(dateStr?'<span>'+dateStr+'</span>':'')+' </div>'+
+  el.innerHTML=sorted.map(a=>{
+    const dateStr=a.start&&a.due?fmtDate(a.start)+' → '+fmtDate(a.due):a.due?fmtDate(a.due):'';
+    const overdue=a.due&&a.due<today()&&!a.done;
+    return '<div class="assignment-item">'+
+      '<div class="assignment-check '+(a.done?'done':'')+'" onclick="toggleAssignment(\''+a.id+'\')">'+(a.done?'✓':'')+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div class="assignment-title '+(a.done?'done':'')+'">'+a.title+'</div>'+
+        '<div class="assignment-meta">'+
+          (a.subject?'<span>'+a.subject+'</span>':'')+
+          (dateStr?'<span style="'+(overdue?'color:var(--accent);font-weight:600;':'')+'">'+(overdue?'⚠ ':'')+dateStr+'</span>':'')+
         '</div>'+
-        '<button class="btn-icon" style="color:var(--accent)" onclick="deleteAssignment(\''+a.id+'\')">✕</button>'+
-      '</div>';
-    }).join('');
-  }
-  el.innerHTML=html;
+      '</div>'+
+      '<button class="btn-icon" style="color:var(--accent)" onclick="deleteAssignment(\''+a.id+'\')" >✕</button>'+
+    '</div>';
+  }).join('');
 }
 function toggleAssignment(id){ const a=state.assignments.find(x=>x.id===id); if(a) a.done=!a.done; saveState(); renderAssignments(); renderCalGrid(); if(calSelectedDate) selectCalDay(calSelectedDate); }
 function deleteAssignment(id){ state.assignments=state.assignments.filter(a=>a.id!==id); saveState(); renderAssignments(); renderCalGrid(); if(calSelectedDate) selectCalDay(calSelectedDate); }
@@ -2910,17 +3273,10 @@ function addZoom(){
   saveState(); closeModal(); renderCalendar(); if(calSelectedDate) selectCalDay(calSelectedDate); toast('Zoom class added!','success');
 }
 
-function openAddAssignmentModal(prefillSection){
+function openAddAssignmentModal(){
   const subjects=state.subjects.map(s=>'<option value="'+s.name+'">'+s.icon+' '+s.name+'</option>').join('');
   const dateVal=calSelectedDate||today();
-  const sectionSel=prefillSection||'school';
   openModal('Add Assignment',
-    '<div class="modal-field"><div class="modal-label">Section</div>'+
-    '<div style="display:flex;gap:8px;">'+
-    '<button type="button" id="sec-school" class="btn '+(sectionSel==='school'?'btn-primary':'btn-ghost')+' btn-sm" onclick="selectAssignSection(&quot;school&quot;)">🏫 School</button>'+
-    '<button type="button" id="sec-jee" class="btn '+(sectionSel==='jee'?'btn-primary':'btn-ghost')+' btn-sm" onclick="selectAssignSection(&quot;jee&quot;)">🎯 JEE Coaching</button>'+
-    '<button type="button" id="sec-other" class="btn '+(sectionSel==='other'?'btn-primary':'btn-ghost')+' btn-sm" onclick="selectAssignSection(&quot;other&quot;)">📌 Other</button>'+
-    '</div><input type="hidden" id="am-section" value="'+sectionSel+'"/></div>'+
     '<div class="modal-field"><div class="modal-label">Title</div><input class="modal-input" id="am-title"/></div>'+
     '<div class="modal-field"><div class="modal-label">Subject</div><select class="modal-input" id="am-subject"><option value="">None</option>'+subjects+'</select></div>'+
     '<div class="modal-field"><div class="modal-label">Due Date</div><input type="date" class="modal-input" id="am-due" value="'+dateVal+'"/></div>'+
@@ -2931,13 +3287,6 @@ function openAddAssignmentModal(prefillSection){
     '<div class="modal-field"><div class="modal-label">Notes</div><textarea class="modal-input" id="am-notes"></textarea></div>',
   'addAssignment');
 }
-function selectAssignSection(sec){
-  document.getElementById('am-section').value=sec;
-  ['school','jee','other'].forEach(s=>{
-    const btn=document.getElementById('sec-'+s);
-    if(btn){ btn.className='btn '+(s===sec?'btn-primary':'btn-ghost')+' btn-sm'; }
-  });
-}
 function toggleAssignRange(on){
   document.getElementById('am-range-fields').style.display=on?'block':'none';
 }
@@ -2947,7 +3296,6 @@ function addAssignment(){
   const useRange=document.getElementById('am-use-range')?.checked;
   state.assignments.push({
     id:uid(),title,
-    section:document.getElementById('am-section')?.value||'school',
     subject:document.getElementById('am-subject').value,
     due:document.getElementById('am-due').value,
     start:useRange?(document.getElementById('am-start')?.value||''):'',
@@ -2989,7 +3337,7 @@ function renderSubjectTabs(){
 function setActiveSubject(id){ activeSubjectId=id; activeNoteId=null; fcIndex=0; quizIndex=0; quizAnswered={}; renderSubjectTabs(); renderStudyPanel(); }
 function renderStudyPanel(){
   document.querySelectorAll('.study-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+activeStudyTab).classList.add('active');
+  document.getElementById('panel-'+activeStudyTab)?.classList.add('active');
   switch(activeStudyTab){
     case 'notes': renderNotesPanel(); break;
     case 'flashcards': renderFlashcardsPanel(); break;
@@ -3299,7 +3647,7 @@ function renderFlashcardsPanel(){
   document.getElementById('fc-back').textContent=fcs[fcIndex].a;
   document.getElementById('fc-counter').textContent=(fcIndex+1)+' / '+fcs.length;
 }
-function flipCard(){ document.getElementById('fc-card').classList.toggle('flipped'); }
+function flipCard(){ document.getElementById('fc-card')?.classList.toggle('flipped'); }
 function fcPrev(){ if(fcIndex>0){fcIndex--;renderFlashcardsPanel();} }
 function fcNext(){ const fcs=getStudy().flashcards||[]; if(fcIndex<fcs.length-1){fcIndex++;renderFlashcardsPanel();} }
 function deleteCurrCard(){
@@ -3769,7 +4117,26 @@ function startEyeTimer(){
     eyeElapsed++;
     if(eyeElapsed>=state.settings.eyeInterval*60){
       eyeElapsed=0;
-      if(state.settings.eyeNotif) toast('👁 Eye break! Look 20 feet away for 20 seconds.','success');
+      if(state.settings.eyeNotif) showEyeBreakOverlay();
+    }
+  },1000);
+}
+function showEyeBreakOverlay(){
+  const overlay=document.getElementById('eye-break-overlay');
+  if(!overlay) return;
+  overlay.style.display='flex';
+  let secs=20;
+  const countEl=overlay.querySelector('#eye-countdown');
+  const barEl=overlay.querySelector('#eye-progress-bar');
+  if(countEl) countEl.textContent=secs;
+  if(barEl) barEl.style.width='100%';
+  const ivl=setInterval(()=>{
+    secs--;
+    if(countEl) countEl.textContent=secs;
+    if(barEl) barEl.style.width=(secs/20*100)+'%';
+    if(secs<=0){
+      clearInterval(ivl);
+      overlay.style.display='none';
     }
   },1000);
 }
@@ -4410,9 +4777,9 @@ function openModal(title, body, action, showConfirm=true){
   const btn=document.getElementById('modal-confirm-btn');
   if(showConfirm){ btn.style.display='block'; modalAction=action; }
   else { btn.style.display='none'; }
-  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-overlay')?.classList.add('open');
 }
-function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); modalAction=null; }
+function closeModal(){ document.getElementById('modal-overlay')?.classList.remove('open'); modalAction=null; }
 function modalConfirm(){
   const actions={
     addHabit, saveHabit,
@@ -4434,6 +4801,10 @@ function modalConfirm(){
     addProfile,
     confirmGenerateNoteFromSources,
     enhanceTranscript,
+    saveQuickGoalProgress,
+    saveGoalMilestone,
+    addGoal,
+    saveGoal,
     applyTemplate: ()=>{},
   };
   if(modalAction && actions[modalAction]) actions[modalAction]();
@@ -4724,7 +5095,7 @@ function getActiveProfile(){
   return state.settings.activeProfile||'default';
 }
 function initMultiuser(){
-  if(!state.profiles) state.profiles={default:{name:'Pradhan',color:'var(--accent)'}};
+  if(!state.profiles) state.profiles={default:{name:'Student',color:'var(--accent)'}};
 }
 function renderProfileSwitcher(){
   initMultiuser();
@@ -5081,12 +5452,12 @@ async function uploadMultipleSourceFiles(input){
 let sidebarCollapsed = false;
 function toggleSidebar(){
   sidebarCollapsed = !sidebarCollapsed;
-  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.getElementById('sidebar')?.classList.toggle('collapsed', sidebarCollapsed);
   localStorage.setItem('kalam_sidebar_collapsed', sidebarCollapsed ? '1' : '0');
 }
 function restoreSidebarState(){
   sidebarCollapsed = localStorage.getItem('kalam_sidebar_collapsed') === '1';
-  if(sidebarCollapsed) document.getElementById('sidebar').classList.add('collapsed');
+  if(sidebarCollapsed) document.getElementById('sidebar')?.classList.add('collapsed');
 }
 
 // ===================== AI ROUTER =====================
@@ -5274,6 +5645,308 @@ async function enhanceTranscript(){
   } catch(e){ toast('Enhancement failed: '+e.message,'error'); }
 }
 
+// ===================== AI FLOATING BUTTON =====================
+let fabOpen = false;
+function toggleAIFab(){
+  fabOpen = !fabOpen;
+  const popup = document.getElementById('ai-fab-popup');
+  const btn = document.getElementById('ai-fab');
+  if(popup) popup.style.display = fabOpen ? 'flex' : 'none';
+  if(btn) btn.style.transform = fabOpen ? 'scale(0.9)' : '';
+  if(fabOpen){
+    syncFabMessages();
+    setTimeout(()=>document.getElementById('ai-fab-input')?.focus(), 100);
+  }
+}
+function syncFabMessages(){
+  const el = document.getElementById('ai-fab-messages');
+  if(!el) return;
+  if(!chatMessages.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--faint);text-align:center;padding:10px;">Ask me anything — I can see your notes, tasks and habits.</div>';
+    return;
+  }
+  el.innerHTML = chatMessages.map(m=>{
+    const content = m.content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    return '<div style="display:flex;'+(m.role==='user'?'justify-content:flex-end':'')+'">'+
+      '<div style="max-width:88%;padding:7px 11px;border-radius:10px;font-size:12.5px;line-height:1.6;background:'+(m.role==='user'?'var(--accent)':'var(--bg)')+';color:'+(m.role==='user'?'var(--bg)':'var(--text)')+';border:'+(m.role==='user'?'none':'1px solid var(--border)')+';">'+content+'</div>'+
+    '</div>';
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+async function sendFabChat(){
+  const input = document.getElementById('ai-fab-input');
+  const text = input?.value.trim();
+  if(!text) return;
+  input.value = ''; input.style.height = 'auto';
+  chatMessages.push({role:'user', content:text});
+  syncFabMessages();
+  const el = document.getElementById('ai-fab-messages');
+  if(el){ el.innerHTML += '<div style="font-size:12px;color:var(--faint);padding:4px 8px;">Thinking…</div>'; el.scrollTop=el.scrollHeight; }
+  let reply = '';
+  const provider = state.settings.aiProvider||'builtin';
+  const hasKey = (provider==='gemini'&&state.settings.geminiKey)||((provider==='claude'||provider==='claude-sonnet')&&state.settings.apikey);
+  if(hasKey){
+    try { reply = await aiCall(buildChatContext()+'\n\nUSER: '+text+'\n\nAssistant:', 600)||parseAndExecute(text); }
+    catch(e){ reply = parseAndExecute(text); }
+  } else {
+    await new Promise(r=>setTimeout(r,300));
+    reply = parseAndExecute(text);
+  }
+  chatMessages.push({role:'assistant', content:reply});
+  syncFabMessages();
+}
+
+// ===================== BINAURAL BEATS =====================
+let binCtx = null, binNodes = [], binPlaying = null;
+const binPresets = [
+  {name:'Deep Focus (40Hz)', freq:40, base:200, label:'Gamma — peak concentration'},
+  {name:'Calm Focus (14Hz)', freq:14, base:180, label:'Beta — relaxed alertness'},
+  {name:'Light Meditation (10Hz)', freq:10, base:160, label:'Alpha — relaxed focus'},
+  {name:'Deep Meditation (6Hz)', freq:6, base:140, label:'Theta — deep calm'},
+  {name:'Deep Sleep (2Hz)', freq:2, base:120, label:'Delta — deep rest'},
+];
+function toggleBinaural(){
+  const panel = document.getElementById('binaural-panel');
+  if(!panel) return;
+  const open = panel.style.display === 'flex';
+  panel.style.display = open ? 'none' : 'flex';
+  if(!open) renderBinauralPanel();
+}
+function renderBinauralPanel(){
+  const el = document.getElementById('bin-beat-btns');
+  if(!el) return;
+  el.innerHTML = binPresets.map((p,i)=>
+    '<div style="padding:8px 12px;border-radius:8px;border:1.5px solid '+(binPlaying===i?'var(--accent)':'var(--border)')+';background:'+(binPlaying===i?'var(--accent-light)':'var(--card)')+';cursor:pointer;transition:all 0.15s;" onclick="playBinaural('+i+')">'+
+    '<div style="font-size:12.5px;font-weight:600;color:'+(binPlaying===i?'var(--accent)':'var(--text)')+';">'+(binPlaying===i?'▶ ':'')+p.name+'</div>'+
+    '<div style="font-size:10px;color:var(--faint);margin-top:1px;">'+p.label+'</div>'+
+    '</div>'
+  ).join('');
+  const status = document.getElementById('bin-status');
+  if(status) status.textContent = binPlaying!==null ? 'Playing: '+binPresets[binPlaying].name : 'Not playing';
+}
+function playBinaural(idx){
+  stopBinaural();
+  if(binPlaying===idx){ binPlaying=null; renderBinauralPanel(); return; }
+  const p = binPresets[idx];
+  binCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const vol = parseFloat(document.getElementById('bin-volume')?.value||0.3);
+  const gain = binCtx.createGain(); gain.gain.value = vol; gain.connect(binCtx.destination);
+  // Left ear
+  const oscL = binCtx.createOscillator(); oscL.frequency.value = p.base; oscL.start();
+  const panL = binCtx.createStereoPanner(); panL.pan.value = -1;
+  oscL.connect(panL); panL.connect(gain);
+  // Right ear (shifted by beat freq)
+  const oscR = binCtx.createOscillator(); oscR.frequency.value = p.base + p.freq; oscR.start();
+  const panR = binCtx.createStereoPanner(); panR.pan.value = 1;
+  oscR.connect(panR); panR.connect(gain);
+  binNodes = [oscL, oscR, panL, panR, gain];
+  binPlaying = idx;
+  renderBinauralPanel();
+  toast('Playing: '+p.name,'success');
+}
+function stopBinaural(){
+  binNodes.forEach(n=>{ try{n.stop&&n.stop(); n.disconnect&&n.disconnect();}catch(e){} });
+  binNodes = [];
+  if(binCtx){ try{binCtx.close();}catch(e){} binCtx=null; }
+}
+function setBinauralVolume(v){
+  const g = binNodes.find(n=>n.gain);
+  if(g) g.gain.value = parseFloat(v);
+}
+
+// ===================== AI FLOAT BUTTON =====================
+let aiFloatOpen = false;
+function toggleAIFloat(){
+  const popup = document.getElementById('ai-float-popup');
+  const btn = document.getElementById('ai-float-btn');
+  aiFloatOpen = !aiFloatOpen;
+  popup.style.display = aiFloatOpen ? 'flex' : 'none';
+  btn.style.transform = aiFloatOpen ? 'scale(0.9)' : 'scale(1)';
+  if(aiFloatOpen){
+    syncFloatChat();
+    document.getElementById('float-chat-input').focus();
+  }
+}
+function syncFloatChat(){
+  // Mirror the main chat messages into float popup
+  const floatEl = document.getElementById('float-chat-messages');
+  if(!floatEl) return;
+  if(!chatMessages.length){
+    floatEl.innerHTML = '<div style="font-size:12px;color:var(--faint);padding:8px;">Ask me anything — or try "what are my habits today?"</div>';
+    return;
+  }
+  floatEl.innerHTML = chatMessages.map(m=>{
+    const content = m.content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    return '<div class="chat-msg '+m.role+'"><div class="chat-bubble" style="font-size:12.5px;">'+content+'</div></div>';
+  }).join('');
+  floatEl.scrollTop = floatEl.scrollHeight;
+}
+async function sendFloatChat(){
+  const input = document.getElementById('float-chat-input');
+  const text = input?.value.trim();
+  if(!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  // Use the main sendChat logic by temporarily pointing to the float input
+  chatMessages.push({role:'user', content:text});
+  syncFloatChat();
+  // Show typing
+  const floatEl = document.getElementById('float-chat-messages');
+  if(floatEl) floatEl.innerHTML += '<div class="chat-msg assistant"><div class="chat-bubble chat-typing" style="font-size:12.5px;">Thinking</div></div>';
+  // Get reply same as main chat
+  let reply = '';
+  const provider = state.settings.aiProvider||'builtin';
+  const hasKey = (provider==='gemini'&&state.settings.geminiKey)||((provider==='claude'||provider==='claude-sonnet')&&state.settings.apikey);
+  if(hasKey){
+    try {
+      const context = buildChatContext();
+      if(provider==='gemini'){
+        const turns = chatMessages.map(m=>({role:m.role==='user'?'user':'model',parts:[{text:m.content}]}));
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+state.settings.geminiKey;
+        const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:context}]},contents:turns,generationConfig:{maxOutputTokens:600,temperature:0.8}})});
+        const data = await res.json();
+        if(data.error) throw new Error(data.error.message);
+        reply = data.candidates?.[0]?.content?.parts?.[0]?.text||parseAndExecute(text);
+      } else {
+        const model = (provider==='claude-sonnet')?'claude-sonnet-4-20250514':'claude-haiku-4-5-20251001';
+        const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':state.settings.apikey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:600,system:context,messages:chatMessages.map(m=>({role:m.role,content:m.content}))})});
+        const data = await res.json();
+        if(data.error) throw new Error(data.error.message);
+        reply = data.content[0].text;
+      }
+    } catch(e){ reply = parseAndExecute(text); }
+  } else {
+    await new Promise(r=>setTimeout(r,300));
+    reply = parseAndExecute(text);
+  }
+  chatMessages.push({role:'assistant', content:reply});
+  syncFloatChat();
+  // Also sync to main chat if on AI page
+  if(currentPage==='ai') renderChatMessages();
+}
+// Close float on outside click
+document.addEventListener('click', e=>{
+  if(aiFloatOpen && !e.target.closest('#ai-float-popup') && !e.target.closest('#ai-float-btn')){
+    toggleAIFloat();
+  }
+});
+
+// ===================== BINAURAL BEATS =====================
+let binauralCtx = null;
+let binauralNodes = {};
+let binauralPlaying = false;
+const binauralPresets = {
+  focus:   {base:200, beat:40,  label:'Focus — 40Hz Gamma'},
+  relax:   {base:200, beat:10,  label:'Relax — 10Hz Alpha'},
+  sleep:   {base:150, beat:4,   label:'Sleep — 4Hz Theta'},
+  creative:{base:200, beat:7,   label:'Creative — 7Hz Theta'},
+  memory:  {base:200, beat:14,  label:'Memory — 14Hz Alpha'},
+};
+let currentBBMode = 'focus';
+function openBinaural(){
+  const el = document.getElementById('binaural-player');
+  if(el) el.style.display = 'flex';
+}
+function closeBinaural(){
+  stopBinaural();
+  const el = document.getElementById('binaural-player');
+  if(el) el.style.display = 'none';
+}
+function toggleBinaural(){
+  if(binauralPlaying) stopBinaural();
+  else startBinaural();
+}
+function startBinaural(){
+  try {
+    if(!binauralCtx) binauralCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const preset = binauralPresets[currentBBMode];
+    const vol = parseFloat(document.getElementById('bb-vol')?.value||0.3);
+    // Left ear: base frequency
+    const oscL = binauralCtx.createOscillator();
+    const gainL = binauralCtx.createGain();
+    const mergerL = binauralCtx.createChannelMerger(2);
+    oscL.frequency.value = preset.base;
+    gainL.gain.value = vol;
+    oscL.connect(gainL);
+    gainL.connect(mergerL, 0, 0);
+    // Right ear: base + beat frequency
+    const oscR = binauralCtx.createOscillator();
+    const gainR = binauralCtx.createGain();
+    oscR.frequency.value = preset.base + preset.beat;
+    gainR.gain.value = vol;
+    oscR.connect(gainR);
+    gainR.connect(mergerL, 0, 1);
+    mergerL.connect(binauralCtx.destination);
+    oscL.start(); oscR.start();
+    binauralNodes = {oscL, oscR, gainL, gainR, mergerL};
+    binauralPlaying = true;
+    const btn = document.getElementById('bb-play-btn');
+    if(btn) btn.textContent = '⏸ Pause';
+    toast('Binaural beats playing — use headphones!','success');
+  } catch(e){ toast('Audio error: '+e.message,'error'); }
+}
+function stopBinaural(){
+  try {
+    binauralNodes.oscL?.stop(); binauralNodes.oscR?.stop();
+    binauralNodes.mergerL?.disconnect();
+  } catch(e){}
+  binauralNodes = {};
+  binauralPlaying = false;
+  const btn = document.getElementById('bb-play-btn');
+  if(btn) btn.textContent = '▶ Play';
+}
+function setBinauralVol(v){
+  if(binauralNodes.gainL) binauralNodes.gainL.gain.value = parseFloat(v);
+  if(binauralNodes.gainR) binauralNodes.gainR.gain.value = parseFloat(v);
+}
+function setBinauralMode(mode){
+  currentBBMode = mode;
+  const lbl = document.getElementById('bb-label');
+  if(lbl) lbl.textContent = binauralPresets[mode]?.label||mode;
+  if(binauralPlaying){ stopBinaural(); startBinaural(); }
+}
+
+// ===================== GOAL MILESTONES =====================
+function quickUpdateGoal(id){
+  const g = state.goals.find(x=>x.id===id);
+  if(!g) return;
+  openModal('Update Progress',
+    '<div class="modal-field"><div class="modal-label">Progress: <span id="qug-pct-lbl">'+(g.progress||0)+'%</span></div>'+
+    '<input type="range" min="0" max="100" value="'+(g.progress||0)+'" id="qug-pct" style="width:100%;accent-color:var(--accent);" oninput="document.getElementById(\'qug-pct-lbl\').textContent=this.value+\'%\'"/></div>',
+    'saveQuickGoalProgress'
+  );
+  window._quickGoalId = id;
+}
+function saveQuickGoalProgress(){
+  const g = state.goals.find(x=>x.id===window._quickGoalId);
+  if(g){ g.progress = parseInt(document.getElementById('qug-pct')?.value||0); }
+  saveState(); closeModal(); renderGoals(); renderDashStats();
+}
+function addGoalMilestone(id){
+  openModal('Add Milestone',
+    '<div class="modal-field"><div class="modal-label">Step / Milestone</div><input class="modal-input" id="ms-text" placeholder="e.g. Complete chapter 5"/></div>',
+    'saveGoalMilestone'
+  );
+  window._milestoneGoalId = id;
+}
+function saveGoalMilestone(){
+  const text = document.getElementById('ms-text')?.value.trim();
+  if(!text){ toast('Enter milestone text','error'); return; }
+  const g = state.goals.find(x=>x.id===window._milestoneGoalId);
+  if(g){ if(!g.milestones) g.milestones=[]; g.milestones.push({text,done:false}); }
+  saveState(); closeModal(); renderGoals();
+}
+function toggleMilestone(goalId, idx){
+  const g = state.goals.find(x=>x.id===goalId);
+  if(g&&g.milestones) g.milestones[idx].done = !g.milestones[idx].done;
+  saveState(); renderGoals();
+}
+function deleteMilestone(goalId, idx){
+  const g = state.goals.find(x=>x.id===goalId);
+  if(g&&g.milestones) g.milestones.splice(idx,1);
+  saveState(); renderGoals();
+}
+
 // ===================== INIT =====================
 function init(){
   loadState();
@@ -5288,6 +5961,162 @@ function init(){
   gcalRestoreSession();
 }
 init();
+
+function setStudyToolTab(tab){
+  document.querySelectorAll('.study-tool-panel').forEach(panel=>{
+    panel.classList.remove('active');
+  });
+
+  document.querySelectorAll('.study-tab').forEach(btn=>{
+    btn.classList.remove('active');
+  });
+
+  const activePanel = document.getElementById(`study-tool-${tab}`);
+  if(activePanel){
+    activePanel.classList.add('active');
+  }
+
+  const activeBtn = document.querySelector(`[data-study-tab="${tab}"]`);
+  if(activeBtn){
+    activeBtn.classList.add('active');
+  }
+}
+
+
+/* ===== STUDY SPACE FIXES ===== */
+
+function setStudyToolTab(tab){
+  try{
+    document.querySelectorAll('.study-tool-panel,.study-panel').forEach(panel=>{
+      panel.classList.remove('active');
+    });
+
+    document.querySelectorAll('.study-tab').forEach(btn=>{
+      btn.classList.remove('active');
+    });
+
+    const panel =
+      document.getElementById(`study-tool-${tab}`) ||
+      document.getElementById(`study-${tab}`);
+
+    if(panel){
+      panel.classList.add('active');
+    }
+
+    const btn = document.querySelector(`[data-study-tab="${tab}"]`);
+    if(btn){
+      btn.classList.add('active');
+    }
+
+    localStorage.setItem('kalamStudyTab',tab);
+  }catch(err){
+    console.error(err);
+  }
+}
+
+window.addEventListener('load',()=>{
+  const savedTab = localStorage.getItem('kalamStudyTab');
+  if(savedTab){
+    setTimeout(()=>setStudyToolTab(savedTab),200);
+  }
+});
+
+function renderSources(){
+  const container =
+    document.getElementById('sources-list') ||
+    document.getElementById('study-sources-list');
+
+  if(!container) return;
+
+  try{
+    const data =
+      window.appData?.sources ||
+      window.sources ||
+      [];
+
+    container.innerHTML='';
+
+    if(!data.length){
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📚</div>
+          <div>No sources uploaded yet</div>
+        </div>
+      `;
+      return;
+    }
+
+    data.forEach(src=>{
+      const div = document.createElement('div');
+      div.className='source-item';
+      div.innerHTML=`
+        <div class="source-header">
+          <div class="source-name">${src.name || 'Untitled Source'}</div>
+        </div>
+        <div class="source-meta">
+          ${(src.type || 'file').toUpperCase()}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }catch(err){
+    console.error(err);
+  }
+}
+
+function loadSpotifyEmbed(){
+  const input = document.getElementById('spotify-link-input');
+  const container = document.getElementById('spotify-player-container');
+
+  if(!input || !container) return;
+
+  let url = input.value.trim();
+
+  if(!url){
+    alert('Paste a Spotify embed link first.');
+    return;
+  }
+
+  if(url.includes('/playlist/') || url.includes('/track/') || url.includes('/album/')){
+    url = url.replace('open.spotify.com','open.spotify.com/embed');
+  }
+
+  container.innerHTML = `
+    <iframe
+      style="border-radius:12px"
+      src="${url}"
+      width="100%"
+      height="700"
+      frameBorder="0"
+      allowfullscreen=""
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy">
+    </iframe>
+  `;
+
+  localStorage.setItem('kalamSpotifyEmbed',url);
+}
+
+function clearSpotifyEmbed(){
+  const container = document.getElementById('spotify-player-container');
+  const input = document.getElementById('spotify-link-input');
+
+  if(container) container.innerHTML='';
+  if(input) input.value='';
+
+  localStorage.removeItem('kalamSpotifyEmbed');
+}
+
+window.addEventListener('load',()=>{
+  const saved = localStorage.getItem('kalamSpotifyEmbed');
+
+  if(saved){
+    const input = document.getElementById('spotify-link-input');
+    if(input) input.value = saved;
+    setTimeout(loadSpotifyEmbed,200);
+  }
+});
+
 </script>
 </body>
 </html>
