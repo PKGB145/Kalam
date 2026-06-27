@@ -1264,6 +1264,10 @@ select.modal-input { cursor: pointer; }
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3l7-2 7 2v2L8 7 1 5V3z"/><path d="M4 6v5c0 1.1 1.8 2 4 2s4-.9 4-2V6"/></svg>
     <span class="nav-label">Study Space</span>
   </div>
+  <div class="nav-item" data-page="exams" data-label="Exams">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2" width="11" height="13" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+    <span class="nav-label">Exams</span>
+  </div>
   <div class="nav-item" data-page="pomodoro" data-label="Pomodoro">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="6"/><path d="M8 6v3l2 1.5"/><path d="M6 1h4"/></svg>
     <span class="nav-label">Pomodoro</span>
@@ -1455,6 +1459,30 @@ select.modal-input { cursor: pointer; }
       </div>
     </div>
 
+    <!-- EXAMS -->
+    <div class="page" id="page-exams">
+      <div class="card" style="padding:18px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div class="card-title" style="margin-bottom:2px;">📝 Exams</div>
+            <div style="font-size:12px;color:var(--faint);">Track upcoming exams, portions, and your scores over time.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAddExamModal()">+ Add Exam</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="exams-grid-wrap">
+        <div class="card" style="padding:14px;">
+          <div class="card-title" style="font-size:13px;margin-bottom:10px;">Upcoming & past exams</div>
+          <div id="exams-list"></div>
+        </div>
+        <div class="card" style="padding:14px;">
+          <div class="card-title" style="font-size:13px;margin-bottom:10px;">Score trend by subject</div>
+          <canvas id="exams-chart" width="380" height="240" style="width:100%;max-width:100%;"></canvas>
+          <div id="exams-chart-legend" style="margin-top:8px;font-size:11px;color:var(--faint);"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- JOURNAL -->
     <div class="page" id="page-journal">
       <div class="journal-layout">
@@ -1634,8 +1662,11 @@ select.modal-input { cursor: pointer; }
           </div>
 
           <!-- Mind Map tool -->
-          <div class="study-tool-panel" id="stab-mindmap" style="padding:12px;overflow-y:auto;flex:1;display:none;flex-direction:column;gap:10px;">
-            <svg id="mind-map-svg" viewBox="0 0 400 300" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);min-height:200px;"></svg>
+          <div class="study-tool-panel" id="stab-mindmap" style="padding:12px;overflow-y:auto;flex:1;display:none;flex-direction:column;gap:10px;background:var(--bg);">
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px;" onclick="toggleMindMapFullscreen()" title="Fullscreen">⛶ Fullscreen</button>
+            </div>
+            <svg id="mind-map-svg" viewBox="0 0 400 300" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);min-height:200px;flex:1;"></svg>
             <button class="ai-btn" style="width:100%;font-size:11px;" onclick="aiAction('mindmap')">⚡ Generate from Notes</button>
           </div>
 
@@ -1960,8 +1991,21 @@ select.modal-input { cursor: pointer; }
         </div>
         <div style="font-size:12px;color:var(--faint);padding:8px 0;line-height:1.7;">
           20-20-20 rule reminders help reduce eye strain. Set the interval in Pomodoro settings.
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Account</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Sign out</div>
+            <div class="settings-desc">Sign out of your Kalam account on this device</div>
+          </div>
+          <div class="settings-control">
+            <button class="btn btn-sm" onclick="kalamSignOut()" style="color:#fff;background:var(--accent);border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;">Sign out</button>
+          </div>
         </div>
       </div>
+    </div>
     </div>
 
   </div><!-- /content -->
@@ -2020,7 +2064,7 @@ select.modal-input { cursor: pointer; }
 
 <!-- BINAURAL BEATS PANEL -->
 <div id="binaural-panel" style="
-  display:none;position:fixed;bottom:86px;right:90px;
+  display:none;position:fixed;bottom:140px;right:24px;
   width:280px;background:var(--card);border:1px solid var(--border);
   border-radius:14px;box-shadow:0 8px 32px var(--neutral-shadow);
   z-index:899;padding:16px;">
@@ -2036,7 +2080,7 @@ select.modal-input { cursor: pointer; }
   <div id="bin-status" style="font-size:11px;color:var(--faint);text-align:center;">Not playing</div>
 </div>
 <button id="binaural-fab" onclick="toggleBinaural()" title="Binaural Beats" style="
-  position:fixed;bottom:24px;right:86px;
+  position:fixed;bottom:84px;right:24px;
   width:42px;height:42px;border-radius:50%;
   background:var(--card);color:var(--muted);
   border:1.5px solid var(--border);cursor:pointer;
@@ -2044,10 +2088,6 @@ select.modal-input { cursor: pointer; }
   box-shadow:0 3px 12px var(--shadow);
   z-index:900;transition:all 0.2s;font-size:17px;">🎵</button>
 
-<!-- AI FLOATING BUTTON -->
-<div id="ai-float-btn" onclick="toggleAIFloat()" title="AI Assistant" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:900;box-shadow:0 4px 20px var(--neutral-shadow);transition:transform 0.2s,box-shadow 0.2s;">
-  <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l1.5 3.5L13 6l-3.5 1.5L8 11l-1.5-3.5L3 6l3.5-1.5z"/><path d="M12.5 10l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/></svg>
-</div>
 <!-- AI FLOAT POPUP -->
 <div id="ai-float-popup" style="display:none;position:fixed;bottom:88px;right:24px;width:380px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 40px var(--neutral-shadow);z-index:900;display:none;flex-direction:column;overflow:hidden;">
   <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
@@ -2065,7 +2105,7 @@ select.modal-input { cursor: pointer; }
 </div>
 
 <!-- SPOTIFY MINI PLAYER -->
-<div id="spotify-player" style="display:none;position:fixed;bottom:88px;left:24px;width:320px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px var(--neutral-shadow);z-index:800;overflow:hidden;">
+<div id="spotify-player" style="display:none;position:fixed;bottom:140px;left:24px;width:320px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px var(--neutral-shadow);z-index:800;overflow:hidden;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);">
     <div style="font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px;">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
@@ -2096,7 +2136,7 @@ select.modal-input { cursor: pointer; }
 </div>
 
 <!-- SPOTIFY TOGGLE BUTTON -->
-<div id="spotify-fab" onclick="toggleSpotify()" title="Spotify Music Player" style="position:fixed;bottom:24px;left:24px;width:44px;height:44px;border-radius:50%;background:#1DB954;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:800;box-shadow:0 4px 16px rgba(29,185,84,0.4);transition:transform 0.2s;">
+<div id="spotify-fab" onclick="toggleSpotify()" title="Spotify Music Player" style="position:fixed;bottom:84px;left:24px;width:44px;height:44px;border-radius:50%;background:#1DB954;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:800;box-shadow:0 4px 16px rgba(29,185,84,0.4);transition:transform 0.2s;">
   <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
 </div>
 <div id="binaural-player" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;z-index:800;box-shadow:0 4px 20px var(--neutral-shadow);align-items:center;gap:16px;min-width:340px;">
@@ -2124,7 +2164,7 @@ select.modal-input { cursor: pointer; }
   <div style="margin-top:24px;width:280px;height:6px;background:rgba(168,213,162,0.2);border-radius:99px;overflow:hidden;">
     <div id="eye-progress-bar" style="height:100%;background:#a8d5a2;border-radius:99px;width:100%;transition:width 1s linear;"></div>
   </div>
-  <button onclick="document.getElementById('eye-break-overlay').style.display='none'" style="margin-top:40px;background:rgba(168,213,162,0.12);border:1.5px solid rgba(168,213,162,0.25);color:#a8d5a2;padding:10px 28px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;transition:background 0.15s;">Skip</button>
+  <button onclick="dismissEyeBreak()" style="margin-top:40px;background:rgba(168,213,162,0.12);border:1.5px solid rgba(168,213,162,0.25);color:#a8d5a2;padding:10px 28px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;transition:background 0.15s;">Skip</button>
 </div>
 
 <!-- ONBOARDING OVERLAY -->
@@ -2165,6 +2205,7 @@ let state = {
   goals: [],
   journal: [],
   assignments: [],
+  exams: [],
   subjects: defaultSubjects,
   study: {}, // {subjectId: {notes:[], flashcards:[], quiz:[], sources:[]}}
   pomodoro: { sessionsToday: 0, focusMinutesToday: 0, lastDate: '' },
@@ -2288,8 +2329,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',pomodoro:'Pomodoro',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',pomodoro:'Stay focused',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',exams:'Exams',pomodoro:'Pomodoro',ai:'AI Assistant',settings:'Settings'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',pomodoro:'Stay focused',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2315,6 +2356,7 @@ function renderPage(page){
     case 'journal': renderJournal(); break;
     case 'calendar': renderCalendar(); break;
     case 'study': renderStudy(); break;
+    case 'exams': renderExams(); break;
     case 'pomodoro': renderPomodoro(); break;
     case 'ai': renderAI(); break;
     case 'settings': renderSettings(); break;
@@ -2615,7 +2657,7 @@ function toggleTask(id,fromDash=false){
   if(fromDash) renderDashboard();
   else renderTasks();
 }
-function deleteTask(id){ state.tasks=state.tasks.filter(t=>t.id!==id); saveState(); renderTasks(); toast('Task deleted'); }
+function deleteTask(id){ const t=state.tasks.find(x=>x.id===id); if(t) gcalDeleteFor('task',t); state.tasks=state.tasks.filter(t=>t.id!==id); saveState(); renderTasks(); toast('Task deleted'); }
 function clearCompletedTasks(){ state.tasks=state.tasks.filter(t=>!t.done); saveState(); renderTasks(); toast('Cleared completed tasks'); }
 let editingTaskId=null;
 function openAddTaskModal(){ editingTaskId=null; openModal('Add Task',taskModalBody(),'addTask'); }
@@ -2639,14 +2681,16 @@ function taskModalBody(t){
 function addTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
-  state.tasks.unshift({id:uid(),text,tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false});
+  const t={id:uid(),text,tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false};
+  state.tasks.unshift(t);
   saveState(); closeModal(); if(currentPage==='tasks') renderTasks(); if(currentPage==='dashboard') renderDashboard(); toast('Task added!','success');
+  gcalPushItem('task',t);
 }
 function saveTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
   const t=state.tasks.find(x=>x.id===editingTaskId);
-  if(t){ t.text=text;t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); }
+  if(t){ t.text=text;t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); gcalPushItem('task',t); }
   saveState(); closeModal(); renderTasks(); toast('Task updated!','success');
 }
 function renderGoals(){
@@ -2745,13 +2789,22 @@ function renderJournalList(filter=''){
   const list=filter ? state.journal.filter(e=>(e.title||'').toLowerCase().includes(filter)||(e.content||'').toLowerCase().includes(filter)) : state.journal;
   if(!list.length){ el.innerHTML='<div class="empty-state">No entries.</div>'; return; }
   el.innerHTML=list.map(e=>`
-    <div class="journal-entry-card ${e.id===activeJournalId?'active':''}" onclick="setActiveJournalEntry('${e.id}')">
+    <div class="journal-entry-card ${e.id===activeJournalId?'active':''}" onclick="setActiveJournalEntry('${e.id}')" style="position:relative;">
+      <button class="btn-icon" title="Delete entry" onclick="event.stopPropagation();deleteJournalEntry('${e.id}')" style="position:absolute;top:6px;right:6px;color:var(--accent);font-size:13px;line-height:1;padding:2px 6px;border-radius:4px;">✕</button>
       <div class="journal-entry-date">${fmtDate(e.date)}</div>
-      <div class="journal-entry-title">${e.title||'Untitled'}</div>
+      <div class="journal-entry-title" style="padding-right:22px;">${e.title||'Untitled'}</div>
       <div class="journal-entry-preview">${(e.content||'').slice(0,60)}</div>
       ${e.mood?`<span class="journal-mood-badge">${e.mood}</span>`:''}
     </div>
   `).join('');
+}
+function deleteJournalEntry(id){
+  if(!confirm('Delete this journal entry? This cannot be undone.')) return;
+  state.journal=state.journal.filter(e=>e.id!==id);
+  if(activeJournalId===id){ activeJournalId=null; clearJournalEditor(); }
+  saveState(); renderJournalList();
+  if(currentPage==='dashboard') renderDashJournal();
+  toast('Entry deleted');
 }
 function filterJournal(v){ renderJournalList(v.toLowerCase()); }
 function setActiveJournalEntry(id){
@@ -3858,8 +3911,9 @@ function renderSourcesPanel(){
     <div class="source-item">
       <div class="source-header">
         <div class="source-name">${s.name}</div>
-        <div style="display:flex;gap:6px;">
-          <button class="ai-btn" onclick="generateFromSource('${s.id}')">⚡ Generate</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="ai-btn" title="Generate flashcards + quiz" onclick="generateFromSource('${s.id}')">⚡ Cards/Quiz</button>
+          <button class="ai-btn" title="Generate mind map" onclick="generateMindMapFromSource('${s.id}')">🧠 Map</button>
           <button class="btn-icon" style="color:var(--accent)" onclick="deleteSource('${s.id}')">✕</button>
         </div>
       </div>
@@ -3893,6 +3947,239 @@ async function generateFromSource(id){
   await generateFlashcardsFromText(source.content);
   await generateQuizFromText(source.content);
   toast('Generated flashcards & quiz!','success');
+}
+async function generateMindMapFromSource(id){
+  const source=getStudy().sources.find(s=>s.id===id);
+  if(!source) return;
+  toast('Generating mind map…');
+  let topics=[];
+  try {
+    const txt = await aiCall('Extract 6-8 key concept labels (each 1-3 words) from this content. Return ONLY a JSON array of strings, nothing else.\n\n'+source.content.slice(0,3000), 400);
+    if(txt){
+      const m = txt.match(/\[[\s\S]*\]/);
+      if(m) topics = JSON.parse(m[0]);
+    }
+  } catch(e){ /* fall back */ }
+  if(!topics.length){
+    // Heuristic: pick capitalised words / sentence starts
+    topics = (source.content.match(/\b[A-Z][a-zA-Z]{3,}\b/g)||[])
+      .filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
+  }
+  if(!topics.length){ toast('Could not extract topics','error'); return; }
+  const subj=state.subjects.find(s=>s.id===activeSubjectId);
+  setStudyToolTab('mindmap', document.querySelector('[data-stab="mindmap"]'));
+  drawMindMap(document.getElementById('mind-map-svg'), subj?subj.name:'Source', topics, (subj&&subj.color)||'var(--accent)');
+  toast('Mind map ready!','success');
+}
+
+// ===================== EXAMS =====================
+function renderExams(){
+  if(!Array.isArray(state.exams)) state.exams=[];
+  const list=document.getElementById('exams-list');
+  if(!list) return;
+  const exams=[...state.exams].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(!exams.length){
+    list.innerHTML='<div class="empty-state"><div class="empty-state-icon">📝</div>No exams yet. Add your first one to track scores and trends.</div>';
+  } else {
+    const td=today();
+    list.innerHTML=exams.map(e=>{
+      const daysOut = e.date ? Math.ceil((new Date(e.date)-new Date(td))/86400000) : null;
+      const tag = daysOut==null?'':
+        daysOut<0?`<span style="color:var(--faint);font-size:11px;">done · ${fmtDate(e.date)}</span>`:
+        daysOut===0?'<span style="color:var(--accent);font-size:11px;font-weight:600;">Today</span>':
+        `<span style="color:var(--accent);font-size:11px;font-weight:600;">in ${daysOut} day${daysOut===1?'':'s'}</span>`;
+      const scoreLine = (e.scored!=null && e.maxMarks)
+        ? `<div style="font-size:12px;margin-top:4px;">Score: <strong>${e.scored}/${e.maxMarks}</strong> (${Math.round(e.scored/e.maxMarks*100)}%)</div>`
+        : (e.maxMarks?`<div style="font-size:11px;color:var(--faint);margin-top:4px;">Max marks: ${e.maxMarks}</div>`:'');
+      return `<div class="card" style="padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="min-width:0;flex:1;">
+            <div style="font-weight:600;font-size:14px;">${e.title||'Exam'}</div>
+            <div style="font-size:11px;color:var(--faint);margin-top:2px;">${e.subject||'—'} · ${e.date?fmtDate(e.date):'no date'}</div>
+            ${e.portions?`<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;">📚 ${e.portions}</div>`:''}
+            ${scoreLine}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            ${tag}
+            <div style="display:flex;gap:4px;">
+              <button class="btn-icon" title="Edit" onclick="openEditExamModal('${e.id}')">✎</button>
+              <button class="btn-icon" style="color:var(--accent)" title="Delete" onclick="deleteExam('${e.id}')">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  drawExamsChart();
+}
+function openAddExamModal(){ openModal('Add Exam', examModalBody(), 'addExam'); }
+function openEditExamModal(id){
+  const e=state.exams.find(x=>x.id===id);
+  if(!e) return;
+  window._editingExamId=id;
+  openModal('Edit Exam', examModalBody(e), 'saveExam');
+}
+function examModalBody(e){
+  const subs=(state.subjects||[]).map(s=>`<option value="${s.name}" ${e&&e.subject===s.name?'selected':''}>${s.name}</option>`).join('');
+  return `
+    <div class="modal-field"><div class="modal-label">Title</div><input class="modal-input" id="ex-title" value="${e?e.title||'':''}" placeholder="e.g. Physics Midterm"/></div>
+    <div class="modal-field"><div class="modal-label">Subject</div><select class="modal-input" id="ex-subject"><option value="">—</option>${subs}</select></div>
+    <div class="modal-field"><div class="modal-label">Date</div><input type="date" class="modal-input" id="ex-date" value="${e&&e.date?e.date:''}"/></div>
+    <div class="modal-field"><div class="modal-label">Portions / Syllabus</div><textarea class="modal-input" id="ex-portions" rows="3" placeholder="Chapters, topics covered…">${e&&e.portions?e.portions:''}</textarea></div>
+    <div class="modal-field" style="display:flex;gap:8px;">
+      <div style="flex:1;"><div class="modal-label">Max marks</div><input type="number" class="modal-input" id="ex-max" value="${e&&e.maxMarks!=null?e.maxMarks:''}" placeholder="100"/></div>
+      <div style="flex:1;"><div class="modal-label">Scored</div><input type="number" class="modal-input" id="ex-scored" value="${e&&e.scored!=null?e.scored:''}" placeholder="optional"/></div>
+    </div>`;
+}
+function _readExamForm(){
+  const max=parseFloat(document.getElementById('ex-max').value);
+  const scored=parseFloat(document.getElementById('ex-scored').value);
+  return {
+    title: document.getElementById('ex-title').value.trim(),
+    subject: document.getElementById('ex-subject').value,
+    date: document.getElementById('ex-date').value,
+    portions: document.getElementById('ex-portions').value.trim(),
+    maxMarks: isNaN(max)?null:max,
+    scored: isNaN(scored)?null:scored,
+  };
+}
+function addExam(){
+  const data=_readExamForm();
+  if(!data.title){ toast('Enter a title','error'); return; }
+  const ex={id:uid(), ...data};
+  state.exams.push(ex);
+  saveState(); closeModal(); renderExams(); toast('Exam added!','success');
+  gcalPushItem('exam',ex);
+}
+function saveExam(){
+  const data=_readExamForm();
+  const e=state.exams.find(x=>x.id===window._editingExamId);
+  if(!e){ closeModal(); return; }
+  Object.assign(e,data); saveState(); closeModal(); renderExams(); toast('Exam updated!','success');
+  gcalPushItem('exam',e);
+}
+function deleteExam(id){
+  if(!confirm('Delete this exam?')) return;
+  const ex=state.exams.find(e=>e.id===id);
+  if(ex) gcalDeleteFor('exam',ex);
+  state.exams=state.exams.filter(e=>e.id!==id);
+  saveState(); renderExams(); toast('Deleted');
+}
+function drawExamsChart(){
+  const canvas=document.getElementById('exams-chart');
+  const legendEl=document.getElementById('exams-chart-legend');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // Group exams with scores by subject
+  const scored=(state.exams||[]).filter(e=>e.scored!=null && e.maxMarks);
+  if(!scored.length){
+    ctx.fillStyle='#999'; ctx.font='13px DM Sans,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Add exam scores to see your trend', W/2, H/2);
+    if(legendEl) legendEl.textContent='';
+    return;
+  }
+  const bySub={};
+  scored.forEach(e=>{
+    const k=e.subject||'Other';
+    (bySub[k]=bySub[k]||[]).push({date:e.date||today(), pct:e.scored/e.maxMarks*100});
+  });
+  Object.values(bySub).forEach(arr=>arr.sort((a,b)=>a.date.localeCompare(b.date)));
+  const padL=36,padR=10,padT=14,padB=24;
+  const cw=W-padL-padR, ch=H-padT-padB;
+  // Axes
+  ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+ch); ctx.lineTo(padL+cw,padT+ch); ctx.stroke();
+  ctx.fillStyle='#999'; ctx.font='10px DM Sans,sans-serif'; ctx.textAlign='right';
+  [0,50,100].forEach(v=>{
+    const y=padT+ch-(v/100)*ch;
+    ctx.fillText(v+'%', padL-4, y+3);
+    ctx.strokeStyle='#eee'; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+cw,y); ctx.stroke();
+  });
+  const colors=['#B5472A','#3a7d5e','#5b6dcd','#c79a36','#8e5db5','#2f8a8a'];
+  const subjects=Object.keys(bySub);
+  subjects.forEach((sub,si)=>{
+    const arr=bySub[sub];
+    const color=colors[si%colors.length];
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2;
+    ctx.beginPath();
+    arr.forEach((p,i)=>{
+      const x=padL+(arr.length===1?cw/2:cw*i/(arr.length-1));
+      const y=padT+ch-(p.pct/100)*ch;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    arr.forEach((p,i)=>{
+      const x=padL+(arr.length===1?cw/2:cw*i/(arr.length-1));
+      const y=padT+ch-(p.pct/100)*ch;
+      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+    });
+  });
+  if(legendEl) legendEl.innerHTML=subjects.map((s,i)=>`<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;"><span style="width:10px;height:10px;border-radius:50%;background:${colors[i%colors.length]};display:inline-block;"></span>${s}</span>`).join('');
+}
+
+// ===================== TASK REMINDERS =====================
+function _notifiedKey(){ return 'kalam_task_notified'; }
+function _getNotified(){ try { return JSON.parse(localStorage.getItem(_notifiedKey())||'{}'); } catch(e){ return {}; } }
+function _setNotified(v){ localStorage.setItem(_notifiedKey(), JSON.stringify(v)); }
+function _fireNotif(title, body){
+  try {
+    if(typeof Notification!=='undefined' && Notification.permission==='granted'){
+      new Notification(title, { body, icon:'/favicon.ico', tag: title });
+    }
+  } catch(e){}
+  toast(title + ': ' + body);
+}
+function _renderOverdueBanner(){
+  let banner=document.getElementById('overdue-banner');
+  const td=today();
+  const overdue=(state.tasks||[]).filter(t=>!t.done && t.due && t.due < td);
+  if(!overdue.length){ if(banner) banner.remove(); return; }
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='overdue-banner';
+    banner.style.cssText='position:fixed;top:0;left:0;right:0;background:#B5472A;color:#FAF7F2;text-align:center;padding:8px 14px;font-size:13px;font-weight:600;z-index:2500;display:flex;align-items:center;justify-content:center;gap:12px;font-family:DM Sans,sans-serif;';
+    document.body.appendChild(banner);
+  }
+  banner.innerHTML = '⚠ You have '+overdue.length+' overdue task'+(overdue.length===1?'':'s')+
+    ' <button onclick="navigate(\'tasks\');this.parentElement.remove()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Review now</button>'+
+    ' <button onclick="this.parentElement.remove()" style="background:transparent;color:#fff;border:none;cursor:pointer;font-size:14px;">✕</button>';
+}
+function checkTaskReminders(){
+  if(!state.settings.eyeNotif && state.settings.taskReminders===false) return; // honour any future toggle
+  const now=new Date();
+  const notified=_getNotified();
+  const td=today();
+  (state.tasks||[]).forEach(t=>{
+    if(t.done || !t.due) return;
+    const dueDate=new Date(t.due+'T23:59:00');
+    const minsUntil=(dueDate-now)/60000;
+    const key=t.id;
+    notified[key]=notified[key]||{};
+    // Due today, not yet warned today
+    if(t.due===td && !notified[key].today){
+      _fireNotif('Due today', t.text);
+      notified[key].today=true;
+    }
+    // Overdue — re-nudge max 3 times, 2h apart
+    if(minsUntil < 0){
+      notified[key].overdueCount = notified[key].overdueCount||0;
+      const lastNudge = notified[key].lastNudge||0;
+      if(notified[key].overdueCount<3 && (Date.now()-lastNudge) > 2*60*60*1000){
+        _fireNotif('Overdue task', t.text);
+        notified[key].overdueCount++;
+        notified[key].lastNudge=Date.now();
+      }
+    }
+  });
+  _setNotified(notified);
+  _renderOverdueBanner();
+}
+function startTaskReminderTicker(){
+  // Run once shortly after load, then every 60s
+  setTimeout(checkTaskReminders, 3000);
+  setInterval(checkTaskReminders, 60000);
 }
 
 // MANAGE SUBJECTS MODAL
@@ -4208,10 +4495,13 @@ function startEyeTimer(){
     }
   },1000);
 }
+function _reqFs(el){ try { if(el.requestFullscreen) return el.requestFullscreen(); if(el.webkitRequestFullscreen) return el.webkitRequestFullscreen(); } catch(e){} }
+function _exitFs(){ try { if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); else if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen(); } catch(e){} }
 function showEyeBreakOverlay(){
   const overlay=document.getElementById('eye-break-overlay');
   if(!overlay) return;
   overlay.style.display='flex';
+  _reqFs(overlay);
   let secs=20;
   const countEl=overlay.querySelector('#eye-countdown');
   const barEl=overlay.querySelector('#eye-progress-bar');
@@ -4224,9 +4514,12 @@ function showEyeBreakOverlay(){
     if(secs<=0){
       clearInterval(ivl);
       overlay.style.display='none';
+      _exitFs();
     }
   },1000);
 }
+function dismissEyeBreak(){ const o=document.getElementById('eye-break-overlay'); if(o) o.style.display='none'; _exitFs(); }
+function toggleMindMapFullscreen(){ const panel=document.getElementById('stab-mindmap'); if(!panel) return; if(document.fullscreenElement||document.webkitFullscreenElement) _exitFs(); else _reqFs(panel); }
 
 // ===================== AI ASSISTANT =====================
 let chatMessages=[];
@@ -5276,7 +5569,7 @@ function gcalConnect(){
   const clientId=document.getElementById('s-gcal-clientid')?.value.trim()||state.settings.gcalClientId||'';
   if(!clientId){ toast('Enter your Google Client ID first','error'); return; }
   saveSetting('gcalClientId',clientId);
-  const scopes='https://www.googleapis.com/auth/calendar.readonly';
+  const scopes='https://www.googleapis.com/auth/calendar.events';
   // Use current page URL as redirect (works for both localhost and GitHub Pages)
   const redirectUri=window.location.origin+window.location.pathname;
   const authUrl='https://accounts.google.com/o/oauth2/v2/auth'
@@ -5306,6 +5599,7 @@ function gcalConnect(){
         gcalUpdateUI();
         toast('Google Calendar connected!','success');
         gcalSync();
+        gcalPushAll();
       }
     } catch(e){ /* cross-origin, still waiting */ }
   },500);
@@ -5435,6 +5729,112 @@ function gcalRestoreSession(){
   gcalUpdateUI();
 }
 
+// ===================== PUSH tasks & exams TO Google Calendar =====================
+function _gcalReady(){
+  if(!gcalAccessToken){
+    const t=sessionStorage.getItem('gcal_token');
+    const e=sessionStorage.getItem('gcal_expiry');
+    if(t&&e&&Date.now()<parseInt(e)){ gcalAccessToken=t; gcalTokenExpiry=parseInt(e); }
+  }
+  return !!(gcalAccessToken && Date.now()<gcalTokenExpiry);
+}
+function _gcalEventFromTask(t){
+  if(!t.due) return null;
+  // Tasks: all-day event on due date
+  return {
+    summary:'📋 '+t.text,
+    description:'Kalam task'+(t.priority?' · '+t.priority+' priority':'')+(t.tag?' · '+t.tag:'')+(t.subtasks&&t.subtasks.length?'\n\nSubtasks:\n- '+t.subtasks.join('\n- '):''),
+    start:{date:t.due},
+    end:{date:t.due},
+    extendedProperties:{private:{kalamType:'task',kalamId:t.id}},
+  };
+}
+function _gcalEventFromExam(ex){
+  if(!ex.date) return null;
+  return {
+    summary:'📝 Exam: '+(ex.title||'Untitled'),
+    description:'Kalam exam'+(ex.subject?' · '+ex.subject:'')+(ex.portions?'\n\nPortions: '+ex.portions:'')+(ex.notes?'\n\nNotes: '+ex.notes:''),
+    start:{date:ex.date},
+    end:{date:ex.date},
+    extendedProperties:{private:{kalamType:'exam',kalamId:ex.id}},
+  };
+}
+async function _gcalUpsert(item, body){
+  if(!body) return;
+  const base='https://www.googleapis.com/calendar/v3/calendars/primary/events';
+  try {
+    if(item.googleEventId){
+      const r=await fetch(base+'/'+encodeURIComponent(item.googleEventId),{
+        method:'PATCH',
+        headers:{Authorization:'Bearer '+gcalAccessToken,'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+      if(r.status===404 || r.status===410){
+        // event deleted in Google — recreate
+        item.googleEventId=null;
+      } else if(!r.ok){
+        throw new Error('PATCH '+r.status);
+      } else { return; }
+    }
+    const r=await fetch(base,{
+      method:'POST',
+      headers:{Authorization:'Bearer '+gcalAccessToken,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error('POST '+r.status);
+    const ev=await r.json();
+    item.googleEventId=ev.id;
+  } catch(e){ console.warn('gcal upsert failed',e); }
+}
+async function _gcalDelete(eventId){
+  if(!eventId) return;
+  try {
+    await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+encodeURIComponent(eventId),{
+      method:'DELETE', headers:{Authorization:'Bearer '+gcalAccessToken}
+    });
+  } catch(e){ console.warn('gcal delete failed',e); }
+}
+let _gcalPushTimer=null;
+function gcalPushItem(kind,item){
+  if(!_gcalReady()) return;
+  // debounce per item to avoid burst on rapid edits
+  clearTimeout(item._gcalT);
+  item._gcalT=setTimeout(async ()=>{
+    const body = kind==='task'?_gcalEventFromTask(item):_gcalEventFromExam(item);
+    if(!body){
+      // no date — clean up any prior event
+      if(item.googleEventId){ await _gcalDelete(item.googleEventId); item.googleEventId=null; saveState(); }
+      return;
+    }
+    await _gcalUpsert(item, body);
+    saveState();
+  },800);
+}
+function gcalDeleteFor(kind,item){
+  if(!_gcalReady() || !item || !item.googleEventId) return;
+  _gcalDelete(item.googleEventId);
+}
+async function gcalPushAll(){
+  if(!_gcalReady()) return;
+  let n=0;
+  for(const t of (state.tasks||[])){
+    const body=_gcalEventFromTask(t);
+    if(body){ await _gcalUpsert(t,body); n++; }
+  }
+  for(const ex of (state.exams||[])){
+    const body=_gcalEventFromExam(ex);
+    if(body){ await _gcalUpsert(ex,body); n++; }
+  }
+  saveState();
+  if(n) toast('Pushed '+n+' items to Google Calendar','success');
+}
+
+// ===================== SIGN OUT (bridge to React shell) =====================
+function kalamSignOut(){
+  if(!confirm('Sign out of Kalam?')) return;
+  try { window.parent.postMessage({type:'kalam:signout'},'*'); } catch(e){}
+}
+
 // ===================== COLLAPSABLE DASHBOARD =====================
 const dashSectionState = {}; // section -> collapsed bool
 
@@ -5478,61 +5878,26 @@ function initDashJournalWordCount(){
 
 // ===================== MULTI-FILE SOURCE UPLOAD =====================
 async function uploadMultipleSourceFiles(input){
-  const files = Array.from(input.files);
-  if(!files.length || !activeSubjectId) return;
+  const files = Array.from(input.files||[]);
   input.value = '';
-  if(files.length === 1){ await uploadSourceFile({files:[files[0]]}); return; }
-  toast('Reading ' + files.length + ' files…');
-  let done = 0;
+  if(!files.length) return;
+  if(!activeSubjectId){ toast('Pick a subject first','error'); return; }
+  toast('Reading ' + files.length + ' file' + (files.length>1?'s':'') + '…');
+  const before = (getStudy().sources||[]).length;
   for(const file of files){
-    await new Promise(resolve => {
-      // Reuse existing uploadSourceFile logic per file
-      const fakeInput = {files:[file]};
-      // We need to await async operations - wrap uploadSourceFile
-      const origSave = saveSource;
-      // Temporarily patch to count
-      const fileExt = file.name.split('.').pop().toLowerCase();
-      if(['txt','md','json','csv'].includes(fileExt)){
-        const reader = new FileReader();
-        reader.onload = e => {
-          saveSource(file.name, e.target.result.trim(), fileExt);
-          done++;
-          resolve();
-        };
-        reader.readAsText(file);
-      } else if(['docx','doc'].includes(fileExt) && typeof mammoth !== 'undefined'){
-        const reader = new FileReader();
-        reader.onload = e => {
-          mammoth.extractRawText({arrayBuffer: e.target.result})
-            .then(r => { saveSource(file.name, r.value.trim(), fileExt); done++; resolve(); })
-            .catch(() => { saveSource(file.name, '[Could not extract text from '+file.name+']', fileExt); done++; resolve(); });
-        };
-        reader.readAsArrayBuffer(file);
-      } else if(fileExt === 'pdf' && typeof pdfjsLib !== 'undefined'){
-        const reader = new FileReader();
-        reader.onload = async e => {
-          try {
-            const pdf = await pdfjsLib.getDocument({data: e.target.result}).promise;
-            let text = '';
-            for(let i=1;i<=pdf.numPages;i++){
-              const page = await pdf.getPage(i);
-              const tc = await page.getTextContent();
-              text += '[Page '+i+']\n' + tc.items.map(x=>x.str).join(' ') + '\n\n';
-            }
-            saveSource(file.name, text.trim(), fileExt);
-          } catch(err){ saveSource(file.name, '[PDF read error: '+err.message+']', fileExt); }
-          done++; resolve();
-        };
-        reader.readAsArrayBuffer(file);
-      } else {
-        // Binary/unsupported — save name only
-        saveSource(file.name, '[Binary file — open and paste content manually]', fileExt);
-        done++; resolve();
-      }
+    await new Promise(resolve=>{
+      const _orig = window.saveSource;
+      let resolved=false;
+      const finish=()=>{ if(resolved) return; resolved=true; window.saveSource=_orig; resolve(); };
+      window.saveSource = function(name, content, ext){ _orig(name, content, ext); finish(); };
+      try { uploadSourceFile({files:[file], value:''}); } catch(e){ finish(); }
+      setTimeout(finish, 60000); // safety so a stuck file doesn't block the queue
     });
   }
+  const after = (getStudy().sources||[]).length;
   renderSourcesPanel();
-  toast('Imported ' + done + '/' + files.length + ' files', 'success');
+  const done = after - before;
+  toast('Imported ' + done + '/' + files.length + ' files', done? 'success':'error');
 }
 
 // ===================== SIDEBAR COLLAPSE =====================
@@ -6466,6 +6831,9 @@ function init(){
   navigate('dashboard');
   updateTopbar('dashboard');
   startEyeTimer();
+  startTaskReminderTicker();
+  // Ask for notification permission once
+  try { if(typeof Notification!=='undefined' && Notification.permission==='default'){ Notification.requestPermission().catch(()=>{}); } } catch(e){}
   gcalRestoreSession();
   // Show onboarding if no name set
   if(!state.settings.name) setTimeout(showOnboarding, 400);
