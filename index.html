@@ -1572,11 +1572,11 @@ select.modal-input { cursor: pointer; }
             <div style="display:flex;gap:5px;">
               <button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="openAddSourceModal()">+ Paste</button>
               <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px;" onclick="document.getElementById('source-file-input').click()">↑</button>
-              <input type="file" id="source-file-input" accept=".txt,.md,.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mkv,.webm,.mp3,.wav" style="display:none" multiple onchange="uploadMultipleSourceFiles(this)"/>
+              <input type="file" id="source-file-input" accept=".txt,.md,.pdf,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.mp4,.mkv,.webm,.mp3,.wav" style="display:none" multiple onchange="uploadMultipleSourceFiles(this)"/>
             </div>
           </div>
           <div id="notebook-sources-list" style="overflow-y:auto;flex:1;"></div>
-          <div style="padding:8px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--faint);">PDF, DOCX, TXT, MP4 supported</div>
+          <div style="padding:8px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--faint);">PDF, DOCX, XLSX, TXT supported</div>
         </div>
 
         <!-- MIDDLE: Notes editor -->
@@ -1586,7 +1586,7 @@ select.modal-input { cursor: pointer; }
               <button class="btn btn-primary btn-sm" onclick="newNote()">+ Note</button>
               <button class="btn btn-ghost btn-sm" id="record-btn" onclick="toggleRecording()">🎙</button>
               <button class="btn btn-ghost btn-sm" onclick="document.getElementById('note-upload-input').click()">↑</button>
-              <input type="file" id="note-upload-input" accept=".txt,.md" style="display:none" onchange="uploadNote(this)"/>
+              <input type="file" id="note-upload-input" accept=".txt,.md,.pdf,.doc,.docx,.xlsx,.xls" style="display:none" onchange="uploadNote(this)"/>
               <div id="recording-status" style="display:none;font-size:11px;color:var(--accent);padding:3px 8px;background:var(--accent-light);border-radius:6px;align-items:center;gap:5px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;display:inline-block;"></span>
                 <span id="rec-label">Listening…</span>
@@ -2230,6 +2230,11 @@ let state = {
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function fmtDate(d){ const dt=new Date(d); return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function addDays(dateStr, days){
+  const dt=new Date(dateStr+'T00:00:00');
+  dt.setDate(dt.getDate()+days);
+  return dt.toISOString().slice(0,10);
+}
 function toast(msg,type=''){
   const t=document.createElement('div');
   t.className='toast'+(type?' '+type:'');
@@ -2255,6 +2260,7 @@ function loadState(){
   state.subjects.forEach(s => {
     if(!state.study[s.id]) state.study[s.id] = {notes:[],flashcards:[],quiz:[],sources:[]};
   });
+  resetPomodoroIfNewDay();
 }
 function deepMerge(target, source){
   const out = {...target};
@@ -2379,6 +2385,7 @@ function renderDashboard(){
   // Eye break handled by full-screen overlay (showEyeBreakOverlay)
 }
 function renderDashStats(){
+  resetPomodoroIfNewDay();
   const td=today();
   const habitsToday=state.habits.filter(h=>h.completions[td]).length;
   document.getElementById('stat-habits').textContent=habitsToday+'/'+state.habits.length;
@@ -2702,16 +2709,10 @@ function renderGoals(){
   if(filter==='done') goals=goals.filter(g=>g.done);
   if(!goals.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">🎯</div>No goals yet. Add your first goal!</div>'; return; }
   el.innerHTML=goals.map(g=>{
-    const streak=calcGoalStreak(g);
-    const totalCI=Object.values(g.checkins||{}).filter(Boolean).length;
-    // Show last 14 days of check-in dots
-    const dots=[];
-    for(let i=13;i>=0;i--){
-      const dt=new Date(); dt.setDate(dt.getDate()-i);
-      const ds=dt.toISOString().slice(0,10);
-      const done=(g.checkins||{})[ds];
-      dots.push('<div class="goal-ci-dot '+(done?'done':'')+'" onclick="toggleGoalCheckin(\''+g.id+'\',\''+ds+'\')" title="'+ds+'"></div>');
-    }
+    const progress=calcGoalProgress(g);
+    const unit=g.unit||'units';
+    const completed=formatGoalNumber(progress.completed);
+    const total=formatGoalNumber(progress.total);
     return '<div class="goal-card '+(g.done?'done-card':'')+'">'+
       '<div class="goal-header-row">'+
         '<div>'+
@@ -2719,21 +2720,32 @@ function renderGoals(){
           (g.category?'<span class="goal-cat-badge">'+g.category+'</span>':'')+ 
         '</div>'+
         '<div style="display:flex;gap:4px;align-items:center;">'+
+          '<button class="btn-icon" onclick="quickUpdateGoal(\''+g.id+'\')" title="Update progress">↗</button>'+
           '<button class="btn-icon" onclick="openEditGoalModal(\''+g.id+'\')" title="Edit">✎</button>'+
           '<button class="btn-icon" style="color:var(--accent)" onclick="deleteGoal(\''+g.id+'\')" title="Delete">✕</button>'+
         '</div>'+
       '</div>'+
       (g.description?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+g.description+'</div>':'')+
-      '<div style="font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Last 14 days</div>'+
-      '<div class="goal-checkin-grid">'+dots.join('')+'</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 5px;">'+
+        '<div style="font-size:12px;color:var(--muted);">'+completed+' / '+total+' '+unit+'</div>'+
+        '<div class="goal-pct">'+progress.pct+'%</div>'+
+      '</div>'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+progress.pct+'%;"></div></div>'+
       '<div class="goal-meta-row">'+
-        '<span class="goal-streak">🔥 '+streak+' day streak</span>'+
-        '<span>'+totalCI+' total check-ins</span>'+
         (g.due?'<span>Due: '+fmtDate(g.due)+'</span>':'')+
-        '<button class="btn btn-primary btn-sm" style="padding:3px 10px;font-size:11px;" onclick="toggleGoalCheckin(\''+g.id+'\',\''+today()+'\')">'+(( g.checkins||{})[today()]?'✓ Done today':'Check in')+'</button>'+
+        '<span>'+(progress.remaining>0?formatGoalNumber(progress.remaining)+' '+unit+' remaining':'Completed')+'</span>'+
       '</div>'+
     '</div>';
   }).join('');
+}
+function formatGoalNumber(n){
+  return Number.isInteger(n)?String(n):String(Math.round(n*10)/10);
+}
+function calcGoalProgress(g){
+  const total=Math.max(0, parseFloat(g.totalQty ?? g.targetQty ?? 100) || 0);
+  const completed=Math.max(0, parseFloat(g.completedQty ?? g.progress ?? 0) || 0);
+  const pct=total>0 ? Math.min(100, Math.round((completed/total)*100)) : (g.done?100:0);
+  return {total: total||100, completed, remaining: Math.max(0,(total||100)-completed), pct};
 }
 function calcGoalStreak(g){
   let streak=0; const dt=new Date();
@@ -2755,23 +2767,40 @@ function toggleGoalCheckin(id,date){
 function openAddGoalModal(){ editingGoalId=null; openModal('Add Goal',goalModalBody(),'addGoal'); }
 function openEditGoalModal(id){ editingGoalId=id; const g=state.goals.find(x=>x.id===id); openModal('Edit Goal',goalModalBody(g),'saveGoal'); }
 function goalModalBody(g){
+  const progress=calcGoalProgress(g||{});
   return '<div class="modal-field"><div class="modal-label">Goal Title</div><input class="modal-input" id="gm-title" value="'+(g?g.title:'')+'"/></div>'+
     '<div class="modal-field"><div class="modal-label">Category (optional)</div><input class="modal-input" id="gm-cat" value="'+(g&&g.category?g.category:'')+'" placeholder="e.g. Health, Study, Personal"/></div>'+
     '<div class="modal-field"><div class="modal-label">Description (optional)</div><input class="modal-input" id="gm-desc" value="'+(g&&g.description?g.description:'')+'" placeholder="What does achieving this look like?"/></div>'+
+    '<div class="modal-field" style="display:flex;gap:8px;">'+
+      '<div style="flex:1;"><div class="modal-label">Total Quantity</div><input type="number" min="0" step="0.1" class="modal-input" id="gm-total" value="'+progress.total+'" placeholder="100"/></div>'+
+      '<div style="flex:1;"><div class="modal-label">Completed</div><input type="number" min="0" step="0.1" class="modal-input" id="gm-completed" value="'+progress.completed+'" placeholder="0"/></div>'+
+    '</div>'+
+    '<div class="modal-field"><div class="modal-label">Unit (optional)</div><input class="modal-input" id="gm-unit" value="'+(g&&g.unit?g.unit:'units')+'" placeholder="e.g. pages, chapters, questions, hours"/></div>'+
     '<div class="modal-field"><div class="modal-label">Due Date (optional)</div><input type="date" class="modal-input" id="gm-due" value="'+(g&&g.due?g.due:'')+'"/></div>'+
     (g?'<div class="modal-field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="gm-done" '+(g.done?'checked':'')+' style="accent-color:var(--accent);"/><label for="gm-done" style="font-size:13px;cursor:pointer;">Mark as completed</label></div>':'');
 }
 function addGoal(){
   const title=document.getElementById('gm-title')?.value.trim();
   if(!title){ toast('Enter a goal title','error'); return; }
-  state.goals.push({id:uid(),title,category:document.getElementById('gm-cat').value.trim(),description:document.getElementById('gm-desc').value.trim(),due:document.getElementById('gm-due').value,checkins:{},done:false});
+  const totalQty=parseFloat(document.getElementById('gm-total')?.value||100)||100;
+  const completedQty=parseFloat(document.getElementById('gm-completed')?.value||0)||0;
+  state.goals.push({id:uid(),title,category:document.getElementById('gm-cat').value.trim(),description:document.getElementById('gm-desc').value.trim(),due:document.getElementById('gm-due').value,totalQty,completedQty,unit:document.getElementById('gm-unit').value.trim()||'units',checkins:{},done:completedQty>=totalQty});
   saveState(); closeModal(); renderGoals(); toast('Goal added!','success');
 }
 function saveGoal(){
   const title=document.getElementById('gm-title')?.value.trim();
   if(!title){ toast('Enter a goal title','error'); return; }
   const g=state.goals.find(x=>x.id===editingGoalId);
-  if(g){ g.title=title; g.category=document.getElementById('gm-cat').value.trim(); g.description=document.getElementById('gm-desc').value.trim(); g.due=document.getElementById('gm-due').value; g.done=document.getElementById('gm-done')?.checked||false; }
+  if(g){
+    g.title=title;
+    g.category=document.getElementById('gm-cat').value.trim();
+    g.description=document.getElementById('gm-desc').value.trim();
+    g.due=document.getElementById('gm-due').value;
+    g.totalQty=parseFloat(document.getElementById('gm-total')?.value||100)||100;
+    g.completedQty=parseFloat(document.getElementById('gm-completed')?.value||0)||0;
+    g.unit=document.getElementById('gm-unit').value.trim()||'units';
+    g.done=(document.getElementById('gm-done')?.checked||false) || g.completedQty>=g.totalQty;
+  }
   saveState(); closeModal(); renderGoals(); toast('Goal updated!','success');
 }
 function deleteGoal(id){ state.goals=state.goals.filter(g=>g.id!==id); saveState(); renderGoals(); toast('Goal deleted'); }
@@ -3357,17 +3386,79 @@ let fcIndex=0;
 let quizIndex=0;
 let quizAnswered={};
 
-function renderStudy(){
-  state.subjects.forEach(s=>{
-    if(!state.study[s.id]) state.study[s.id]={notes:[],flashcards:[],quiz:[],sources:[]};
-  });
+function emptyStudySubject(){
+  return {notes:[],flashcards:[],quiz:[],sources:[],mindmapTopics:[],chatHistory:[]};
+}
+function normalizeStudySubject(study){
+  const normalized=Object.assign(emptyStudySubject(), study||{});
+  normalized.notes=Array.isArray(normalized.notes)?normalized.notes:[];
+  normalized.flashcards=(Array.isArray(normalized.flashcards)?normalized.flashcards:[]).map(card=>({
+    id: card.id||uid(),
+    q: card.q||card.question||'',
+    a: card.a||card.answer||'',
+    date: card.date||card.createdAt||today()
+  })).filter(card=>card.q||card.a);
+  normalized.quiz=(Array.isArray(normalized.quiz)?normalized.quiz:[]).map(item=>({
+    id: item.id||uid(),
+    q: item.q||item.question||'',
+    opts: item.opts||item.options||[],
+    answer: typeof item.answer==='number' ? item.answer : Math.max(0,(item.options||[]).indexOf(item.answer))
+  })).filter(item=>item.q&&item.opts.length);
+  if(Array.isArray(normalized.quizzes)){
+    normalized.quiz.push(...normalized.quizzes.map(item=>({
+      id: item.id||uid(),
+      q: item.q||item.question||'',
+      opts: item.opts||item.options||[],
+      answer: typeof item.answer==='number' ? item.answer : Math.max(0,(item.options||[]).indexOf(item.answer))
+    })).filter(item=>item.q&&item.opts.length));
+    delete normalized.quizzes;
+  }
+  normalized.sources=(Array.isArray(normalized.sources)?normalized.sources:[]).map(src=>({
+    id: src.id||uid(),
+    name: src.name||src.title||'Untitled Source',
+    content: src.content||'',
+    chars: src.chars || (src.content||'').length,
+    date: src.date||src.createdAt||today(),
+    fileType: src.fileType||src.type||'txt'
+  }));
+  normalized.mindmapTopics=Array.isArray(normalized.mindmapTopics)?normalized.mindmapTopics:(Array.isArray(normalized.mindmaps)?normalized.mindmaps:[]);
+  delete normalized.mindmaps;
+  normalized.chatHistory=Array.isArray(normalized.chatHistory)?normalized.chatHistory:[];
+  return normalized;
+}
+function ensureStudySubject(subjectId=activeSubjectId){
+  if(!state.study) state.study={};
+  if(!subjectId && state.subjects.length) subjectId=state.subjects[0].id;
+  if(!subjectId) return emptyStudySubject();
+  activeSubjectId=subjectId;
+  state.study[subjectId]=normalizeStudySubject(state.study[subjectId]);
+  return state.study[subjectId];
+}
+function getStudy(){ return ensureStudySubject(activeSubjectId); }
+function refreshStudy(){
+  if(!state.study) state.study={};
+  if(!Array.isArray(state.subjects)) state.subjects=[];
+  if(activeSubjectId && !state.subjects.some(s=>s.id===activeSubjectId)) activeSubjectId=null;
+  state.subjects.forEach(s=>{ state.study[s.id]=normalizeStudySubject(state.study[s.id]); });
   if(!activeSubjectId && state.subjects.length) activeSubjectId=state.subjects[0].id;
+  if(activeSubjectId) ensureStudySubject(activeSubjectId);
+  state.subjects.forEach(s=>{
+    if(!state.study[s.id]) state.study[s.id]=emptyStudySubject();
+  });
   renderSubjectTabs();
   renderNotesPanel();
   renderFlashcardsPanel();
   renderQuizPanel();
   renderMindMap();
   renderNotebookSources();
+  renderStudyChat();
+}
+function saveStudy(){
+  saveState();
+  refreshStudy();
+}
+function renderStudy(){
+  refreshStudy();
 }
 function renderSubjectTabs(){
   const el=document.getElementById('subject-tabs-list');
@@ -3384,8 +3475,7 @@ function renderSubjectTabs(){
 }
 function setActiveSubject(id){
   activeSubjectId=id; activeNoteId=null; fcIndex=0; quizIndex=0; quizAnswered={};
-  renderSubjectTabs(); renderNotesPanel(); renderFlashcardsPanel();
-  renderQuizPanel(); renderMindMap(); renderNotebookSources();
+  refreshStudy();
 }
 // Called from study tool tab buttons
 function setStudyToolTab(tab, btn){
@@ -3401,6 +3491,7 @@ function setStudyToolTab(tab, btn){
   if(tab==='flashcards') renderFlashcardsPanel();
   else if(tab==='quiz') renderQuizPanel();
   else if(tab==='mindmap') renderMindMap();
+  else if(tab==='chat') renderStudyChat();
 }
 // Stub for old code that calls renderStudyPanel
 function renderStudyPanel(){ renderStudy(); }
@@ -3439,18 +3530,18 @@ const _origRenderSourcesPanel = typeof renderSourcesPanel !== 'undefined' ? rend
 function renderSourcesPanel(){ renderNotebookSources(); }
 
 // Study chat (NotebookLM-style: ask about your notes)
-let studyChatMessages=[];
 async function sendStudyChat(){
   const input=document.getElementById('study-chat-input');
   const text=input?.value.trim();
   if(!text) return;
   input.value=''; input.style.height='auto';
-  studyChatMessages.push({role:'user',content:text});
+  const sd=getStudy();
+  sd.chatHistory.push({role:'user',content:text,date:Date.now()});
+  saveState();
   renderStudyChat();
   const el=document.getElementById('study-chat-messages');
   if(el) el.innerHTML+=`<div class="chat-msg assistant"><div class="chat-bubble chat-typing" style="font-size:12px;">Thinking</div></div>`;
   // Build context from current subject notes + sources
-  const sd=getStudy();
   const notesCtx=(sd.notes||[]).map(n=>`Note: "${n.title}"\n${n.content.slice(0,600)}`).join('\n\n');
   const sourcesCtx=(sd.sources||[]).slice(0,3).map(s=>`Source: "${s.name}"\n${s.content.slice(0,800)}`).join('\n\n');
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
@@ -3460,7 +3551,8 @@ async function sendStudyChat(){
     const result=await aiCall(prompt, 600);
     reply=result||getStudyFallbackReply(text, sd);
   } catch(e){ reply=getStudyFallbackReply(text, sd); }
-  studyChatMessages.push({role:'assistant',content:reply});
+  sd.chatHistory.push({role:'assistant',content:reply,date:Date.now()});
+  saveState();
   renderStudyChat();
 }
 function getStudyFallbackReply(text, sd){
@@ -3476,17 +3568,17 @@ function getStudyFallbackReply(text, sd){
 function renderStudyChat(){
   const el=document.getElementById('study-chat-messages');
   if(!el) return;
-  if(!studyChatMessages.length){
+  const messages=getStudy().chatHistory||[];
+  if(!messages.length){
     el.innerHTML='<div style="font-size:12px;color:var(--faint);padding:8px;">Ask anything about your notes and sources…</div>';
     return;
   }
-  el.innerHTML=studyChatMessages.map(m=>{
+  el.innerHTML=messages.map(m=>{
     const content=m.content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     return `<div class="chat-msg ${m.role}"><div class="chat-bubble" style="font-size:12px;">${content}</div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
 }
-function getStudy(){ return state.study[activeSubjectId]||{notes:[],flashcards:[],quiz:[],sources:[]}; }
 
 // NOTES
 let noteTimer=null;
@@ -3509,10 +3601,9 @@ function setActiveNote(id){ activeNoteId=id; renderNotesPanel(); }
 function newNote(){
   if(!activeSubjectId) return;
   const n={id:uid(),title:'',content:'',date:today()};
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].notes.unshift(n);
+  ensureStudySubject().notes.unshift(n);
   activeNoteId=n.id;
-  saveState(); renderNotesPanel();
+  saveStudy();
   document.getElementById('note-title').focus();
 }
 function noteChanged(){
@@ -3524,7 +3615,7 @@ function noteChanged(){
     if(!n) return;
     n.title=document.getElementById('note-title').value;
     n.content=document.getElementById('note-content').value;
-    saveState(); renderNotesPanel();
+    saveState(); renderNotesPanel(); renderMindMap();
   },800);
 }
 function deleteActiveNote(){
@@ -3544,24 +3635,62 @@ function confirmDeleteNote(){
   if(!activeNoteId||!activeSubjectId) return;
   state.study[activeSubjectId].notes=state.study[activeSubjectId].notes.filter(x=>x.id!==activeNoteId);
   activeNoteId=null;
-  saveState(); closeModal(); renderNotesPanel(); toast('Note deleted');
+  closeModal(); saveStudy(); toast('Note deleted');
 }
-function uploadNote(input){
+async function parseStudyFile(file){
+  const name=file.name||'Untitled';
+  const ext=(name.split('.').pop()||'txt').toLowerCase();
+  if(['txt','md','csv','json'].includes(ext)){
+    return {name,ext,content:(await file.text()).trim()};
+  }
+  const buffer=await file.arrayBuffer();
+  if(ext==='pdf'){
+    if(typeof pdfjsLib==='undefined') throw new Error('PDF parser is still loading');
+    const pdf=await pdfjsLib.getDocument({data:buffer}).promise;
+    let text='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i);
+      const tc=await page.getTextContent();
+      text+='[Page '+i+']\n'+tc.items.map(item=>item.str).join(' ')+'\n\n';
+    }
+    return {name,ext,content:text.trim()};
+  }
+  if(['docx','doc'].includes(ext)){
+    if(typeof mammoth==='undefined') throw new Error('DOCX parser is still loading');
+    const result=await mammoth.extractRawText({arrayBuffer:buffer});
+    return {name,ext,content:(result.value||'').trim()};
+  }
+  if(['xlsx','xls'].includes(ext)){
+    if(typeof XLSX==='undefined') throw new Error('Spreadsheet parser is still loading');
+    const wb=XLSX.read(buffer,{type:'array'});
+    const content=wb.SheetNames.map(sheetName=>{
+      const ws=wb.Sheets[sheetName];
+      return '[Sheet: '+sheetName+']\n'+XLSX.utils.sheet_to_csv(ws);
+    }).join('\n\n').trim();
+    return {name,ext,content};
+  }
+  throw new Error('Unsupported file type: '+ext.toUpperCase());
+}
+
+async function uploadNote(input){
   const file=input.files[0];
   if(!file||!activeSubjectId) return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const content=e.target.result.trim();
-    const name=file.name.replace(/\.[^.]+$/,'');
+  try{
+    toast('Reading '+file.name+'…');
+    const parsed=await parseStudyFile(file);
+    const content=parsed.content;
+    if(!content){ toast('No readable text found in '+file.name,'error'); return; }
+    const name=parsed.name.replace(/\.[^.]+$/,'');
     const n={id:uid(),title:name,content,date:today()};
-    if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-    state.study[activeSubjectId].notes.unshift(n);
+    ensureStudySubject().notes.unshift(n);
     activeNoteId=n.id;
-    saveState(); renderNotesPanel();
+    saveStudy();
     toast('Note imported: '+name,'success');
-  };
-  reader.readAsText(file);
-  input.value='';
+  }catch(err){
+    toast('Could not import note: '+err.message,'error');
+  }finally{
+    input.value='';
+  }
 }
 async function aiGenerateNote(){
   if(!activeSubjectId){ toast('Select a subject first','error'); return; }
@@ -3600,97 +3729,23 @@ async function confirmGenerateNote(){
     content=builtinNoteContent(topic,subj?subj.name:'');
   }
   const n={id:uid(),title:topic,content,date:today()};
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].notes.unshift(n);
+  ensureStudySubject().notes.unshift(n);
   activeNoteId=n.id;
-  saveState(); renderNotesPanel();
+  saveStudy();
   toast('Note generated: '+topic,'success');
 }
 function builtinNoteContent(topic,subject){
   return '── '+topic.toUpperCase()+' ──\nSubject: '+subject+'\nDate: '+today()+'\n\nDEFINITION\n• '+topic+' is a key concept in '+subject+'.\n• [Add your own definition here]\n\nKEY POINTS\n• Point 1\n• Point 2\n• Point 3\n\nFORMULAS / RULES\n• [Add formulas here]\n\nEXAMPLES\n• Example 1:\n• Example 2:\n\nCOMMON EXAM QUESTIONS\n• Q: What is '+topic+'?\n• Q: Explain with an example.\n\nNOTES TO SELF\n• [Add your personal notes here]';
 }
-function uploadSourceFile(input){
+async function uploadSourceFile(input){
   const file=input.files[0];
   if(!file||!activeSubjectId){ input.value=''; return; }
   const name=file.name;
   const ext=name.split('.').pop().toLowerCase();
   input.value='';
 
-  // Show loading toast
   toast('Reading '+name+'…');
-
-  if(['txt','md','json','csv'].includes(ext)){
-    // Plain text — read directly
-    const reader=new FileReader();
-    reader.onload=function(e){
-      const content=e.target.result.trim();
-      saveSource(name, content, ext);
-    };
-    reader.readAsText(file);
-
-  } else if(['docx','doc'].includes(ext)){
-    // DOCX — use mammoth.js
-    if(typeof mammoth==='undefined'){
-      toast('DOCX parser loading, try again in a moment','error'); return;
-    }
-    const reader=new FileReader();
-    reader.onload=function(e){
-      mammoth.extractRawText({arrayBuffer: e.target.result})
-        .then(function(result){
-          const content=result.value.trim();
-          if(!content){ toast('No text found in '+name,'error'); return; }
-          saveSource(name, content, ext);
-          if(result.messages.length) console.log('Mammoth warnings:', result.messages);
-        })
-        .catch(function(err){ toast('Could not read DOCX: '+err.message,'error'); });
-    };
-    reader.readAsArrayBuffer(file);
-
-  } else if(ext==='pdf'){
-    // PDF — use pdf.js
-    if(typeof pdfjsLib==='undefined'){
-      toast('PDF parser loading, try again in a moment','error'); return;
-    }
-    const reader=new FileReader();
-    reader.onload=async function(e){
-      try {
-        const pdf=await pdfjsLib.getDocument({data: e.target.result}).promise;
-        let text='';
-        for(let i=1;i<=pdf.numPages;i++){
-          const page=await pdf.getPage(i);
-          const tc=await page.getTextContent();
-          const pageText=tc.items.map(item=>item.str).join(' ');
-          text+='[Page '+i+']\n'+pageText+'\n\n';
-        }
-        const content=text.trim();
-        if(!content){ toast('No text found in PDF (may be scanned/image-only)','error'); return; }
-        saveSource(name, content, ext);
-      } catch(err){ toast('Could not read PDF: '+err.message,'error'); }
-    };
-    reader.readAsArrayBuffer(file);
-
-  } else if(['xlsx','xls'].includes(ext)){
-    // Excel — use SheetJS (XLSX)
-    if(typeof XLSX==='undefined'){
-      toast('Excel parser loading, try again in a moment','error'); return;
-    }
-    const reader=new FileReader();
-    reader.onload=function(e){
-      try {
-        const wb=XLSX.read(e.target.result,{type:'array'});
-        let text='';
-        wb.SheetNames.forEach(sheetName=>{
-          const ws=wb.Sheets[sheetName];
-          text+='[Sheet: '+sheetName+']\n';
-          text+=XLSX.utils.sheet_to_csv(ws)+'\n\n';
-        });
-        const content=text.trim();
-        saveSource(name, content, ext);
-      } catch(err){ toast('Could not read Excel file: '+err.message,'error'); }
-    };
-    reader.readAsArrayBuffer(file);
-
-  } else if(['pptx','ppt'].includes(ext)){
+  if(['pptx','ppt'].includes(ext)){
     // PPTX — unzip and extract text from XML (PPTX is a ZIP of XML files)
     const reader=new FileReader();
     reader.onload=async function(e){
@@ -3720,8 +3775,14 @@ function uploadSourceFile(input){
     window._pendingBinaryFile={name, ext};
 
   } else {
-    // Unknown — offer paste
-    openPasteModal(name, ext);
+    try{
+      const parsed=await parseStudyFile(file);
+      if(!parsed.content){ toast('No readable text found in '+name,'error'); return; }
+      saveSource(parsed.name, parsed.content, parsed.ext);
+    }catch(err){
+      if(err.message.startsWith('Unsupported file type')) openPasteModal(name, ext);
+      else toast('Could not read '+name+': '+err.message,'error');
+    }
   }
 }
 
@@ -3754,9 +3815,8 @@ function openPasteModal(name, ext){
 }
 
 function saveSource(name, content, ext){
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:ext});
-  saveState(); renderSourcesPanel();
+  ensureStudySubject().sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:ext});
+  saveStudy();
   toast('✓ '+name+' added ('+Math.round(content.length/1000)+'k chars)','success');
 }
 
@@ -3796,7 +3856,7 @@ function deleteCurrCard(){
   if(!fcs.length) return;
   fcs.splice(fcIndex,1);
   fcIndex=Math.max(0,fcIndex-1);
-  saveState(); renderFlashcardsPanel(); toast('Card deleted');
+  saveStudy(); toast('Card deleted');
 }
 function openAddFlashcardModal(){
   openModal('Add Flashcard',`
@@ -3808,9 +3868,8 @@ function addFlashcard(){
   const q=document.getElementById('fc-q')?.value.trim();
   const a=document.getElementById('fc-a')?.value.trim();
   if(!q||!a){ toast('Fill in both fields','error'); return; }
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].flashcards.push({q,a});
-  saveState(); closeModal(); renderFlashcardsPanel(); toast('Flashcard added!','success');
+  ensureStudySubject().flashcards.push({id:uid(),q,a,date:today()});
+  closeModal(); saveStudy(); toast('Flashcard added!','success');
 }
 
 // QUIZ
@@ -3869,9 +3928,8 @@ function addQuizQuestion(){
   const q=document.getElementById('qm-q')?.value.trim();
   const opts=[0,1,2,3].map(i=>document.getElementById('qm-'+i).value.trim());
   if(!q||opts.some(o=>!o)){ toast('Fill all fields','error'); return; }
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].quiz.push({q,opts,answer:parseInt(document.getElementById('qm-ans').value)});
-  saveState(); closeModal(); renderQuizPanel(); toast('Question added!','success');
+  ensureStudySubject().quiz.push({id:uid(),q,opts,answer:parseInt(document.getElementById('qm-ans').value)});
+  closeModal(); saveStudy(); toast('Question added!','success');
 }
 
 // MIND MAP
@@ -3880,7 +3938,7 @@ function renderMindMap(){
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
   if(!subj){ svg.innerHTML=''; return; }
   const sd=getStudy();
-  const topics=sd.notes.map(n=>n.title||'Note').filter(Boolean).slice(0,8);
+  const topics=(sd.mindmapTopics&&sd.mindmapTopics.length?sd.mindmapTopics:sd.notes.map(n=>n.title||'Note')).filter(Boolean).slice(0,8);
   drawMindMap(svg, subj.name, topics, subj.color||'var(--accent)');
 }
 function drawMindMap(svg, center, topics, color){
@@ -3931,14 +3989,14 @@ function addSource(){
   const name=document.getElementById('sm-name')?.value.trim();
   const content=document.getElementById('sm-content')?.value.trim();
   if(!name||!content){ toast('Fill in all fields','error'); return; }
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].sources.push({id:uid(),name,content,chars:content.length,date:today()});
-  saveState(); closeModal(); renderSourcesPanel(); toast('Source added!','success');
+  ensureStudySubject().sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:'txt'});
+  closeModal(); saveStudy(); toast('Source added!','success');
 }
 function deleteSource(id){
-  if(!state.study[activeSubjectId]) return;
-  state.study[activeSubjectId].sources=state.study[activeSubjectId].sources.filter(s=>s.id!==id);
-  saveState(); renderSourcesPanel(); toast('Source deleted');
+  const study=ensureStudySubject();
+  study.sources=study.sources.filter(s=>s.id!==id);
+  if(activeSourceId===id) activeSourceId=null;
+  saveStudy(); toast('Source deleted');
 }
 async function generateFromSource(id){
   const source=getStudy().sources.find(s=>s.id===id);
@@ -3967,6 +4025,8 @@ async function generateMindMapFromSource(id){
   }
   if(!topics.length){ toast('Could not extract topics','error'); return; }
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
+  ensureStudySubject().mindmapTopics=topics;
+  saveState();
   setStudyToolTab('mindmap', document.querySelector('[data-stab="mindmap"]'));
   drawMindMap(document.getElementById('mind-map-svg'), subj?subj.name:'Source', topics, (subj&&subj.color)||'var(--accent)');
   toast('Mind map ready!','success');
@@ -4259,33 +4319,36 @@ async function claudeGenerate(type, content){
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
     if(type==='flashcards'){
-      if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-      state.study[activeSubjectId].flashcards.push(...parsed);
+      ensureStudySubject().flashcards.push(...parsed);
       toast('Generated '+parsed.length+' flashcards!','success');
     } else if(type==='quiz'){
-      state.study[activeSubjectId].quiz.push(...parsed);
+      ensureStudySubject().quiz.push(...parsed);
       toast('Generated '+parsed.length+' quiz questions!','success');
     } else if(type==='mindmap'){
       const subj=state.subjects.find(s=>s.id===activeSubjectId);
+      ensureStudySubject().mindmapTopics=parsed;
+      saveStudy();
       drawMindMap(document.getElementById('mind-map-svg'),subj.name,parsed,subj.color);
       toast('Mind map generated!','success');
-      saveState(); return;
+      return;
     }
-    saveState();
+    saveStudy();
   } catch(e){ toast('Generation failed, using fallback','error'); fallbackGenerate(type,content); }
 }
 function fallbackGenerate(type, content){
-  if(type==='flashcards') generateFlashcardsFromText(content);
-  else if(type==='quiz') generateQuizFromText(content);
+  if(type==='flashcards') fallbackFlashcardsFromText(content);
+  else if(type==='quiz') fallbackQuizFromText(content);
   else if(type==='summary') showFallbackSummary(content);
   else if(type==='mindmap'){
     const topics=getStudy().notes.map(n=>n.title).filter(Boolean).slice(0,8);
     const subj=state.subjects.find(s=>s.id===activeSubjectId);
+    ensureStudySubject().mindmapTopics=topics;
+    saveStudy();
     if(subj) drawMindMap(document.getElementById('mind-map-svg'),subj.name,topics,subj.color);
     toast('Mind map from note titles','success');
   }
 }
-function generateFlashcardsFromText(text){
+function fallbackFlashcardsFromText(text){
   const cards=[];
   const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>20);
   sentences.slice(0,8).forEach(s=>{
@@ -4296,11 +4359,10 @@ function generateFlashcardsFromText(text){
       cards.push({q:q.trim(),a:words[fillIdx]});
     }
   });
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].flashcards.push(...cards);
-  saveState(); toast('Generated '+cards.length+' flashcards (fallback)','success');
+  ensureStudySubject().flashcards.push(...cards);
+  saveStudy(); toast('Generated '+cards.length+' flashcards (fallback)','success');
 }
-function generateQuizFromText(text){
+function fallbackQuizFromText(text){
   const qs=[];
   const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>30).slice(0,5);
   sentences.forEach(s=>{
@@ -4312,9 +4374,8 @@ function generateQuizFromText(text){
       qs.push({q:'What best completes: "'+words.slice(0,keyIdx).join(' ')+' _____"?',opts:[key,wrong[0]||'none',wrong[1]||'other',wrong[2]||'neither'],answer:0});
     }
   });
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].quiz.push(...qs);
-  saveState(); toast('Generated '+qs.length+' questions (fallback)','success');
+  ensureStudySubject().quiz.push(...qs);
+  saveStudy(); toast('Generated '+qs.length+' questions (fallback)','success');
 }
 function showFallbackSummary(text){
   const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>20).slice(0,8);
@@ -4322,12 +4383,12 @@ function showFallbackSummary(text){
   openModal('Summary (Fallback)',`<div style="font-size:13.5px;line-height:1.8;white-space:pre-wrap;">${bullets}</div>`,null,false);
 }
 async function generateFlashcardsFromText(text){
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureStudySubject();
   if(state.settings.apikey){ await claudeGenerate('flashcards',text); }
   else fallbackGenerate('flashcards',text);
 }
 async function generateQuizFromText(text){
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureStudySubject();
   if(state.settings.apikey){ await claudeGenerate('quiz',text); }
   else fallbackGenerate('quiz',text);
 }
@@ -4337,7 +4398,19 @@ let pomoMode='focus',pomoRunning=false,pomoInterval=null,pomoRemaining=0,pomoTot
 let pomoSettings={focus:25,short:5,long:15,sessions:4,eye:20};
 let eyeTimer=null, eyeElapsed=0;
 
+function resetPomodoroIfNewDay(){
+  const td=today();
+  if(!state.pomodoro) state.pomodoro={sessionsToday:0,focusMinutesToday:0,lastDate:td};
+  if(state.pomodoro.lastDate!==td){
+    state.pomodoro.sessionsToday=0;
+    state.pomodoro.focusMinutesToday=0;
+    state.pomodoro.lastDate=td;
+    pomoSessions=0;
+    saveState();
+  }
+}
 function renderPomodoro(){
+  resetPomodoroIfNewDay();
   updatePomoSettings();
   renderPomoDots();
   updatePomoDisplay();
@@ -4374,6 +4447,7 @@ function setPomoMode(mode){
 }
 let focusLockEnabled=false;
 function pomoToggle(){
+  resetPomodoroIfNewDay();
   if(pomoRunning){
     pomoRunning=false;
     clearInterval(pomoInterval);
@@ -4388,6 +4462,16 @@ function pomoToggle(){
       enterFocusFullscreen();
     }
     pomoInterval=setInterval(()=>{
+      const prevDate=state.pomodoro?.lastDate||today();
+      resetPomodoroIfNewDay();
+      if(prevDate!==state.pomodoro.lastDate){
+        pomoRunning=false;
+        clearInterval(pomoInterval);
+        setPomoMode('focus');
+        renderPomoDots();
+        toast('Pomodoro reset for a new day');
+        return;
+      }
       pomoRemaining--;
       updatePomoDisplay();
       updateFocusLockUI();
@@ -4446,13 +4530,12 @@ function pomoReset(){
   setPomoMode(pomoMode);
 }
 function pomoComplete(){
+  resetPomodoroIfNewDay();
   pomoRunning=false;
   clearInterval(pomoInterval);
   document.getElementById('pomo-start-btn').textContent='▶ Start';
   if(pomoMode==='focus'){
     pomoSessions++;
-    const td=today();
-    if(state.pomodoro.lastDate!==td){ state.pomodoro.sessionsToday=0; state.pomodoro.focusMinutesToday=0; state.pomodoro.lastDate=td; }
     state.pomodoro.sessionsToday++;
     state.pomodoro.focusMinutesToday+=pomoSettings.focus;
     saveState();
@@ -4476,6 +4559,7 @@ function updatePomoDisplay(){
   document.getElementById('pomo-ring').style.strokeDashoffset=offset;
 }
 function renderPomoDots(){
+  resetPomodoroIfNewDay();
   const el=document.getElementById('pomo-dots');
   const sessToday=state.pomodoro.sessionsToday||0;
   const n=pomoSettings.sessions;
@@ -5222,9 +5306,8 @@ function handleFlashcardUpload(input){
       }
     } catch(err){ toast('Could not parse file. Check the format.','error'); return; }
     if(!cards.length){ toast('No cards found in file.','error'); return; }
-    if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-    state.study[activeSubjectId].flashcards.push(...cards);
-    saveState(); renderFlashcardsPanel();
+    ensureStudySubject().flashcards.push(...cards);
+    saveStudy();
     toast('Imported '+cards.length+' flashcards!','success');
     openModal('Import Complete',`
       <div style="text-align:center;padding:10px 0;">
@@ -5239,6 +5322,7 @@ function handleFlashcardUpload(input){
     `, null, false);
   };
   reader.readAsText(file);
+  input.value='';
 }
 function parseFlashcardJSON(text){
   const raw=JSON.parse(text);
@@ -5287,8 +5371,16 @@ function splitCSVLine(line,sep){
 }
 
 // ===================== DATA BACKUP =====================
+function exportableState(){
+  const data=JSON.parse(JSON.stringify(state));
+  delete data.pomodoro;
+  if(data._profileData){
+    Object.keys(data._profileData).forEach(id=>{ delete data._profileData[id].pomodoro; });
+  }
+  return data;
+}
 function exportData(){
-  const json=JSON.stringify(state,null,2);
+  const json=JSON.stringify(exportableState(),null,2);
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -5331,7 +5423,15 @@ function importData(input){
 }
 function confirmImport(){
   if(!window._pendingImport) return;
-  state=window._pendingImport;
+  const currentPomodoro=state.pomodoro||{ sessionsToday:0, focusMinutesToday:0, lastDate:today() };
+  const imported=window._pendingImport;
+  delete imported.pomodoro;
+  if(imported._profileData){
+    Object.keys(imported._profileData).forEach(id=>{ delete imported._profileData[id].pomodoro; });
+  }
+  state=deepMerge(state, imported);
+  state.pomodoro=currentPomodoro;
+  resetPomodoroIfNewDay();
   window._pendingImport=null;
   // Ensure study data exists for all subjects
   (state.subjects||[]).forEach(s=>{
@@ -5459,14 +5559,13 @@ async function confirmGenerateNoteFromSources(){
     content='── '+topic.toUpperCase()+' ──\nGenerated from: '+selected.map(i=>pool[i].name).join(', ')+'\nDate: '+today()+'\n\nKEY POINTS\n'+sentences.map(s=>'• '+s.trim()).join('\n');
   }
   const n={id:uid(),title:topic,content,date:today()};
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].notes.unshift(n);
+  ensureStudySubject().notes.unshift(n);
   activeNoteId=n.id;
-  saveState(); renderNotesPanel(); renderStudyPanel();
+  saveStudy();
   // Switch to notes tab
   activeStudyTab='notes';
   document.querySelectorAll('.study-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab==='notes'));
-  renderStudyPanel();
+  refreshStudy();
   toast('Note generated from sources!','success');
 }
 
@@ -5648,6 +5747,7 @@ async function gcalSync(){
     const calendars=(calData.items||[]).filter(c=>c.selected!==false);
     // Fetch events from each calendar — next 60 days
     const now=new Date();
+    now.setHours(0,0,0,0);
     const future=new Date(); future.setDate(future.getDate()+60);
     const timeMin=now.toISOString();
     const timeMax=future.toISOString();
@@ -5669,6 +5769,7 @@ async function gcalSync(){
       const evData=await evRes.json();
       for(const gev of (evData.items||[])){
         if(!gev.summary) continue;
+        if(gev.extendedProperties?.private?.kalamType) continue;
         const startDate=gev.start?.date||gev.start?.dateTime?.slice(0,10)||'';
         const startTime=gev.start?.dateTime?gev.start.dateTime.slice(11,16):'';
         const endTime=gev.end?.dateTime?gev.end.dateTime.slice(11,16):'';
@@ -5745,7 +5846,7 @@ function _gcalEventFromTask(t){
     summary:'📋 '+t.text,
     description:'Kalam task'+(t.priority?' · '+t.priority+' priority':'')+(t.tag?' · '+t.tag:'')+(t.subtasks&&t.subtasks.length?'\n\nSubtasks:\n- '+t.subtasks.join('\n- '):''),
     start:{date:t.due},
-    end:{date:t.due},
+    end:{date:addDays(t.due,1)},
     extendedProperties:{private:{kalamType:'task',kalamId:t.id}},
   };
 }
@@ -5755,7 +5856,7 @@ function _gcalEventFromExam(ex){
     summary:'📝 Exam: '+(ex.title||'Untitled'),
     description:'Kalam exam'+(ex.subject?' · '+ex.subject:'')+(ex.portions?'\n\nPortions: '+ex.portions:'')+(ex.notes?'\n\nNotes: '+ex.notes:''),
     start:{date:ex.date},
-    end:{date:ex.date},
+    end:{date:addDays(ex.date,1)},
     extendedProperties:{private:{kalamType:'exam',kalamId:ex.id}},
   };
 }
@@ -5807,6 +5908,7 @@ function gcalPushItem(kind,item){
       return;
     }
     await _gcalUpsert(item, body);
+    item._gcalT=null;
     saveState();
   },800);
 }
@@ -5885,14 +5987,17 @@ async function uploadMultipleSourceFiles(input){
   toast('Reading ' + files.length + ' file' + (files.length>1?'s':'') + '…');
   const before = (getStudy().sources||[]).length;
   for(const file of files){
-    await new Promise(resolve=>{
-      const _orig = window.saveSource;
-      let resolved=false;
-      const finish=()=>{ if(resolved) return; resolved=true; window.saveSource=_orig; resolve(); };
-      window.saveSource = function(name, content, ext){ _orig(name, content, ext); finish(); };
-      try { uploadSourceFile({files:[file], value:''}); } catch(e){ finish(); }
-      setTimeout(finish, 60000); // safety so a stuck file doesn't block the queue
-    });
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
+    if(['txt','md','csv','json','pdf','doc','docx','xls','xlsx'].includes(ext)){
+      try{
+        const parsed=await parseStudyFile(file);
+        if(parsed.content) saveSource(parsed.name, parsed.content, parsed.ext);
+      }catch(err){
+        toast('Could not read '+file.name+': '+err.message,'error');
+      }
+    } else {
+      await uploadSourceFile({files:[file], value:''});
+    }
   }
   const after = (getStudy().sources||[]).length;
   renderSourcesPanel();
@@ -6362,16 +6467,21 @@ function setBinauralMode(mode){
 function quickUpdateGoal(id){
   const g = state.goals.find(x=>x.id===id);
   if(!g) return;
+  const progress=calcGoalProgress(g);
   openModal('Update Progress',
-    '<div class="modal-field"><div class="modal-label">Progress: <span id="qug-pct-lbl">'+(g.progress||0)+'%</span></div>'+
-    '<input type="range" min="0" max="100" value="'+(g.progress||0)+'" id="qug-pct" style="width:100%;accent-color:var(--accent);" oninput="document.getElementById(\'qug-pct-lbl\').textContent=this.value+\'%\'"/></div>',
+    '<div class="modal-field"><div class="modal-label">Completed '+(g.unit||'units')+'</div>'+
+    '<input type="number" min="0" step="0.1" class="modal-input" id="qug-completed" value="'+progress.completed+'"/></div>'+
+    '<div style="font-size:12px;color:var(--faint);">Target: '+formatGoalNumber(progress.total)+' '+(g.unit||'units')+' · Current: '+progress.pct+'%</div>',
     'saveQuickGoalProgress'
   );
   window._quickGoalId = id;
 }
 function saveQuickGoalProgress(){
   const g = state.goals.find(x=>x.id===window._quickGoalId);
-  if(g){ g.progress = parseInt(document.getElementById('qug-pct')?.value||0); }
+  if(g){
+    g.completedQty = parseFloat(document.getElementById('qug-completed')?.value||0)||0;
+    g.done = g.completedQty >= (parseFloat(g.totalQty)||100);
+  }
   saveState(); closeModal(); renderGoals(); renderDashStats();
 }
 function addGoalMilestone(id){
@@ -6427,10 +6537,9 @@ function addMindmapNode(){
 
   if(!text) return;
 
-  window.studyData.mindmaps.push(text);
-
-  saveStudyData();
-  renderMindmap();
+  const study=ensureStudySubject();
+  study.mindmapTopics.push(text);
+  saveStudy();
 
   input.value='';
 }
@@ -6496,42 +6605,12 @@ function clearSpotifyEmbed(){
   localStorage.removeItem('kalamSpotifyEmbed');
 }
 
-function ensureStudySubject(){
-  if(!activeSubjectId){
-    activeSubjectId = 'general';
-  }
-
-  if(!state.study){
-    state.study = {};
-  }
-
-  if(!state.study[activeSubjectId]){
-    state.study[activeSubjectId] = {
-      notes: [],
-      flashcards: [],
-      quiz: [],
-      mindmaps: [],
-      chatHistory: [],
-      sources: []
-    };
-  }
-
-  return state.study[activeSubjectId];
-}
-
 async function loadStudyData(){
-  try{
-    const saved = JSON.parse(localStorage.getItem('kalamStudyTools'));
-    if(saved){
-      window.studyData = saved;
-    }
-  }catch(err){
-    console.error(err);
-  }
+  refreshStudy();
 }
 
 async function saveStudyData(){
-  localStorage.setItem('kalamStudyTools', JSON.stringify(window.studyData));
+  saveStudy();
 }
 
 function createFlashcard(){
@@ -6548,17 +6627,19 @@ function createFlashcard(){
     return;
   }
 
-  window.studyData.flashcards.push({
-    id: Date.now(),
-    question,
-    answer
+  const study = ensureStudySubject();
+
+  study.flashcards.push({
+    id: uid(),
+    q: question,
+    a: answer,
+    date: today()
   });
 
   q.value='';
   a.value='';
 
-  saveStudyData();
-  renderFlashcards();
+  saveStudy();
 }
 
 function createQuizQuestion(){
@@ -6588,7 +6669,13 @@ function createQuizQuestion(){
     return;
   }
 
-  window.studyData.quizzes.push(quiz);
+  const study = ensureStudySubject();
+  study.quiz.push({
+    id: quiz.id,
+    q: quiz.question,
+    opts: quiz.options,
+    answer: Math.max(0, quiz.options.indexOf(quiz.answer))
+  });
 
   q.value='';
   o1.value='';
@@ -6597,8 +6684,7 @@ function createQuizQuestion(){
   o4.value='';
   ans.value='';
 
-  saveStudyData();
-  renderQuizzes();
+  saveStudy();
 }
 
 async function uploadStudyNote(file){
@@ -6607,20 +6693,20 @@ async function uploadStudyNote(file){
   if(!file) return;
 
   try{
-    const text = await file.text();
+    const parsed = await parseStudyFile(file);
 
     const note = {
-      id: crypto.randomUUID(),
-      title: file.name,
-      content: text,
-      createdAt: Date.now(),
-      type: file.type || 'text/plain'
+      id: uid(),
+      title: parsed.name.replace(/\.[^.]+$/,''),
+      content: parsed.content,
+      date: today(),
+      type: parsed.ext
     };
 
-    state.study[activeSubjectId].notes.push(note);
+    state.study[activeSubjectId].notes.unshift(note);
+    activeNoteId=note.id;
 
-    saveState();
-    renderNotesPanel();
+    saveStudy();
 
     toast('Note uploaded successfully','success');
   }catch(err){
@@ -6645,43 +6731,57 @@ function openStudyNote(id){
   }
 }
 
-function renderFlashcards(){
-  const container = document.getElementById('flashcards-container');
+function renderFlashcards() {
+    const container = document.getElementById("flashcards-container");
 
-  if(!container) return;
+    if (!container) return;
 
-  container.innerHTML='';
+    const study = ensureStudySubject();
+    const cards = study.flashcards || [];
 
-  if(!window.studyData.flashcards.length){
-    container.innerHTML = '<div class="empty-state">No flashcards created yet</div>';
-    return;
-  }
+    container.innerHTML = "";
 
-  window.studyData.flashcards.forEach(card=>{
-    const div = document.createElement('div');
+    if (cards.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                No flashcards created yet
+            </div>
+        `;
+        return;
+    }
 
-    div.className='flashcard';
+    cards.forEach((card, index) => {
 
-    div.innerHTML=`
-      <div class="flashcard-inner">
-        <div class="flashcard-front">
-          <strong>Q:</strong><br><br>
-          ${card.question}
-        </div>
+        const div = document.createElement("div");
 
-        <div class="flashcard-back">
-          <strong>A:</strong><br><br>
-          ${card.answer}
-        </div>
-      </div>
-    `;
+        div.className = "flashcard";
 
-    div.onclick=()=>{
-      div.classList.toggle('flipped');
-    };
+        div.innerHTML = `
+            <div class="flashcard-inner">
 
-    container.appendChild(div);
-  });
+                <div class="flashcard-front">
+                    <strong>Question ${index + 1}</strong>
+                    <hr>
+                    <p>${card.q || card.question || ''}</p>
+                </div>
+
+                <div class="flashcard-back">
+                    <strong>Answer</strong>
+                    <hr>
+                    <p>${card.a || card.answer || ''}</p>
+                </div>
+
+            </div>
+        `;
+
+        div.addEventListener("click", () => {
+            div.classList.toggle("flipped");
+        });
+
+        container.appendChild(div);
+
+    });
+
 }
 
 function renderQuizzes(){
@@ -6691,25 +6791,26 @@ function renderQuizzes(){
 
   container.innerHTML='';
 
-  if(!window.studyData.quizzes.length){
+  const quizzes = ensureStudySubject().quiz || [];
+  if(!quizzes.length){
     container.innerHTML='<div class="empty-state">No quiz questions yet</div>';
     return;
   }
 
-  window.studyData.quizzes.forEach((quiz,index)=>{
+  quizzes.forEach((quiz,index)=>{
     const div = document.createElement('div');
 
     div.className='quiz-card';
 
     div.innerHTML=`
       <div class="quiz-question">
-        ${index+1}. ${quiz.question}
+        ${index+1}. ${quiz.q}
       </div>
 
       <div class="quiz-options">
-        ${quiz.options.map(opt=>`
+        ${quiz.opts.map(opt=>`
           <button class="quiz-option"
-            onclick="checkQuiz(this,'${opt}','${quiz.answer}')">
+            onclick="checkQuiz(this,'${opt}','${quiz.opts[quiz.answer]}')">
             ${opt}
           </button>
         `).join('')}
@@ -6727,16 +6828,7 @@ function renderSources(){
 
   if(!container) return;
 
-  if(!state.study[activeSubjectId]){
-    state.study[activeSubjectId] = {
-      notes: [],
-      flashcards: [],
-      quiz: [],
-      sources: []
-    };
-  }
-
-  const sources = state.study[activeSubjectId].sources || [];
+  const sources = ensureStudySubject().sources || [];
 
   container.innerHTML = '';
 
@@ -6762,13 +6854,13 @@ function renderSources(){
         </div>
 
         <button class="icon-btn"
-          onclick="deleteSource(${index})">
+          onclick="deleteSource('${src.id}')">
           ✕
         </button>
       </div>
 
       <div class="source-meta">
-        ${(src.type || 'file').toUpperCase()}
+        ${(src.fileType || src.type || 'file').toUpperCase()}
       </div>
     `;
 
@@ -6800,7 +6892,25 @@ function renderMindmap(){
 
   ctx.fillStyle='#fff';
   ctx.textAlign='center';
-  ctx.fillText('Study Topic',centerX,centerY+5);
+  const subj=state.subjects.find(s=>s.id===activeSubjectId);
+  ctx.fillText(subj?subj.name:'Study Topic',centerX,centerY+5);
+  const topics=(ensureStudySubject().mindmapTopics||[]).slice(0,8);
+  topics.forEach((topic,index)=>{
+    const angle=(Math.PI*2*index/topics.length)-Math.PI/2;
+    const x=centerX+170*Math.cos(angle);
+    const y=centerY+170*Math.sin(angle);
+    ctx.strokeStyle='#B5472A';
+    ctx.beginPath();
+    ctx.moveTo(centerX,centerY);
+    ctx.lineTo(x,y);
+    ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();
+    ctx.arc(x,y,42,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#333';
+    ctx.fillText(String(topic).slice(0,16),x,y+5);
+  });
 }
 
 // ===================== INIT =====================
