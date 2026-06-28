@@ -1272,6 +1272,10 @@ select.modal-input { cursor: pointer; }
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="6"/><path d="M8 6v3l2 1.5"/><path d="M6 1h4"/></svg>
     <span class="nav-label">Pomodoro</span>
   </div>
+  <div class="nav-item" data-page="brainDump" data-label="Brain Dump">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5C3.3 2.5 2 3.8 2 5.5c0 1 .5 1.9 1.3 2.4-.2.4-.3.8-.3 1.3 0 1.5 1.2 2.8 2.8 2.8.4 0 .8-.1 1.1-.2.5.9 1.5 1.5 2.6 1.5 1.7 0 3-1.3 3-3 0-.3 0-.5-.1-.8.9-.5 1.6-1.4 1.6-2.5 0-1.7-1.3-3-3-3-.4 0-.7.1-1 .2C9.6 3 8.5 2.5 7.4 2.5c-.9 0-1.7.3-2.4.9z"/></svg>
+    <span class="nav-label">Brain Dump</span>
+  </div>
   <div class="nav-item" data-page="ai" data-label="AI Assistant">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l1.5 3.5L13 6l-3.5 1.5L8 11l-1.5-3.5L3 6l3.5-1.5z"/><path d="M12.5 10l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/></svg>
     <span class="nav-label">AI Assistant</span>
@@ -1485,6 +1489,13 @@ select.modal-input { cursor: pointer; }
 
     <!-- JOURNAL -->
     <div class="page" id="page-journal">
+      <div id="journal-reminder-banner" style="display:none;background:var(--accent-light);border:1px solid var(--accent-mid);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="font-size:13px;color:var(--accent);">📝 You haven't written today's journal yet. A few lines a day adds up.</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm" onclick="newJournalEntry();dismissJournalReminder();" style="font-size:11px;">Write now</button>
+          <button class="btn btn-ghost btn-sm" onclick="dismissJournalReminder()" style="font-size:11px;">Dismiss</button>
+        </div>
+      </div>
       <div class="journal-layout">
         <div class="card journal-list" id="journal-list-panel">
           <button class="btn btn-primary btn-sm" onclick="newJournalEntry()" style="margin-bottom:10px;width:100%;">+ New Entry</button>
@@ -1497,12 +1508,47 @@ select.modal-input { cursor: pointer; }
             <input class="journal-small-input" id="journal-mood" placeholder="Mood (e.g. calm, anxious)" oninput="journalChanged()"/>
             <input class="journal-small-input" id="journal-tags" placeholder="Tags (comma-separated)" oninput="journalChanged()"/>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="openTemplateModal()" style="align-self:flex-start;">📝 Templates</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:flex-start;">
+            <button class="btn btn-ghost btn-sm" onclick="openTemplateModal()">📝 Templates</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportJournalEntryAsPdf()" title="Download this entry as PDF">↓ PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportJournalEntryAsDoc()" title="Download this entry as Word">↓ Word</button>
+          </div>
           <textarea class="journal-textarea" id="journal-content" placeholder="Write freely…" oninput="journalChanged()"></textarea>
           <div class="journal-wordcount" id="journal-wordcount">0 words</div>
         </div>
       </div>
     </div>
+
+
+    <!-- BRAIN DUMP -->
+    <div class="page" id="page-brainDump">
+      <div class="card" style="padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">🧠 Brain Dump</div>
+          <div style="font-size:12px;color:var(--faint);">Loose thoughts, ideas, half-baked notes. Separate from journal &amp; study.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="newBrainDump()">+ New Dump</button>
+      </div>
+      <div class="journal-layout" style="height:calc(100vh - 180px);">
+        <div class="card journal-list">
+          <input class="search-input" placeholder="Search dumps…" id="bd-search" oninput="renderBrainDumpList()"/>
+          <div id="bd-entries-list"></div>
+        </div>
+        <div class="card journal-editor-panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+            <input class="journal-title-input" id="bd-title" placeholder="Title…" oninput="brainDumpChanged()" style="flex:1;"/>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              <button class="btn btn-ghost btn-sm" onclick="exportBrainDumpAsPdf()" title="Download as PDF">↓ PDF</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportBrainDumpAsDoc()" title="Download as Word">↓ Word</button>
+              <button class="btn-icon" style="color:var(--accent)" onclick="deleteBrainDump()" title="Delete">✕</button>
+            </div>
+          </div>
+          <textarea class="journal-textarea" id="bd-body" placeholder="Dump anything here… it autosaves." oninput="brainDumpChanged()"></textarea>
+          <div class="journal-wordcount" id="bd-wordcount">0 words</div>
+        </div>
+      </div>
+    </div>
+
 
     <!-- CALENDAR -->
     <div class="page" id="page-calendar">
@@ -1572,11 +1618,11 @@ select.modal-input { cursor: pointer; }
             <div style="display:flex;gap:5px;">
               <button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 8px;" onclick="openAddSourceModal()">+ Paste</button>
               <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px;" onclick="document.getElementById('source-file-input').click()">↑</button>
-              <input type="file" id="source-file-input" accept=".txt,.md,.pdf,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.mp4,.mkv,.webm,.mp3,.wav" style="display:none" multiple onchange="uploadMultipleSourceFiles(this)"/>
+              <input type="file" id="source-file-input" accept=".txt,.md,.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mkv,.webm,.mp3,.wav" style="display:none" multiple onchange="uploadMultipleSourceFiles(this)"/>
             </div>
           </div>
           <div id="notebook-sources-list" style="overflow-y:auto;flex:1;"></div>
-          <div style="padding:8px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--faint);">PDF, DOCX, XLSX, TXT supported</div>
+          <div style="padding:8px 12px;border-top:1px solid var(--border);font-size:10px;color:var(--faint);">PDF, DOCX, TXT, MP4 supported</div>
         </div>
 
         <!-- MIDDLE: Notes editor -->
@@ -1586,7 +1632,7 @@ select.modal-input { cursor: pointer; }
               <button class="btn btn-primary btn-sm" onclick="newNote()">+ Note</button>
               <button class="btn btn-ghost btn-sm" id="record-btn" onclick="toggleRecording()">🎙</button>
               <button class="btn btn-ghost btn-sm" onclick="document.getElementById('note-upload-input').click()">↑</button>
-              <input type="file" id="note-upload-input" accept=".txt,.md,.pdf,.doc,.docx,.xlsx,.xls" style="display:none" onchange="uploadNote(this)"/>
+              <input type="file" id="note-upload-input" accept=".txt,.md" style="display:none" onchange="uploadNote(this)"/>
               <div id="recording-status" style="display:none;font-size:11px;color:var(--accent);padding:3px 8px;background:var(--accent-light);border-radius:6px;align-items:center;gap:5px;">
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite;display:inline-block;"></span>
                 <span id="rec-label">Listening…</span>
@@ -2120,6 +2166,7 @@ select.modal-input { cursor: pointer; }
     <div style="display:flex;gap:6px;">
       <input id="spotify-url-input" class="search-input" placeholder="https://open.spotify.com/playlist/…" style="margin-bottom:0;font-size:11px;flex:1;"/>
       <button class="btn btn-primary btn-sm" onclick="loadSpotifyEmbed()" style="font-size:11px;white-space:nowrap;">Load</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearSpotifyEmbed()" style="font-size:11px;white-space:nowrap;color:var(--accent);" title="Remove the loaded playlist">✕</button>
     </div>
     <div style="font-size:10px;color:var(--faint);margin-top:4px;">Study playlists: Lo-fi, Focus, Classical</div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
@@ -2209,6 +2256,9 @@ let state = {
   subjects: defaultSubjects,
   study: {}, // {subjectId: {notes:[], flashcards:[], quiz:[], sources:[]}}
   pomodoro: { sessionsToday: 0, focusMinutesToday: 0, lastDate: '' },
+  brainDumps: [], // [{id,title,body,createdAt,updatedAt}]
+  spotify: { embedUrl: '' }, // last loaded playlist, persisted until user removes
+  journalReminder: { dismissedDate: '', notifyTime: '20:00' },
   settings: {
     name: '',
     apikey: '',
@@ -2226,15 +2276,13 @@ let state = {
   taskTags: ['study','health','personal'],
 };
 
+// keys excluded from export/import (session/transient state)
+const EXPORT_EXCLUDE = ['pomodoro'];
+
 // ===================== UTILS =====================
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function fmtDate(d){ const dt=new Date(d); return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
-function addDays(dateStr, days){
-  const dt=new Date(dateStr+'T00:00:00');
-  dt.setDate(dt.getDate()+days);
-  return dt.toISOString().slice(0,10);
-}
 function toast(msg,type=''){
   const t=document.createElement('div');
   t.className='toast'+(type?' '+type:'');
@@ -2260,7 +2308,6 @@ function loadState(){
   state.subjects.forEach(s => {
     if(!state.study[s.id]) state.study[s.id] = {notes:[],flashcards:[],quiz:[],sources:[]};
   });
-  resetPomodoroIfNewDay();
 }
 function deepMerge(target, source){
   const out = {...target};
@@ -2335,8 +2382,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',exams:'Exams',pomodoro:'Pomodoro',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',pomodoro:'Stay focused',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',exams:'Exams',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2364,6 +2411,7 @@ function renderPage(page){
     case 'study': renderStudy(); break;
     case 'exams': renderExams(); break;
     case 'pomodoro': renderPomodoro(); break;
+    case 'brainDump': renderBrainDump(); break;
     case 'ai': renderAI(); break;
     case 'settings': renderSettings(); break;
   }
@@ -2385,7 +2433,6 @@ function renderDashboard(){
   // Eye break handled by full-screen overlay (showEyeBreakOverlay)
 }
 function renderDashStats(){
-  resetPomodoroIfNewDay();
   const td=today();
   const habitsToday=state.habits.filter(h=>h.completions[td]).length;
   document.getElementById('stat-habits').textContent=habitsToday+'/'+state.habits.length;
@@ -2709,10 +2756,14 @@ function renderGoals(){
   if(filter==='done') goals=goals.filter(g=>g.done);
   if(!goals.length){ el.innerHTML='<div class="empty-state"><div class="empty-state-icon">🎯</div>No goals yet. Add your first goal!</div>'; return; }
   el.innerHTML=goals.map(g=>{
-    const progress=calcGoalProgress(g);
-    const unit=g.unit||'units';
-    const completed=formatGoalNumber(progress.completed);
-    const total=formatGoalNumber(progress.total);
+    const {pct,label,mode}=goalProgress(g);
+    const totalCI=Object.values(g.checkins||{}).filter(Boolean).length;
+    const streak=calcGoalStreak(g);
+    const incBtn = mode==='target'
+      ? '<button class="btn btn-ghost btn-sm" style="padding:3px 10px;font-size:11px;" onclick="incGoalProgress(\''+g.id+'\',1)">+1</button>'
+      : (mode==='checkins'
+          ? '<button class="btn btn-primary btn-sm" style="padding:3px 10px;font-size:11px;" onclick="toggleGoalCheckin(\''+g.id+'\',\''+today()+'\')">'+(( g.checkins||{})[today()]?'✓ Done today':'Check in')+'</button>'
+          : '');
     return '<div class="goal-card '+(g.done?'done-card':'')+'">'+
       '<div class="goal-header-row">'+
         '<div>'+
@@ -2720,32 +2771,43 @@ function renderGoals(){
           (g.category?'<span class="goal-cat-badge">'+g.category+'</span>':'')+ 
         '</div>'+
         '<div style="display:flex;gap:4px;align-items:center;">'+
-          '<button class="btn-icon" onclick="quickUpdateGoal(\''+g.id+'\')" title="Update progress">↗</button>'+
           '<button class="btn-icon" onclick="openEditGoalModal(\''+g.id+'\')" title="Edit">✎</button>'+
           '<button class="btn-icon" style="color:var(--accent)" onclick="deleteGoal(\''+g.id+'\')" title="Delete">✕</button>'+
         '</div>'+
       '</div>'+
       (g.description?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+g.description+'</div>':'')+
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 5px;">'+
-        '<div style="font-size:12px;color:var(--muted);">'+completed+' / '+total+' '+unit+'</div>'+
-        '<div class="goal-pct">'+progress.pct+'%</div>'+
+      '<div style="display:flex;align-items:center;gap:10px;margin:6px 0 8px;">'+
+        '<div class="progress-bar" style="flex:1;height:8px;"><div class="progress-fill" style="width:'+pct+'%;"></div></div>'+
+        '<div class="goal-pct" style="min-width:80px;text-align:right;">'+pct+'% · '+label+'</div>'+
       '</div>'+
-      '<div class="progress-bar"><div class="progress-fill" style="width:'+progress.pct+'%;"></div></div>'+
       '<div class="goal-meta-row">'+
+        (mode==='checkins'?'<span class="goal-streak">🔥 '+streak+' day streak · '+totalCI+' check-ins</span>':'<span style="color:var(--faint);">'+(mode==='target'?'Target-based':'No target set')+'</span>')+
         (g.due?'<span>Due: '+fmtDate(g.due)+'</span>':'')+
-        '<span>'+(progress.remaining>0?formatGoalNumber(progress.remaining)+' '+unit+' remaining':'Completed')+'</span>'+
+        incBtn+
       '</div>'+
     '</div>';
   }).join('');
 }
-function formatGoalNumber(n){
-  return Number.isInteger(n)?String(n):String(Math.round(n*10)/10);
-}
-function calcGoalProgress(g){
-  const total=Math.max(0, parseFloat(g.totalQty ?? g.targetQty ?? 100) || 0);
-  const completed=Math.max(0, parseFloat(g.completedQty ?? g.progress ?? 0) || 0);
-  const pct=total>0 ? Math.min(100, Math.round((completed/total)*100)) : (g.done?100:0);
-  return {total: total||100, completed, remaining: Math.max(0,(total||100)-completed), pct};
+function goalProgress(g){
+  // Auto-detect: target > subtasks > checkins fallback.
+  const target=parseFloat(g.target);
+  const completed=parseFloat(g.completed)||0;
+  if(!isNaN(target)&&target>0){
+    const pct=Math.max(0,Math.min(100,Math.round(completed/target*100)));
+    return {pct,label:completed+'/'+target,mode:'target'};
+  }
+  if(Array.isArray(g.subtasks)&&g.subtasks.length){
+    const done=g.subtasks.filter(s=>s.done).length;
+    const pct=Math.round(done/g.subtasks.length*100);
+    return {pct,label:done+'/'+g.subtasks.length,mode:'subtasks'};
+  }
+  // Legacy: derive from checkins (treat as 0 → 100 over 30 days)
+  const totalCI=Object.values(g.checkins||{}).filter(Boolean).length;
+  if(totalCI){
+    const pct=Math.min(100,Math.round(totalCI/30*100));
+    return {pct,label:totalCI+' check-ins',mode:'checkins'};
+  }
+  return {pct:g.done?100:0,label:g.done?'done':'not started',mode:'none'};
 }
 function calcGoalStreak(g){
   let streak=0; const dt=new Date();
@@ -2764,43 +2826,52 @@ function toggleGoalCheckin(id,date){
   g.checkins[date]=!g.checkins[date];
   saveState(); renderGoals();
 }
+function incGoalProgress(id,by){
+  const g=state.goals.find(x=>x.id===id);
+  if(!g) return;
+  g.completed=(parseFloat(g.completed)||0)+by;
+  const t=parseFloat(g.target);
+  if(!isNaN(t)&&g.completed>=t){ g.done=true; }
+  saveState(); renderGoals();
+  toast('Progress: '+g.completed+(t?'/'+t:''),'success');
+}
 function openAddGoalModal(){ editingGoalId=null; openModal('Add Goal',goalModalBody(),'addGoal'); }
 function openEditGoalModal(id){ editingGoalId=id; const g=state.goals.find(x=>x.id===id); openModal('Edit Goal',goalModalBody(g),'saveGoal'); }
 function goalModalBody(g){
-  const progress=calcGoalProgress(g||{});
   return '<div class="modal-field"><div class="modal-label">Goal Title</div><input class="modal-input" id="gm-title" value="'+(g?g.title:'')+'"/></div>'+
     '<div class="modal-field"><div class="modal-label">Category (optional)</div><input class="modal-input" id="gm-cat" value="'+(g&&g.category?g.category:'')+'" placeholder="e.g. Health, Study, Personal"/></div>'+
     '<div class="modal-field"><div class="modal-label">Description (optional)</div><input class="modal-input" id="gm-desc" value="'+(g&&g.description?g.description:'')+'" placeholder="What does achieving this look like?"/></div>'+
     '<div class="modal-field" style="display:flex;gap:8px;">'+
-      '<div style="flex:1;"><div class="modal-label">Total Quantity</div><input type="number" min="0" step="0.1" class="modal-input" id="gm-total" value="'+progress.total+'" placeholder="100"/></div>'+
-      '<div style="flex:1;"><div class="modal-label">Completed</div><input type="number" min="0" step="0.1" class="modal-input" id="gm-completed" value="'+progress.completed+'" placeholder="0"/></div>'+
+      '<div style="flex:1;"><div class="modal-label">Target quantity</div><input type="number" min="0" step="any" class="modal-input" id="gm-target" value="'+(g&&g.target!=null?g.target:'')+'" placeholder="e.g. 20 (chapters/hours/etc)"/></div>'+
+      '<div style="flex:1;"><div class="modal-label">Already completed</div><input type="number" min="0" step="any" class="modal-input" id="gm-completed" value="'+(g&&g.completed!=null?g.completed:'')+'" placeholder="0"/></div>'+
     '</div>'+
-    '<div class="modal-field"><div class="modal-label">Unit (optional)</div><input class="modal-input" id="gm-unit" value="'+(g&&g.unit?g.unit:'units')+'" placeholder="e.g. pages, chapters, questions, hours"/></div>'+
+    '<div style="font-size:11px;color:var(--faint);margin:-6px 0 12px;">Leave Target blank to track this goal by daily check-ins instead.</div>'+
     '<div class="modal-field"><div class="modal-label">Due Date (optional)</div><input type="date" class="modal-input" id="gm-due" value="'+(g&&g.due?g.due:'')+'"/></div>'+
     (g?'<div class="modal-field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="gm-done" '+(g.done?'checked':'')+' style="accent-color:var(--accent);"/><label for="gm-done" style="font-size:13px;cursor:pointer;">Mark as completed</label></div>':'');
 }
+function _readGoalForm(){
+  const t=parseFloat(document.getElementById('gm-target').value);
+  const c=parseFloat(document.getElementById('gm-completed').value);
+  return {
+    title:document.getElementById('gm-title').value.trim(),
+    category:document.getElementById('gm-cat').value.trim(),
+    description:document.getElementById('gm-desc').value.trim(),
+    due:document.getElementById('gm-due').value,
+    target:isNaN(t)?null:t,
+    completed:isNaN(c)?0:c,
+  };
+}
 function addGoal(){
-  const title=document.getElementById('gm-title')?.value.trim();
-  if(!title){ toast('Enter a goal title','error'); return; }
-  const totalQty=parseFloat(document.getElementById('gm-total')?.value||100)||100;
-  const completedQty=parseFloat(document.getElementById('gm-completed')?.value||0)||0;
-  state.goals.push({id:uid(),title,category:document.getElementById('gm-cat').value.trim(),description:document.getElementById('gm-desc').value.trim(),due:document.getElementById('gm-due').value,totalQty,completedQty,unit:document.getElementById('gm-unit').value.trim()||'units',checkins:{},done:completedQty>=totalQty});
+  const data=_readGoalForm();
+  if(!data.title){ toast('Enter a goal title','error'); return; }
+  state.goals.push({id:uid(),...data,checkins:{},done:false});
   saveState(); closeModal(); renderGoals(); toast('Goal added!','success');
 }
 function saveGoal(){
-  const title=document.getElementById('gm-title')?.value.trim();
-  if(!title){ toast('Enter a goal title','error'); return; }
+  const data=_readGoalForm();
+  if(!data.title){ toast('Enter a goal title','error'); return; }
   const g=state.goals.find(x=>x.id===editingGoalId);
-  if(g){
-    g.title=title;
-    g.category=document.getElementById('gm-cat').value.trim();
-    g.description=document.getElementById('gm-desc').value.trim();
-    g.due=document.getElementById('gm-due').value;
-    g.totalQty=parseFloat(document.getElementById('gm-total')?.value||100)||100;
-    g.completedQty=parseFloat(document.getElementById('gm-completed')?.value||0)||0;
-    g.unit=document.getElementById('gm-unit').value.trim()||'units';
-    g.done=(document.getElementById('gm-done')?.checked||false) || g.completedQty>=g.totalQty;
-  }
+  if(g){ Object.assign(g,data); g.done=document.getElementById('gm-done')?.checked||false; }
   saveState(); closeModal(); renderGoals(); toast('Goal updated!','success');
 }
 function deleteGoal(id){ state.goals=state.goals.filter(g=>g.id!==id); saveState(); renderGoals(); toast('Goal deleted'); }
@@ -2809,6 +2880,7 @@ function deleteGoal(id){ state.goals=state.goals.filter(g=>g.id!==id); saveState
 let activeJournalId=null;
 let journalTimer=null;
 function renderJournal(){
+  refreshJournalReminderBanner();
   renderJournalList();
   if(!activeJournalId && state.journal.length) setActiveJournalEntry(state.journal[0].id);
   else if(!activeJournalId) clearJournalEditor();
@@ -3386,79 +3458,17 @@ let fcIndex=0;
 let quizIndex=0;
 let quizAnswered={};
 
-function emptyStudySubject(){
-  return {notes:[],flashcards:[],quiz:[],sources:[],mindmapTopics:[],chatHistory:[]};
-}
-function normalizeStudySubject(study){
-  const normalized=Object.assign(emptyStudySubject(), study||{});
-  normalized.notes=Array.isArray(normalized.notes)?normalized.notes:[];
-  normalized.flashcards=(Array.isArray(normalized.flashcards)?normalized.flashcards:[]).map(card=>({
-    id: card.id||uid(),
-    q: card.q||card.question||'',
-    a: card.a||card.answer||'',
-    date: card.date||card.createdAt||today()
-  })).filter(card=>card.q||card.a);
-  normalized.quiz=(Array.isArray(normalized.quiz)?normalized.quiz:[]).map(item=>({
-    id: item.id||uid(),
-    q: item.q||item.question||'',
-    opts: item.opts||item.options||[],
-    answer: typeof item.answer==='number' ? item.answer : Math.max(0,(item.options||[]).indexOf(item.answer))
-  })).filter(item=>item.q&&item.opts.length);
-  if(Array.isArray(normalized.quizzes)){
-    normalized.quiz.push(...normalized.quizzes.map(item=>({
-      id: item.id||uid(),
-      q: item.q||item.question||'',
-      opts: item.opts||item.options||[],
-      answer: typeof item.answer==='number' ? item.answer : Math.max(0,(item.options||[]).indexOf(item.answer))
-    })).filter(item=>item.q&&item.opts.length));
-    delete normalized.quizzes;
-  }
-  normalized.sources=(Array.isArray(normalized.sources)?normalized.sources:[]).map(src=>({
-    id: src.id||uid(),
-    name: src.name||src.title||'Untitled Source',
-    content: src.content||'',
-    chars: src.chars || (src.content||'').length,
-    date: src.date||src.createdAt||today(),
-    fileType: src.fileType||src.type||'txt'
-  }));
-  normalized.mindmapTopics=Array.isArray(normalized.mindmapTopics)?normalized.mindmapTopics:(Array.isArray(normalized.mindmaps)?normalized.mindmaps:[]);
-  delete normalized.mindmaps;
-  normalized.chatHistory=Array.isArray(normalized.chatHistory)?normalized.chatHistory:[];
-  return normalized;
-}
-function ensureStudySubject(subjectId=activeSubjectId){
-  if(!state.study) state.study={};
-  if(!subjectId && state.subjects.length) subjectId=state.subjects[0].id;
-  if(!subjectId) return emptyStudySubject();
-  activeSubjectId=subjectId;
-  state.study[subjectId]=normalizeStudySubject(state.study[subjectId]);
-  return state.study[subjectId];
-}
-function getStudy(){ return ensureStudySubject(activeSubjectId); }
-function refreshStudy(){
-  if(!state.study) state.study={};
-  if(!Array.isArray(state.subjects)) state.subjects=[];
-  if(activeSubjectId && !state.subjects.some(s=>s.id===activeSubjectId)) activeSubjectId=null;
-  state.subjects.forEach(s=>{ state.study[s.id]=normalizeStudySubject(state.study[s.id]); });
-  if(!activeSubjectId && state.subjects.length) activeSubjectId=state.subjects[0].id;
-  if(activeSubjectId) ensureStudySubject(activeSubjectId);
+function renderStudy(){
   state.subjects.forEach(s=>{
-    if(!state.study[s.id]) state.study[s.id]=emptyStudySubject();
+    if(!state.study[s.id]) state.study[s.id]={notes:[],flashcards:[],quiz:[],sources:[]};
   });
+  if(!activeSubjectId && state.subjects.length) activeSubjectId=state.subjects[0].id;
   renderSubjectTabs();
   renderNotesPanel();
   renderFlashcardsPanel();
   renderQuizPanel();
   renderMindMap();
   renderNotebookSources();
-  renderStudyChat();
-}
-function saveStudy(){
-  saveState();
-  refreshStudy();
-}
-function renderStudy(){
-  refreshStudy();
 }
 function renderSubjectTabs(){
   const el=document.getElementById('subject-tabs-list');
@@ -3475,7 +3485,8 @@ function renderSubjectTabs(){
 }
 function setActiveSubject(id){
   activeSubjectId=id; activeNoteId=null; fcIndex=0; quizIndex=0; quizAnswered={};
-  refreshStudy();
+  renderSubjectTabs(); renderNotesPanel(); renderFlashcardsPanel();
+  renderQuizPanel(); renderMindMap(); renderNotebookSources();
 }
 // Called from study tool tab buttons
 function setStudyToolTab(tab, btn){
@@ -3491,7 +3502,6 @@ function setStudyToolTab(tab, btn){
   if(tab==='flashcards') renderFlashcardsPanel();
   else if(tab==='quiz') renderQuizPanel();
   else if(tab==='mindmap') renderMindMap();
-  else if(tab==='chat') renderStudyChat();
 }
 // Stub for old code that calls renderStudyPanel
 function renderStudyPanel(){ renderStudy(); }
@@ -3530,18 +3540,18 @@ const _origRenderSourcesPanel = typeof renderSourcesPanel !== 'undefined' ? rend
 function renderSourcesPanel(){ renderNotebookSources(); }
 
 // Study chat (NotebookLM-style: ask about your notes)
+let studyChatMessages=[];
 async function sendStudyChat(){
   const input=document.getElementById('study-chat-input');
   const text=input?.value.trim();
   if(!text) return;
   input.value=''; input.style.height='auto';
-  const sd=getStudy();
-  sd.chatHistory.push({role:'user',content:text,date:Date.now()});
-  saveState();
+  studyChatMessages.push({role:'user',content:text});
   renderStudyChat();
   const el=document.getElementById('study-chat-messages');
   if(el) el.innerHTML+=`<div class="chat-msg assistant"><div class="chat-bubble chat-typing" style="font-size:12px;">Thinking</div></div>`;
   // Build context from current subject notes + sources
+  const sd=getStudy();
   const notesCtx=(sd.notes||[]).map(n=>`Note: "${n.title}"\n${n.content.slice(0,600)}`).join('\n\n');
   const sourcesCtx=(sd.sources||[]).slice(0,3).map(s=>`Source: "${s.name}"\n${s.content.slice(0,800)}`).join('\n\n');
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
@@ -3551,8 +3561,7 @@ async function sendStudyChat(){
     const result=await aiCall(prompt, 600);
     reply=result||getStudyFallbackReply(text, sd);
   } catch(e){ reply=getStudyFallbackReply(text, sd); }
-  sd.chatHistory.push({role:'assistant',content:reply,date:Date.now()});
-  saveState();
+  studyChatMessages.push({role:'assistant',content:reply});
   renderStudyChat();
 }
 function getStudyFallbackReply(text, sd){
@@ -3568,17 +3577,17 @@ function getStudyFallbackReply(text, sd){
 function renderStudyChat(){
   const el=document.getElementById('study-chat-messages');
   if(!el) return;
-  const messages=getStudy().chatHistory||[];
-  if(!messages.length){
+  if(!studyChatMessages.length){
     el.innerHTML='<div style="font-size:12px;color:var(--faint);padding:8px;">Ask anything about your notes and sources…</div>';
     return;
   }
-  el.innerHTML=messages.map(m=>{
+  el.innerHTML=studyChatMessages.map(m=>{
     const content=m.content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     return `<div class="chat-msg ${m.role}"><div class="chat-bubble" style="font-size:12px;">${content}</div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
 }
+function getStudy(){ return state.study[activeSubjectId]||{notes:[],flashcards:[],quiz:[],sources:[]}; }
 
 // NOTES
 let noteTimer=null;
@@ -3601,9 +3610,10 @@ function setActiveNote(id){ activeNoteId=id; renderNotesPanel(); }
 function newNote(){
   if(!activeSubjectId) return;
   const n={id:uid(),title:'',content:'',date:today()};
-  ensureStudySubject().notes.unshift(n);
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].notes.unshift(n);
   activeNoteId=n.id;
-  saveStudy();
+  saveState(); renderNotesPanel();
   document.getElementById('note-title').focus();
 }
 function noteChanged(){
@@ -3615,7 +3625,7 @@ function noteChanged(){
     if(!n) return;
     n.title=document.getElementById('note-title').value;
     n.content=document.getElementById('note-content').value;
-    saveState(); renderNotesPanel(); renderMindMap();
+    saveState(); renderNotesPanel();
   },800);
 }
 function deleteActiveNote(){
@@ -3635,62 +3645,24 @@ function confirmDeleteNote(){
   if(!activeNoteId||!activeSubjectId) return;
   state.study[activeSubjectId].notes=state.study[activeSubjectId].notes.filter(x=>x.id!==activeNoteId);
   activeNoteId=null;
-  closeModal(); saveStudy(); toast('Note deleted');
+  saveState(); closeModal(); renderNotesPanel(); toast('Note deleted');
 }
-async function parseStudyFile(file){
-  const name=file.name||'Untitled';
-  const ext=(name.split('.').pop()||'txt').toLowerCase();
-  if(['txt','md','csv','json'].includes(ext)){
-    return {name,ext,content:(await file.text()).trim()};
-  }
-  const buffer=await file.arrayBuffer();
-  if(ext==='pdf'){
-    if(typeof pdfjsLib==='undefined') throw new Error('PDF parser is still loading');
-    const pdf=await pdfjsLib.getDocument({data:buffer}).promise;
-    let text='';
-    for(let i=1;i<=pdf.numPages;i++){
-      const page=await pdf.getPage(i);
-      const tc=await page.getTextContent();
-      text+='[Page '+i+']\n'+tc.items.map(item=>item.str).join(' ')+'\n\n';
-    }
-    return {name,ext,content:text.trim()};
-  }
-  if(['docx','doc'].includes(ext)){
-    if(typeof mammoth==='undefined') throw new Error('DOCX parser is still loading');
-    const result=await mammoth.extractRawText({arrayBuffer:buffer});
-    return {name,ext,content:(result.value||'').trim()};
-  }
-  if(['xlsx','xls'].includes(ext)){
-    if(typeof XLSX==='undefined') throw new Error('Spreadsheet parser is still loading');
-    const wb=XLSX.read(buffer,{type:'array'});
-    const content=wb.SheetNames.map(sheetName=>{
-      const ws=wb.Sheets[sheetName];
-      return '[Sheet: '+sheetName+']\n'+XLSX.utils.sheet_to_csv(ws);
-    }).join('\n\n').trim();
-    return {name,ext,content};
-  }
-  throw new Error('Unsupported file type: '+ext.toUpperCase());
-}
-
-async function uploadNote(input){
+function uploadNote(input){
   const file=input.files[0];
   if(!file||!activeSubjectId) return;
-  try{
-    toast('Reading '+file.name+'…');
-    const parsed=await parseStudyFile(file);
-    const content=parsed.content;
-    if(!content){ toast('No readable text found in '+file.name,'error'); return; }
-    const name=parsed.name.replace(/\.[^.]+$/,'');
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const content=e.target.result.trim();
+    const name=file.name.replace(/\.[^.]+$/,'');
     const n={id:uid(),title:name,content,date:today()};
-    ensureStudySubject().notes.unshift(n);
+    if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+    state.study[activeSubjectId].notes.unshift(n);
     activeNoteId=n.id;
-    saveStudy();
+    saveState(); renderNotesPanel();
     toast('Note imported: '+name,'success');
-  }catch(err){
-    toast('Could not import note: '+err.message,'error');
-  }finally{
-    input.value='';
-  }
+  };
+  reader.readAsText(file);
+  input.value='';
 }
 async function aiGenerateNote(){
   if(!activeSubjectId){ toast('Select a subject first','error'); return; }
@@ -3729,23 +3701,97 @@ async function confirmGenerateNote(){
     content=builtinNoteContent(topic,subj?subj.name:'');
   }
   const n={id:uid(),title:topic,content,date:today()};
-  ensureStudySubject().notes.unshift(n);
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].notes.unshift(n);
   activeNoteId=n.id;
-  saveStudy();
+  saveState(); renderNotesPanel();
   toast('Note generated: '+topic,'success');
 }
 function builtinNoteContent(topic,subject){
   return '── '+topic.toUpperCase()+' ──\nSubject: '+subject+'\nDate: '+today()+'\n\nDEFINITION\n• '+topic+' is a key concept in '+subject+'.\n• [Add your own definition here]\n\nKEY POINTS\n• Point 1\n• Point 2\n• Point 3\n\nFORMULAS / RULES\n• [Add formulas here]\n\nEXAMPLES\n• Example 1:\n• Example 2:\n\nCOMMON EXAM QUESTIONS\n• Q: What is '+topic+'?\n• Q: Explain with an example.\n\nNOTES TO SELF\n• [Add your personal notes here]';
 }
-async function uploadSourceFile(input){
+function uploadSourceFile(input){
   const file=input.files[0];
   if(!file||!activeSubjectId){ input.value=''; return; }
   const name=file.name;
   const ext=name.split('.').pop().toLowerCase();
   input.value='';
 
+  // Show loading toast
   toast('Reading '+name+'…');
-  if(['pptx','ppt'].includes(ext)){
+
+  if(['txt','md','json','csv'].includes(ext)){
+    // Plain text — read directly
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const content=e.target.result.trim();
+      saveSource(name, content, ext);
+    };
+    reader.readAsText(file);
+
+  } else if(['docx','doc'].includes(ext)){
+    // DOCX — use mammoth.js
+    if(typeof mammoth==='undefined'){
+      toast('DOCX parser loading, try again in a moment','error'); return;
+    }
+    const reader=new FileReader();
+    reader.onload=function(e){
+      mammoth.extractRawText({arrayBuffer: e.target.result})
+        .then(function(result){
+          const content=result.value.trim();
+          if(!content){ toast('No text found in '+name,'error'); return; }
+          saveSource(name, content, ext);
+          if(result.messages.length) console.log('Mammoth warnings:', result.messages);
+        })
+        .catch(function(err){ toast('Could not read DOCX: '+err.message,'error'); });
+    };
+    reader.readAsArrayBuffer(file);
+
+  } else if(ext==='pdf'){
+    // PDF — use pdf.js
+    if(typeof pdfjsLib==='undefined'){
+      toast('PDF parser loading, try again in a moment','error'); return;
+    }
+    const reader=new FileReader();
+    reader.onload=async function(e){
+      try {
+        const pdf=await pdfjsLib.getDocument({data: e.target.result}).promise;
+        let text='';
+        for(let i=1;i<=pdf.numPages;i++){
+          const page=await pdf.getPage(i);
+          const tc=await page.getTextContent();
+          const pageText=tc.items.map(item=>item.str).join(' ');
+          text+='[Page '+i+']\n'+pageText+'\n\n';
+        }
+        const content=text.trim();
+        if(!content){ toast('No text found in PDF (may be scanned/image-only)','error'); return; }
+        saveSource(name, content, ext);
+      } catch(err){ toast('Could not read PDF: '+err.message,'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+
+  } else if(['xlsx','xls'].includes(ext)){
+    // Excel — use SheetJS (XLSX)
+    if(typeof XLSX==='undefined'){
+      toast('Excel parser loading, try again in a moment','error'); return;
+    }
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try {
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        let text='';
+        wb.SheetNames.forEach(sheetName=>{
+          const ws=wb.Sheets[sheetName];
+          text+='[Sheet: '+sheetName+']\n';
+          text+=XLSX.utils.sheet_to_csv(ws)+'\n\n';
+        });
+        const content=text.trim();
+        saveSource(name, content, ext);
+      } catch(err){ toast('Could not read Excel file: '+err.message,'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+
+  } else if(['pptx','ppt'].includes(ext)){
     // PPTX — unzip and extract text from XML (PPTX is a ZIP of XML files)
     const reader=new FileReader();
     reader.onload=async function(e){
@@ -3775,14 +3821,8 @@ async function uploadSourceFile(input){
     window._pendingBinaryFile={name, ext};
 
   } else {
-    try{
-      const parsed=await parseStudyFile(file);
-      if(!parsed.content){ toast('No readable text found in '+name,'error'); return; }
-      saveSource(parsed.name, parsed.content, parsed.ext);
-    }catch(err){
-      if(err.message.startsWith('Unsupported file type')) openPasteModal(name, ext);
-      else toast('Could not read '+name+': '+err.message,'error');
-    }
+    // Unknown — offer paste
+    openPasteModal(name, ext);
   }
 }
 
@@ -3815,8 +3855,9 @@ function openPasteModal(name, ext){
 }
 
 function saveSource(name, content, ext){
-  ensureStudySubject().sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:ext});
-  saveStudy();
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:ext});
+  saveState(); renderSourcesPanel();
   toast('✓ '+name+' added ('+Math.round(content.length/1000)+'k chars)','success');
 }
 
@@ -3856,7 +3897,7 @@ function deleteCurrCard(){
   if(!fcs.length) return;
   fcs.splice(fcIndex,1);
   fcIndex=Math.max(0,fcIndex-1);
-  saveStudy(); toast('Card deleted');
+  saveState(); renderFlashcardsPanel(); toast('Card deleted');
 }
 function openAddFlashcardModal(){
   openModal('Add Flashcard',`
@@ -3868,8 +3909,9 @@ function addFlashcard(){
   const q=document.getElementById('fc-q')?.value.trim();
   const a=document.getElementById('fc-a')?.value.trim();
   if(!q||!a){ toast('Fill in both fields','error'); return; }
-  ensureStudySubject().flashcards.push({id:uid(),q,a,date:today()});
-  closeModal(); saveStudy(); toast('Flashcard added!','success');
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].flashcards.push({q,a});
+  saveState(); closeModal(); renderFlashcardsPanel(); toast('Flashcard added!','success');
 }
 
 // QUIZ
@@ -3928,8 +3970,9 @@ function addQuizQuestion(){
   const q=document.getElementById('qm-q')?.value.trim();
   const opts=[0,1,2,3].map(i=>document.getElementById('qm-'+i).value.trim());
   if(!q||opts.some(o=>!o)){ toast('Fill all fields','error'); return; }
-  ensureStudySubject().quiz.push({id:uid(),q,opts,answer:parseInt(document.getElementById('qm-ans').value)});
-  closeModal(); saveStudy(); toast('Question added!','success');
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].quiz.push({q,opts,answer:parseInt(document.getElementById('qm-ans').value)});
+  saveState(); closeModal(); renderQuizPanel(); toast('Question added!','success');
 }
 
 // MIND MAP
@@ -3938,7 +3981,7 @@ function renderMindMap(){
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
   if(!subj){ svg.innerHTML=''; return; }
   const sd=getStudy();
-  const topics=(sd.mindmapTopics&&sd.mindmapTopics.length?sd.mindmapTopics:sd.notes.map(n=>n.title||'Note')).filter(Boolean).slice(0,8);
+  const topics=sd.notes.map(n=>n.title||'Note').filter(Boolean).slice(0,8);
   drawMindMap(svg, subj.name, topics, subj.color||'var(--accent)');
 }
 function drawMindMap(svg, center, topics, color){
@@ -3989,14 +4032,14 @@ function addSource(){
   const name=document.getElementById('sm-name')?.value.trim();
   const content=document.getElementById('sm-content')?.value.trim();
   if(!name||!content){ toast('Fill in all fields','error'); return; }
-  ensureStudySubject().sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:'txt'});
-  closeModal(); saveStudy(); toast('Source added!','success');
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].sources.push({id:uid(),name,content,chars:content.length,date:today()});
+  saveState(); closeModal(); renderSourcesPanel(); toast('Source added!','success');
 }
 function deleteSource(id){
-  const study=ensureStudySubject();
-  study.sources=study.sources.filter(s=>s.id!==id);
-  if(activeSourceId===id) activeSourceId=null;
-  saveStudy(); toast('Source deleted');
+  if(!state.study[activeSubjectId]) return;
+  state.study[activeSubjectId].sources=state.study[activeSubjectId].sources.filter(s=>s.id!==id);
+  saveState(); renderSourcesPanel(); toast('Source deleted');
 }
 async function generateFromSource(id){
   const source=getStudy().sources.find(s=>s.id===id);
@@ -4025,8 +4068,6 @@ async function generateMindMapFromSource(id){
   }
   if(!topics.length){ toast('Could not extract topics','error'); return; }
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
-  ensureStudySubject().mindmapTopics=topics;
-  saveState();
   setStudyToolTab('mindmap', document.querySelector('[data-stab="mindmap"]'));
   drawMindMap(document.getElementById('mind-map-svg'), subj?subj.name:'Source', topics, (subj&&subj.color)||'var(--accent)');
   toast('Mind map ready!','success');
@@ -4319,36 +4360,33 @@ async function claudeGenerate(type, content){
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
     if(type==='flashcards'){
-      ensureStudySubject().flashcards.push(...parsed);
+      if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+      state.study[activeSubjectId].flashcards.push(...parsed);
       toast('Generated '+parsed.length+' flashcards!','success');
     } else if(type==='quiz'){
-      ensureStudySubject().quiz.push(...parsed);
+      state.study[activeSubjectId].quiz.push(...parsed);
       toast('Generated '+parsed.length+' quiz questions!','success');
     } else if(type==='mindmap'){
       const subj=state.subjects.find(s=>s.id===activeSubjectId);
-      ensureStudySubject().mindmapTopics=parsed;
-      saveStudy();
       drawMindMap(document.getElementById('mind-map-svg'),subj.name,parsed,subj.color);
       toast('Mind map generated!','success');
-      return;
+      saveState(); return;
     }
-    saveStudy();
+    saveState();
   } catch(e){ toast('Generation failed, using fallback','error'); fallbackGenerate(type,content); }
 }
 function fallbackGenerate(type, content){
-  if(type==='flashcards') fallbackFlashcardsFromText(content);
-  else if(type==='quiz') fallbackQuizFromText(content);
+  if(type==='flashcards') generateFlashcardsFromText(content);
+  else if(type==='quiz') generateQuizFromText(content);
   else if(type==='summary') showFallbackSummary(content);
   else if(type==='mindmap'){
     const topics=getStudy().notes.map(n=>n.title).filter(Boolean).slice(0,8);
     const subj=state.subjects.find(s=>s.id===activeSubjectId);
-    ensureStudySubject().mindmapTopics=topics;
-    saveStudy();
     if(subj) drawMindMap(document.getElementById('mind-map-svg'),subj.name,topics,subj.color);
     toast('Mind map from note titles','success');
   }
 }
-function fallbackFlashcardsFromText(text){
+function generateFlashcardsFromText(text){
   const cards=[];
   const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>20);
   sentences.slice(0,8).forEach(s=>{
@@ -4359,10 +4397,11 @@ function fallbackFlashcardsFromText(text){
       cards.push({q:q.trim(),a:words[fillIdx]});
     }
   });
-  ensureStudySubject().flashcards.push(...cards);
-  saveStudy(); toast('Generated '+cards.length+' flashcards (fallback)','success');
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].flashcards.push(...cards);
+  saveState(); toast('Generated '+cards.length+' flashcards (fallback)','success');
 }
-function fallbackQuizFromText(text){
+function generateQuizFromText(text){
   const qs=[];
   const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>30).slice(0,5);
   sentences.forEach(s=>{
@@ -4374,8 +4413,9 @@ function fallbackQuizFromText(text){
       qs.push({q:'What best completes: "'+words.slice(0,keyIdx).join(' ')+' _____"?',opts:[key,wrong[0]||'none',wrong[1]||'other',wrong[2]||'neither'],answer:0});
     }
   });
-  ensureStudySubject().quiz.push(...qs);
-  saveStudy(); toast('Generated '+qs.length+' questions (fallback)','success');
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].quiz.push(...qs);
+  saveState(); toast('Generated '+qs.length+' questions (fallback)','success');
 }
 function showFallbackSummary(text){
   const sentences=text.split(/[.!?]+/).filter(s=>s.trim().length>20).slice(0,8);
@@ -4383,12 +4423,12 @@ function showFallbackSummary(text){
   openModal('Summary (Fallback)',`<div style="font-size:13.5px;line-height:1.8;white-space:pre-wrap;">${bullets}</div>`,null,false);
 }
 async function generateFlashcardsFromText(text){
-  ensureStudySubject();
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
   if(state.settings.apikey){ await claudeGenerate('flashcards',text); }
   else fallbackGenerate('flashcards',text);
 }
 async function generateQuizFromText(text){
-  ensureStudySubject();
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
   if(state.settings.apikey){ await claudeGenerate('quiz',text); }
   else fallbackGenerate('quiz',text);
 }
@@ -4398,19 +4438,7 @@ let pomoMode='focus',pomoRunning=false,pomoInterval=null,pomoRemaining=0,pomoTot
 let pomoSettings={focus:25,short:5,long:15,sessions:4,eye:20};
 let eyeTimer=null, eyeElapsed=0;
 
-function resetPomodoroIfNewDay(){
-  const td=today();
-  if(!state.pomodoro) state.pomodoro={sessionsToday:0,focusMinutesToday:0,lastDate:td};
-  if(state.pomodoro.lastDate!==td){
-    state.pomodoro.sessionsToday=0;
-    state.pomodoro.focusMinutesToday=0;
-    state.pomodoro.lastDate=td;
-    pomoSessions=0;
-    saveState();
-  }
-}
 function renderPomodoro(){
-  resetPomodoroIfNewDay();
   updatePomoSettings();
   renderPomoDots();
   updatePomoDisplay();
@@ -4447,7 +4475,6 @@ function setPomoMode(mode){
 }
 let focusLockEnabled=false;
 function pomoToggle(){
-  resetPomodoroIfNewDay();
   if(pomoRunning){
     pomoRunning=false;
     clearInterval(pomoInterval);
@@ -4462,16 +4489,6 @@ function pomoToggle(){
       enterFocusFullscreen();
     }
     pomoInterval=setInterval(()=>{
-      const prevDate=state.pomodoro?.lastDate||today();
-      resetPomodoroIfNewDay();
-      if(prevDate!==state.pomodoro.lastDate){
-        pomoRunning=false;
-        clearInterval(pomoInterval);
-        setPomoMode('focus');
-        renderPomoDots();
-        toast('Pomodoro reset for a new day');
-        return;
-      }
       pomoRemaining--;
       updatePomoDisplay();
       updateFocusLockUI();
@@ -4530,12 +4547,13 @@ function pomoReset(){
   setPomoMode(pomoMode);
 }
 function pomoComplete(){
-  resetPomodoroIfNewDay();
   pomoRunning=false;
   clearInterval(pomoInterval);
   document.getElementById('pomo-start-btn').textContent='▶ Start';
   if(pomoMode==='focus'){
     pomoSessions++;
+    const td=today();
+    if(state.pomodoro.lastDate!==td){ state.pomodoro.sessionsToday=0; state.pomodoro.focusMinutesToday=0; state.pomodoro.lastDate=td; }
     state.pomodoro.sessionsToday++;
     state.pomodoro.focusMinutesToday+=pomoSettings.focus;
     saveState();
@@ -4559,7 +4577,6 @@ function updatePomoDisplay(){
   document.getElementById('pomo-ring').style.strokeDashoffset=offset;
 }
 function renderPomoDots(){
-  resetPomodoroIfNewDay();
   const el=document.getElementById('pomo-dots');
   const sessToday=state.pomodoro.sessionsToday||0;
   const n=pomoSettings.sessions;
@@ -5306,8 +5323,9 @@ function handleFlashcardUpload(input){
       }
     } catch(err){ toast('Could not parse file. Check the format.','error'); return; }
     if(!cards.length){ toast('No cards found in file.','error'); return; }
-    ensureStudySubject().flashcards.push(...cards);
-    saveStudy();
+    if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+    state.study[activeSubjectId].flashcards.push(...cards);
+    saveState(); renderFlashcardsPanel();
     toast('Imported '+cards.length+' flashcards!','success');
     openModal('Import Complete',`
       <div style="text-align:center;padding:10px 0;">
@@ -5322,7 +5340,6 @@ function handleFlashcardUpload(input){
     `, null, false);
   };
   reader.readAsText(file);
-  input.value='';
 }
 function parseFlashcardJSON(text){
   const raw=JSON.parse(text);
@@ -5371,16 +5388,11 @@ function splitCSVLine(line,sep){
 }
 
 // ===================== DATA BACKUP =====================
-function exportableState(){
-  const data=JSON.parse(JSON.stringify(state));
-  delete data.pomodoro;
-  if(data._profileData){
-    Object.keys(data._profileData).forEach(id=>{ delete data._profileData[id].pomodoro; });
-  }
-  return data;
-}
 function exportData(){
-  const json=JSON.stringify(exportableState(),null,2);
+  // Strip transient state (pomodoro counters reset daily, etc.)
+  const out={};
+  for(const k in state){ if(!EXPORT_EXCLUDE.includes(k)) out[k]=state[k]; }
+  const json=JSON.stringify(out,null,2);
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -5389,7 +5401,7 @@ function exportData(){
   a.download='kalam-backup-'+dateStr+'.json';
   a.click();
   URL.revokeObjectURL(url);
-  toast('Data exported!','success');
+  toast('Data exported! (Pomodoro counters excluded — they reset daily.)','success');
 }
 function importData(input){
   const file=input.files[0];
@@ -5423,20 +5435,22 @@ function importData(input){
 }
 function confirmImport(){
   if(!window._pendingImport) return;
-  const currentPomodoro=state.pomodoro||{ sessionsToday:0, focusMinutesToday:0, lastDate:today() };
-  const imported=window._pendingImport;
-  delete imported.pomodoro;
-  if(imported._profileData){
-    Object.keys(imported._profileData).forEach(id=>{ delete imported._profileData[id].pomodoro; });
-  }
-  state=deepMerge(state, imported);
-  state.pomodoro=currentPomodoro;
-  resetPomodoroIfNewDay();
+  const incoming=window._pendingImport;
   window._pendingImport=null;
+  // Preserve current pomodoro counters — they're daily, never imported
+  const keepPomo=state.pomodoro;
+  state=incoming;
+  state.pomodoro=keepPomo;
+  // Drop anything in EXPORT_EXCLUDE that snuck in from older backups
+  EXPORT_EXCLUDE.forEach(k=>{ if(k!=='pomodoro') delete state[k]; });
   // Ensure study data exists for all subjects
+  if(!state.study) state.study={};
   (state.subjects||[]).forEach(s=>{
     if(!state.study[s.id]) state.study[s.id]={notes:[],flashcards:[],quiz:[],sources:[]};
   });
+  if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
+  if(!state.spotify) state.spotify={embedUrl:''};
+  if(!state.journalReminder) state.journalReminder={dismissedDate:'',notifyTime:'20:00'};
   saveState();
   applySettings();
   closeModal();
@@ -5559,13 +5573,14 @@ async function confirmGenerateNoteFromSources(){
     content='── '+topic.toUpperCase()+' ──\nGenerated from: '+selected.map(i=>pool[i].name).join(', ')+'\nDate: '+today()+'\n\nKEY POINTS\n'+sentences.map(s=>'• '+s.trim()).join('\n');
   }
   const n={id:uid(),title:topic,content,date:today()};
-  ensureStudySubject().notes.unshift(n);
+  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  state.study[activeSubjectId].notes.unshift(n);
   activeNoteId=n.id;
-  saveStudy();
+  saveState(); renderNotesPanel(); renderStudyPanel();
   // Switch to notes tab
   activeStudyTab='notes';
   document.querySelectorAll('.study-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab==='notes'));
-  refreshStudy();
+  renderStudyPanel();
   toast('Note generated from sources!','success');
 }
 
@@ -5693,8 +5708,8 @@ function gcalConnect(){
         gcalAccessToken=params.get('access_token');
         const expiresIn=parseInt(params.get('expires_in')||'3600');
         gcalTokenExpiry=Date.now()+expiresIn*1000;
-        sessionStorage.setItem('gcal_token',gcalAccessToken);
-        sessionStorage.setItem('gcal_expiry',gcalTokenExpiry);
+        localStorage.setItem('gcal_token',gcalAccessToken);
+        localStorage.setItem('gcal_expiry',gcalTokenExpiry);
         gcalUpdateUI();
         toast('Google Calendar connected!','success');
         gcalSync();
@@ -5707,6 +5722,8 @@ function gcalConnect(){
 function gcalDisconnect(){
   gcalAccessToken=null;
   gcalTokenExpiry=0;
+  localStorage.removeItem('gcal_token');
+  localStorage.removeItem('gcal_expiry');
   sessionStorage.removeItem('gcal_token');
   sessionStorage.removeItem('gcal_expiry');
   // Remove imported gcal events
@@ -5723,14 +5740,14 @@ function toggleGcalAutosync(){
 }
 
 async function gcalSync(){
-  // Restore token from session if page was reloaded
+  // Restore token from storage (localStorage = survives browser restart up to expiry)
   if(!gcalAccessToken){
-    const t=sessionStorage.getItem('gcal_token');
-    const e=sessionStorage.getItem('gcal_expiry');
+    const t=localStorage.getItem('gcal_token')||sessionStorage.getItem('gcal_token');
+    const e=localStorage.getItem('gcal_expiry')||sessionStorage.getItem('gcal_expiry');
     if(t&&e&&Date.now()<parseInt(e)){ gcalAccessToken=t; gcalTokenExpiry=parseInt(e); }
   }
   if(!gcalAccessToken||Date.now()>=gcalTokenExpiry){
-    toast('Google Calendar session expired — reconnect in Settings','error');
+    toast('Google session expired — open Settings → Google Calendar → Reconnect','error');
     gcalUpdateUI(); return;
   }
   const statusEl=document.getElementById('gcal-sync-label');
@@ -5742,12 +5759,12 @@ async function gcalSync(){
     const calRes=await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',{
       headers:{Authorization:'Bearer '+gcalAccessToken}
     });
-    if(!calRes.ok) throw new Error('HTTP '+calRes.status+' — reconnect Google');
+    if(calRes.status===401||calRes.status===403){ _gcalHandleAuthError(calRes.status); throw new Error('HTTP '+calRes.status+' — Google session expired, please reconnect'); }
+    if(!calRes.ok) throw new Error('HTTP '+calRes.status);
     const calData=await calRes.json();
     const calendars=(calData.items||[]).filter(c=>c.selected!==false);
     // Fetch events from each calendar — next 60 days
     const now=new Date();
-    now.setHours(0,0,0,0);
     const future=new Date(); future.setDate(future.getDate()+60);
     const timeMin=now.toISOString();
     const timeMax=future.toISOString();
@@ -5769,7 +5786,6 @@ async function gcalSync(){
       const evData=await evRes.json();
       for(const gev of (evData.items||[])){
         if(!gev.summary) continue;
-        if(gev.extendedProperties?.private?.kalamType) continue;
         const startDate=gev.start?.date||gev.start?.dateTime?.slice(0,10)||'';
         const startTime=gev.start?.dateTime?gev.start.dateTime.slice(11,16):'';
         const endTime=gev.end?.dateTime?gev.end.dateTime.slice(11,16):'';
@@ -5820,21 +5836,35 @@ async function gcalSync(){
 }
 
 function gcalRestoreSession(){
-  const t=sessionStorage.getItem('gcal_token');
-  const e=sessionStorage.getItem('gcal_expiry');
+  // Prefer localStorage (survives browser restart) but fall back to sessionStorage for older sessions
+  const t=localStorage.getItem('gcal_token')||sessionStorage.getItem('gcal_token');
+  const e=localStorage.getItem('gcal_expiry')||sessionStorage.getItem('gcal_expiry');
   if(t&&e&&Date.now()<parseInt(e)){
     gcalAccessToken=t;
     gcalTokenExpiry=parseInt(e);
+    // migrate from sessionStorage to localStorage so the next browser restart still finds it
+    localStorage.setItem('gcal_token',t);
+    localStorage.setItem('gcal_expiry',e);
     if(state.settings.gcalAutoSync) gcalSync();
   }
   gcalUpdateUI();
+}
+function _gcalHandleAuthError(status){
+  gcalAccessToken=null; gcalTokenExpiry=0;
+  localStorage.removeItem('gcal_token'); localStorage.removeItem('gcal_expiry');
+  sessionStorage.removeItem('gcal_token'); sessionStorage.removeItem('gcal_expiry');
+  gcalUpdateUI();
+  const reason = status===403
+    ? 'Google rejected the request (403). Most likely the calendar.events scope is missing — please Disconnect and Connect again in Settings.'
+    : 'Google sign-in expired (401). Please reconnect in Settings.';
+  toast(reason,'error');
 }
 
 // ===================== PUSH tasks & exams TO Google Calendar =====================
 function _gcalReady(){
   if(!gcalAccessToken){
-    const t=sessionStorage.getItem('gcal_token');
-    const e=sessionStorage.getItem('gcal_expiry');
+    const t=localStorage.getItem('gcal_token')||sessionStorage.getItem('gcal_token');
+    const e=localStorage.getItem('gcal_expiry')||sessionStorage.getItem('gcal_expiry');
     if(t&&e&&Date.now()<parseInt(e)){ gcalAccessToken=t; gcalTokenExpiry=parseInt(e); }
   }
   return !!(gcalAccessToken && Date.now()<gcalTokenExpiry);
@@ -5846,7 +5876,7 @@ function _gcalEventFromTask(t){
     summary:'📋 '+t.text,
     description:'Kalam task'+(t.priority?' · '+t.priority+' priority':'')+(t.tag?' · '+t.tag:'')+(t.subtasks&&t.subtasks.length?'\n\nSubtasks:\n- '+t.subtasks.join('\n- '):''),
     start:{date:t.due},
-    end:{date:addDays(t.due,1)},
+    end:{date:t.due},
     extendedProperties:{private:{kalamType:'task',kalamId:t.id}},
   };
 }
@@ -5856,7 +5886,7 @@ function _gcalEventFromExam(ex){
     summary:'📝 Exam: '+(ex.title||'Untitled'),
     description:'Kalam exam'+(ex.subject?' · '+ex.subject:'')+(ex.portions?'\n\nPortions: '+ex.portions:'')+(ex.notes?'\n\nNotes: '+ex.notes:''),
     start:{date:ex.date},
-    end:{date:addDays(ex.date,1)},
+    end:{date:ex.date},
     extendedProperties:{private:{kalamType:'exam',kalamId:ex.id}},
   };
 }
@@ -5870,6 +5900,7 @@ async function _gcalUpsert(item, body){
         headers:{Authorization:'Bearer '+gcalAccessToken,'Content-Type':'application/json'},
         body:JSON.stringify(body)
       });
+      if(r.status===401||r.status===403){ _gcalHandleAuthError(r.status); return; }
       if(r.status===404 || r.status===410){
         // event deleted in Google — recreate
         item.googleEventId=null;
@@ -5882,6 +5913,7 @@ async function _gcalUpsert(item, body){
       headers:{Authorization:'Bearer '+gcalAccessToken,'Content-Type':'application/json'},
       body:JSON.stringify(body)
     });
+    if(r.status===401||r.status===403){ _gcalHandleAuthError(r.status); return; }
     if(!r.ok) throw new Error('POST '+r.status);
     const ev=await r.json();
     item.googleEventId=ev.id;
@@ -5908,7 +5940,6 @@ function gcalPushItem(kind,item){
       return;
     }
     await _gcalUpsert(item, body);
-    item._gcalT=null;
     saveState();
   },800);
 }
@@ -5987,17 +6018,14 @@ async function uploadMultipleSourceFiles(input){
   toast('Reading ' + files.length + ' file' + (files.length>1?'s':'') + '…');
   const before = (getStudy().sources||[]).length;
   for(const file of files){
-    const ext=(file.name.split('.').pop()||'').toLowerCase();
-    if(['txt','md','csv','json','pdf','doc','docx','xls','xlsx'].includes(ext)){
-      try{
-        const parsed=await parseStudyFile(file);
-        if(parsed.content) saveSource(parsed.name, parsed.content, parsed.ext);
-      }catch(err){
-        toast('Could not read '+file.name+': '+err.message,'error');
-      }
-    } else {
-      await uploadSourceFile({files:[file], value:''});
-    }
+    await new Promise(resolve=>{
+      const _orig = window.saveSource;
+      let resolved=false;
+      const finish=()=>{ if(resolved) return; resolved=true; window.saveSource=_orig; resolve(); };
+      window.saveSource = function(name, content, ext){ _orig(name, content, ext); finish(); };
+      try { uploadSourceFile({files:[file], value:''}); } catch(e){ finish(); }
+      setTimeout(finish, 60000); // safety so a stuck file doesn't block the queue
+    });
   }
   const after = (getStudy().sources||[]).length;
   renderSourcesPanel();
@@ -6467,21 +6495,16 @@ function setBinauralMode(mode){
 function quickUpdateGoal(id){
   const g = state.goals.find(x=>x.id===id);
   if(!g) return;
-  const progress=calcGoalProgress(g);
   openModal('Update Progress',
-    '<div class="modal-field"><div class="modal-label">Completed '+(g.unit||'units')+'</div>'+
-    '<input type="number" min="0" step="0.1" class="modal-input" id="qug-completed" value="'+progress.completed+'"/></div>'+
-    '<div style="font-size:12px;color:var(--faint);">Target: '+formatGoalNumber(progress.total)+' '+(g.unit||'units')+' · Current: '+progress.pct+'%</div>',
+    '<div class="modal-field"><div class="modal-label">Progress: <span id="qug-pct-lbl">'+(g.progress||0)+'%</span></div>'+
+    '<input type="range" min="0" max="100" value="'+(g.progress||0)+'" id="qug-pct" style="width:100%;accent-color:var(--accent);" oninput="document.getElementById(\'qug-pct-lbl\').textContent=this.value+\'%\'"/></div>',
     'saveQuickGoalProgress'
   );
   window._quickGoalId = id;
 }
 function saveQuickGoalProgress(){
   const g = state.goals.find(x=>x.id===window._quickGoalId);
-  if(g){
-    g.completedQty = parseFloat(document.getElementById('qug-completed')?.value||0)||0;
-    g.done = g.completedQty >= (parseFloat(g.totalQty)||100);
-  }
+  if(g){ g.progress = parseInt(document.getElementById('qug-pct')?.value||0); }
   saveState(); closeModal(); renderGoals(); renderDashStats();
 }
 function addGoalMilestone(id){
@@ -6537,9 +6560,10 @@ function addMindmapNode(){
 
   if(!text) return;
 
-  const study=ensureStudySubject();
-  study.mindmapTopics.push(text);
-  saveStudy();
+  window.studyData.mindmaps.push(text);
+
+  saveStudyData();
+  renderMindmap();
 
   input.value='';
 }
@@ -6605,12 +6629,42 @@ function clearSpotifyEmbed(){
   localStorage.removeItem('kalamSpotifyEmbed');
 }
 
+function ensureStudySubject(){
+  if(!activeSubjectId){
+    activeSubjectId = 'general';
+  }
+
+  if(!state.study){
+    state.study = {};
+  }
+
+  if(!state.study[activeSubjectId]){
+    state.study[activeSubjectId] = {
+      notes: [],
+      flashcards: [],
+      quiz: [],
+      mindmaps: [],
+      chatHistory: [],
+      sources: []
+    };
+  }
+
+  return state.study[activeSubjectId];
+}
+
 async function loadStudyData(){
-  refreshStudy();
+  try{
+    const saved = JSON.parse(localStorage.getItem('kalamStudyTools'));
+    if(saved){
+      window.studyData = saved;
+    }
+  }catch(err){
+    console.error(err);
+  }
 }
 
 async function saveStudyData(){
-  saveStudy();
+  localStorage.setItem('kalamStudyTools', JSON.stringify(window.studyData));
 }
 
 function createFlashcard(){
@@ -6627,19 +6681,17 @@ function createFlashcard(){
     return;
   }
 
-  const study = ensureStudySubject();
-
-  study.flashcards.push({
-    id: uid(),
-    q: question,
-    a: answer,
-    date: today()
+  window.studyData.flashcards.push({
+    id: Date.now(),
+    question,
+    answer
   });
 
   q.value='';
   a.value='';
 
-  saveStudy();
+  saveStudyData();
+  renderFlashcards();
 }
 
 function createQuizQuestion(){
@@ -6669,13 +6721,7 @@ function createQuizQuestion(){
     return;
   }
 
-  const study = ensureStudySubject();
-  study.quiz.push({
-    id: quiz.id,
-    q: quiz.question,
-    opts: quiz.options,
-    answer: Math.max(0, quiz.options.indexOf(quiz.answer))
-  });
+  window.studyData.quizzes.push(quiz);
 
   q.value='';
   o1.value='';
@@ -6684,7 +6730,8 @@ function createQuizQuestion(){
   o4.value='';
   ans.value='';
 
-  saveStudy();
+  saveStudyData();
+  renderQuizzes();
 }
 
 async function uploadStudyNote(file){
@@ -6693,20 +6740,20 @@ async function uploadStudyNote(file){
   if(!file) return;
 
   try{
-    const parsed = await parseStudyFile(file);
+    const text = await file.text();
 
     const note = {
-      id: uid(),
-      title: parsed.name.replace(/\.[^.]+$/,''),
-      content: parsed.content,
-      date: today(),
-      type: parsed.ext
+      id: crypto.randomUUID(),
+      title: file.name,
+      content: text,
+      createdAt: Date.now(),
+      type: file.type || 'text/plain'
     };
 
-    state.study[activeSubjectId].notes.unshift(note);
-    activeNoteId=note.id;
+    state.study[activeSubjectId].notes.push(note);
 
-    saveStudy();
+    saveState();
+    renderNotesPanel();
 
     toast('Note uploaded successfully','success');
   }catch(err){
@@ -6731,57 +6778,43 @@ function openStudyNote(id){
   }
 }
 
-function renderFlashcards() {
-    const container = document.getElementById("flashcards-container");
+function renderFlashcards(){
+  const container = document.getElementById('flashcards-container');
 
-    if (!container) return;
+  if(!container) return;
 
-    const study = ensureStudySubject();
-    const cards = study.flashcards || [];
+  container.innerHTML='';
 
-    container.innerHTML = "";
+  if(!window.studyData.flashcards.length){
+    container.innerHTML = '<div class="empty-state">No flashcards created yet</div>';
+    return;
+  }
 
-    if (cards.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                No flashcards created yet
-            </div>
-        `;
-        return;
-    }
+  window.studyData.flashcards.forEach(card=>{
+    const div = document.createElement('div');
 
-    cards.forEach((card, index) => {
+    div.className='flashcard';
 
-        const div = document.createElement("div");
+    div.innerHTML=`
+      <div class="flashcard-inner">
+        <div class="flashcard-front">
+          <strong>Q:</strong><br><br>
+          ${card.question}
+        </div>
 
-        div.className = "flashcard";
+        <div class="flashcard-back">
+          <strong>A:</strong><br><br>
+          ${card.answer}
+        </div>
+      </div>
+    `;
 
-        div.innerHTML = `
-            <div class="flashcard-inner">
+    div.onclick=()=>{
+      div.classList.toggle('flipped');
+    };
 
-                <div class="flashcard-front">
-                    <strong>Question ${index + 1}</strong>
-                    <hr>
-                    <p>${card.q || card.question || ''}</p>
-                </div>
-
-                <div class="flashcard-back">
-                    <strong>Answer</strong>
-                    <hr>
-                    <p>${card.a || card.answer || ''}</p>
-                </div>
-
-            </div>
-        `;
-
-        div.addEventListener("click", () => {
-            div.classList.toggle("flipped");
-        });
-
-        container.appendChild(div);
-
-    });
-
+    container.appendChild(div);
+  });
 }
 
 function renderQuizzes(){
@@ -6791,26 +6824,25 @@ function renderQuizzes(){
 
   container.innerHTML='';
 
-  const quizzes = ensureStudySubject().quiz || [];
-  if(!quizzes.length){
+  if(!window.studyData.quizzes.length){
     container.innerHTML='<div class="empty-state">No quiz questions yet</div>';
     return;
   }
 
-  quizzes.forEach((quiz,index)=>{
+  window.studyData.quizzes.forEach((quiz,index)=>{
     const div = document.createElement('div');
 
     div.className='quiz-card';
 
     div.innerHTML=`
       <div class="quiz-question">
-        ${index+1}. ${quiz.q}
+        ${index+1}. ${quiz.question}
       </div>
 
       <div class="quiz-options">
-        ${quiz.opts.map(opt=>`
+        ${quiz.options.map(opt=>`
           <button class="quiz-option"
-            onclick="checkQuiz(this,'${opt}','${quiz.opts[quiz.answer]}')">
+            onclick="checkQuiz(this,'${opt}','${quiz.answer}')">
             ${opt}
           </button>
         `).join('')}
@@ -6828,7 +6860,16 @@ function renderSources(){
 
   if(!container) return;
 
-  const sources = ensureStudySubject().sources || [];
+  if(!state.study[activeSubjectId]){
+    state.study[activeSubjectId] = {
+      notes: [],
+      flashcards: [],
+      quiz: [],
+      sources: []
+    };
+  }
+
+  const sources = state.study[activeSubjectId].sources || [];
 
   container.innerHTML = '';
 
@@ -6854,13 +6895,13 @@ function renderSources(){
         </div>
 
         <button class="icon-btn"
-          onclick="deleteSource('${src.id}')">
+          onclick="deleteSource(${index})">
           ✕
         </button>
       </div>
 
       <div class="source-meta">
-        ${(src.fileType || src.type || 'file').toUpperCase()}
+        ${(src.type || 'file').toUpperCase()}
       </div>
     `;
 
@@ -6892,25 +6933,7 @@ function renderMindmap(){
 
   ctx.fillStyle='#fff';
   ctx.textAlign='center';
-  const subj=state.subjects.find(s=>s.id===activeSubjectId);
-  ctx.fillText(subj?subj.name:'Study Topic',centerX,centerY+5);
-  const topics=(ensureStudySubject().mindmapTopics||[]).slice(0,8);
-  topics.forEach((topic,index)=>{
-    const angle=(Math.PI*2*index/topics.length)-Math.PI/2;
-    const x=centerX+170*Math.cos(angle);
-    const y=centerY+170*Math.sin(angle);
-    ctx.strokeStyle='#B5472A';
-    ctx.beginPath();
-    ctx.moveTo(centerX,centerY);
-    ctx.lineTo(x,y);
-    ctx.stroke();
-    ctx.fillStyle='#fff';
-    ctx.beginPath();
-    ctx.arc(x,y,42,0,Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle='#333';
-    ctx.fillText(String(topic).slice(0,16),x,y+5);
-  });
+  ctx.fillText('Study Topic',centerX,centerY+5);
 }
 
 // ===================== INIT =====================
@@ -6932,8 +6955,215 @@ function finishOnboarding(){
   updateTopbar('dashboard');
   toast('Welcome to Kalam, '+name+'! 🎉','success');
 }
+
+// ===================== BRAIN DUMP =====================
+let activeBrainDumpId=null;
+let _bdTimer=null;
+function renderBrainDump(){
+  if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
+  renderBrainDumpList();
+  if(!activeBrainDumpId && state.brainDumps.length) setActiveBrainDump(state.brainDumps[0].id);
+  else if(!activeBrainDumpId) clearBrainDumpEditor();
+  else setActiveBrainDump(activeBrainDumpId);
+}
+function renderBrainDumpList(){
+  const el=document.getElementById('bd-entries-list'); if(!el) return;
+  const q=(document.getElementById('bd-search')?.value||'').toLowerCase();
+  const list=q?state.brainDumps.filter(d=>(d.title||'').toLowerCase().includes(q)||(d.body||'').toLowerCase().includes(q)):state.brainDumps;
+  if(!list.length){ el.innerHTML='<div class="empty-state">No dumps yet.</div>'; return; }
+  el.innerHTML=list.map(d=>`
+    <div class="journal-entry-card ${d.id===activeBrainDumpId?'active':''}" onclick="setActiveBrainDump('${d.id}')">
+      <div class="journal-entry-date">${fmtDate((d.updatedAt||d.createdAt||'').slice(0,10))}</div>
+      <div class="journal-entry-title">${(d.title||'Untitled').replace(/</g,'&lt;')}</div>
+      <div class="journal-entry-preview">${(d.body||'').slice(0,60).replace(/</g,'&lt;')}</div>
+    </div>`).join('');
+}
+function newBrainDump(){
+  const d={id:uid(),title:'',body:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  state.brainDumps.unshift(d); saveState();
+  activeBrainDumpId=d.id; renderBrainDumpList();
+  const t=document.getElementById('bd-title'); const b=document.getElementById('bd-body');
+  if(t){ t.value=''; t.focus(); }
+  if(b) b.value='';
+  document.getElementById('bd-wordcount').textContent='0 words';
+}
+function setActiveBrainDump(id){
+  activeBrainDumpId=id;
+  const d=state.brainDumps.find(x=>x.id===id); if(!d) return;
+  const t=document.getElementById('bd-title'); const b=document.getElementById('bd-body');
+  if(t) t.value=d.title||''; if(b) b.value=d.body||'';
+  document.getElementById('bd-wordcount').textContent=(d.body||'').trim().split(/\s+/).filter(Boolean).length+' words';
+  renderBrainDumpList();
+}
+function clearBrainDumpEditor(){
+  const t=document.getElementById('bd-title'); const b=document.getElementById('bd-body');
+  if(t) t.value=''; if(b) b.value='';
+  const wc=document.getElementById('bd-wordcount'); if(wc) wc.textContent='0 words';
+}
+function brainDumpChanged(){
+  const b=document.getElementById('bd-body');
+  if(b){
+    const wc=document.getElementById('bd-wordcount');
+    if(wc) wc.textContent=(b.value||'').trim().split(/\s+/).filter(Boolean).length+' words';
+  }
+  if(_bdTimer) clearTimeout(_bdTimer);
+  _bdTimer=setTimeout(()=>{
+    if(!activeBrainDumpId) return;
+    const d=state.brainDumps.find(x=>x.id===activeBrainDumpId); if(!d) return;
+    d.title=document.getElementById('bd-title').value;
+    d.body=document.getElementById('bd-body').value;
+    d.updatedAt=new Date().toISOString();
+    saveState(); renderBrainDumpList();
+  },500);
+}
+function deleteBrainDump(){
+  if(!activeBrainDumpId) return;
+  if(!confirm('Delete this brain dump?')) return;
+  state.brainDumps=state.brainDumps.filter(d=>d.id!==activeBrainDumpId);
+  activeBrainDumpId=null; saveState();
+  clearBrainDumpEditor(); renderBrainDumpList();
+  toast('Dump deleted');
+}
+function exportBrainDumpAsPdf(){
+  if(!activeBrainDumpId){ toast('No dump selected','error'); return; }
+  const d=state.brainDumps.find(x=>x.id===activeBrainDumpId);
+  if(!d) return;
+  _printAsPdf(d.title||'Brain Dump', d.body||'', d.createdAt);
+}
+function exportBrainDumpAsDoc(){
+  if(!activeBrainDumpId){ toast('No dump selected','error'); return; }
+  const d=state.brainDumps.find(x=>x.id===activeBrainDumpId); if(!d) return;
+  _downloadAsDoc((d.title||'brain-dump'), _buildExportHtml(d.title||'Brain Dump', d.body||'', d.createdAt));
+}
+
+// ===================== JOURNAL — per-entry export =====================
+function exportJournalEntryAsPdf(){
+  const e=state.journal.find(x=>x.id===activeJournalId);
+  if(!e){ toast('Pick an entry first','error'); return; }
+  const meta=[e.mood?'Mood: '+e.mood:'',(e.tags||[]).length?'Tags: '+e.tags.join(', '):''].filter(Boolean).join(' · ');
+  _printAsPdf(e.title||'Journal entry', (meta?meta+'\n\n':'')+(e.content||''), e.date);
+}
+function exportJournalEntryAsDoc(){
+  const e=state.journal.find(x=>x.id===activeJournalId);
+  if(!e){ toast('Pick an entry first','error'); return; }
+  const meta=[e.mood?'Mood: '+e.mood:'',(e.tags||[]).length?'Tags: '+e.tags.join(', '):''].filter(Boolean).join(' · ');
+  _downloadAsDoc((e.title||'journal-entry'), _buildExportHtml(e.title||'Journal entry', (meta?meta+'\n\n':'')+(e.content||''), e.date));
+}
+
+// ----- shared exporters (no deps; PDF via print dialog, DOC via msword MIME) -----
+function _escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _buildExportHtml(title, body, date){
+  const dateStr = date ? new Date(date).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '';
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${_escapeHtml(title)}</title>
+    <style>body{font-family:Georgia,'Times New Roman',serif;max-width:680px;margin:40px auto;color:#111;line-height:1.7;padding:0 20px;}
+    h1{font-size:24px;margin-bottom:4px;} .date{color:#666;font-size:13px;margin-bottom:24px;} p{white-space:pre-wrap;}</style></head>
+    <body><h1>${_escapeHtml(title)}</h1>${dateStr?`<div class="date">${dateStr}</div>`:''}<p>${_escapeHtml(body)}</p></body></html>`;
+}
+function _printAsPdf(title, body, date){
+  const html=_buildExportHtml(title, body, date);
+  const w=window.open('','_blank','width=800,height=900');
+  if(!w){ toast('Popup blocked — allow popups to download as PDF','error'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(()=>{ try { w.focus(); w.print(); } catch(e){} }, 400);
+  toast('Opening print dialog — choose "Save as PDF"');
+}
+function _downloadAsDoc(filenameBase, html){
+  const blob=new Blob(['\ufeff',html],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=(filenameBase.replace(/[^\w\-]+/g,'_').slice(0,60)||'kalam-export')+'.doc';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Downloaded .doc — opens in Word/Pages','success');
+}
+
+// ===================== JOURNAL REMINDER =====================
+function _wroteJournalToday(){
+  const td=today();
+  return (state.journal||[]).some(e=>(e.date||'').slice(0,10)===td && (e.content||'').trim().length>0);
+}
+function scheduleJournalReminder(){
+  if(!state.journalReminder) state.journalReminder={dismissedDate:'',notifyTime:'20:00'};
+  refreshJournalReminderBanner();
+  // Lightweight OS notification at user-chosen time (best effort, tab-open only)
+  try {
+    const [hh,mm]=(state.journalReminder.notifyTime||'20:00').split(':').map(n=>parseInt(n));
+    const now=new Date();
+    const fire=new Date(); fire.setHours(hh||20, mm||0, 0, 0);
+    if(fire<=now) fire.setDate(fire.getDate()+1);
+    const ms=fire-now;
+    setTimeout(()=>{
+      if(!_wroteJournalToday() && typeof Notification!=='undefined' && Notification.permission==='granted'){
+        try { new Notification('Kalam', {body:"Write today's journal — even one line is enough."}); } catch(e){}
+      }
+      // re-arm for tomorrow
+      scheduleJournalReminder();
+    }, Math.max(1000, ms));
+  } catch(e){}
+}
+function refreshJournalReminderBanner(){
+  const el=document.getElementById('journal-reminder-banner');
+  if(!el) return;
+  const td=today();
+  const dismissed=(state.journalReminder?.dismissedDate||'')===td;
+  const wrote=_wroteJournalToday();
+  el.style.display=(!wrote && !dismissed) ? 'flex' : 'none';
+}
+function dismissJournalReminder(){
+  if(!state.journalReminder) state.journalReminder={dismissedDate:'',notifyTime:'20:00'};
+  state.journalReminder.dismissedDate=today();
+  saveState();
+  refreshJournalReminderBanner();
+}
+
+// ===================== SPOTIFY persistence =====================
+function restoreSpotifyEmbed(){
+  // Prefer state (survives across imports). Fall back to legacy localStorage key.
+  let url=(state.spotify&&state.spotify.embedUrl)||localStorage.getItem('kalamSpotifyEmbed')||'';
+  if(!url) return;
+  // Normalise — embed URL only
+  if(url.includes('/playlist/') || url.includes('/track/') || url.includes('/album/')){
+    if(!url.includes('/embed/')) url = url.replace('https://open.spotify.com/','https://open.spotify.com/embed/').split('?')[0];
+  }
+  state.spotify=state.spotify||{}; state.spotify.embedUrl=url; saveState();
+  const iframe=document.getElementById('spotify-iframe');
+  const ph=document.getElementById('spotify-placeholder');
+  const input=document.getElementById('spotify-url-input');
+  if(iframe){ iframe.src=url; iframe.style.display='block'; }
+  if(ph) ph.style.display='none';
+  if(input) input.value=url;
+}
+// Patch loadSpotifyEmbed/clearSpotifyEmbed to persist into state.spotify too
+const _originalLoadSpotifyEmbed = typeof loadSpotifyEmbed==='function' ? loadSpotifyEmbed : null;
+loadSpotifyEmbed = function(){
+  if(_originalLoadSpotifyEmbed) _originalLoadSpotifyEmbed();
+  const iframe=document.getElementById('spotify-iframe');
+  if(iframe && iframe.src){
+    state.spotify=state.spotify||{};
+    state.spotify.embedUrl=iframe.src;
+    saveState();
+  }
+};
+const _originalClearSpotifyEmbed = typeof clearSpotifyEmbed==='function' ? clearSpotifyEmbed : null;
+clearSpotifyEmbed = function(){
+  if(_originalClearSpotifyEmbed) _originalClearSpotifyEmbed();
+  state.spotify=state.spotify||{}; state.spotify.embedUrl='';
+  saveState();
+};
 function init(){
   loadState();
+  // Pomodoro daily reset — zero counters when the date changes
+  const td=today();
+  if(!state.pomodoro) state.pomodoro={sessionsToday:0,focusMinutesToday:0,lastDate:''};
+  if(state.pomodoro.lastDate!==td){
+    state.pomodoro.sessionsToday=0;
+    state.pomodoro.focusMinutesToday=0;
+    state.pomodoro.lastDate=td;
+    saveState();
+  }
+  // Default shape guards for new fields
+  if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
+  if(!state.spotify) state.spotify={embedUrl:''};
+  if(!state.journalReminder) state.journalReminder={dismissedDate:'',notifyTime:'20:00'};
   applySettings();
   if(state.settings.accent) setAccent(state.settings.accent, null);
   restoreSidebarState();
@@ -6945,6 +7175,10 @@ function init(){
   // Ask for notification permission once
   try { if(typeof Notification!=='undefined' && Notification.permission==='default'){ Notification.requestPermission().catch(()=>{}); } } catch(e){}
   gcalRestoreSession();
+  // Restore Spotify embed if user previously loaded one (persists until they Remove)
+  restoreSpotifyEmbed();
+  // Journal reminder banner + optional OS notification
+  scheduleJournalReminder();
   // Show onboarding if no name set
   if(!state.settings.name) setTimeout(showOnboarding, 400);
 }
