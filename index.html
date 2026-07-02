@@ -2275,7 +2275,7 @@ let state = {
   assignments: [],
   exams: [],
   subjects: defaultSubjects,
-  study: {}, // {subjectId: {notes:[], flashcards:[], quiz:[], sources:[]}}
+  study: {}, // {subjectId: {notes:[], flashcards:[], quizzes:[], mindmap:{topics:[]}, sources:[], chat:[]}}
   pomodoro: { sessionsToday: 0, focusMinutesToday: 0, lastDate: '' },
   brainDumps: [], // [{id,title,body,createdAt,updatedAt}]
   spotify: { embedUrl: '' }, // last loaded playlist, persisted until user removes
@@ -2325,10 +2325,24 @@ function loadState(){
       state = deepMerge(state, parsed);
     } catch(e){}
   }
-  // Init study for any subjects that don't have data
-  state.subjects.forEach(s => {
-    if(!state.study[s.id]) state.study[s.id] = {notes:[],flashcards:[],quiz:[],sources:[]};
-  });
+  // Init + migrate study record for every subject (single source of truth)
+  state.subjects.forEach(s => { ensureSubjectStudy(s.id); });
+}
+// Ensures state.study[id] exists with full schema; migrates legacy `quiz`→`quizzes`
+function ensureSubjectStudy(id){
+  if(!id) return null;
+  const sd = state.study[id] || {};
+  if(!Array.isArray(sd.notes)) sd.notes = [];
+  if(!Array.isArray(sd.flashcards)) sd.flashcards = [];
+  if(Array.isArray(sd.quiz) && !Array.isArray(sd.quizzes)) sd.quizzes = sd.quiz;
+  if(!Array.isArray(sd.quizzes)) sd.quizzes = [];
+  delete sd.quiz;
+  if(!sd.mindmap || typeof sd.mindmap!=='object') sd.mindmap = {topics:[]};
+  if(!Array.isArray(sd.mindmap.topics)) sd.mindmap.topics = [];
+  if(!Array.isArray(sd.sources)) sd.sources = [];
+  if(!Array.isArray(sd.chat)) sd.chat = [];
+  state.study[id] = sd;
+  return sd;
 }
 function deepMerge(target, source){
   const out = {...target};
@@ -3508,18 +3522,24 @@ let fcIndex=0;
 let quizIndex=0;
 let quizAnswered={};
 
-function renderStudy(){
-  state.subjects.forEach(s=>{
-    if(!state.study[s.id]) state.study[s.id]={notes:[],flashcards:[],quiz:[],sources:[]};
-  });
+// Centralized study rendering pipeline. Call after ANY change to state.study.
+// Optional persist=true saves state; pass false to skip when caller already saved.
+function refreshStudy(persist){
+  state.subjects.forEach(s=>ensureSubjectStudy(s.id));
   if(!activeSubjectId && state.subjects.length) activeSubjectId=state.subjects[0].id;
+  if(activeSubjectId) ensureSubjectStudy(activeSubjectId);
   renderSubjectTabs();
   renderNotesPanel();
   renderFlashcardsPanel();
   renderQuizPanel();
   renderMindMap();
   renderNotebookSources();
+  renderStudyChat();
+  if(persist) saveState();
 }
+// Back-compat aliases — all study renderers funnel through refreshStudy.
+function renderStudy(){ refreshStudy(false); }
+function ensureStudySubject(id){ return ensureSubjectStudy(id || activeSubjectId); }
 function renderSubjectTabs(){
   const el=document.getElementById('subject-tabs-list');
   if(!el) return;
@@ -3534,9 +3554,9 @@ function renderSubjectTabs(){
   `).join('');
 }
 function setActiveSubject(id){
-  activeSubjectId=id; activeNoteId=null; fcIndex=0; quizIndex=0; quizAnswered={};
-  renderSubjectTabs(); renderNotesPanel(); renderFlashcardsPanel();
-  renderQuizPanel(); renderMindMap(); renderNotebookSources();
+  activeSubjectId=id; activeNoteId=null; activeSourceId=null;
+  fcIndex=0; quizIndex=0; quizAnswered={};
+  refreshStudy(false);
 }
 // Called from study tool tab buttons
 function setStudyToolTab(tab, btn){
@@ -3589,19 +3609,18 @@ function getSourceIcon(ext){
 const _origRenderSourcesPanel = typeof renderSourcesPanel !== 'undefined' ? renderSourcesPanel : null;
 function renderSourcesPanel(){ renderNotebookSources(); }
 
-// Study chat (NotebookLM-style: ask about your notes)
-let studyChatMessages=[];
+// Study chat (NotebookLM-style: ask about your notes) — persisted per subject in state.study[id].chat
+function _chat(){ const sd=activeSubjectId?ensureSubjectStudy(activeSubjectId):null; return sd?sd.chat:[]; }
 async function sendStudyChat(){
   const input=document.getElementById('study-chat-input');
   const text=input?.value.trim();
-  if(!text) return;
+  if(!text||!activeSubjectId) return;
   input.value=''; input.style.height='auto';
-  studyChatMessages.push({role:'user',content:text});
-  renderStudyChat();
+  const sd=ensureSubjectStudy(activeSubjectId);
+  sd.chat.push({role:'user',content:text});
+  saveState(); renderStudyChat();
   const el=document.getElementById('study-chat-messages');
   if(el) el.innerHTML+=`<div class="chat-msg assistant"><div class="chat-bubble chat-typing" style="font-size:12px;">Thinking</div></div>`;
-  // Build context from current subject notes + sources
-  const sd=getStudy();
   const notesCtx=(sd.notes||[]).map(n=>`Note: "${n.title}"\n${n.content.slice(0,600)}`).join('\n\n');
   const sourcesCtx=(sd.sources||[]).slice(0,3).map(s=>`Source: "${s.name}"\n${s.content.slice(0,800)}`).join('\n\n');
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
@@ -3611,8 +3630,8 @@ async function sendStudyChat(){
     const result=await aiCall(prompt, 600);
     reply=result||getStudyFallbackReply(text, sd);
   } catch(e){ reply=getStudyFallbackReply(text, sd); }
-  studyChatMessages.push({role:'assistant',content:reply});
-  renderStudyChat();
+  sd.chat.push({role:'assistant',content:reply});
+  saveState(); renderStudyChat();
 }
 function getStudyFallbackReply(text, sd){
   const lo=text.toLowerCase();
@@ -3627,17 +3646,19 @@ function getStudyFallbackReply(text, sd){
 function renderStudyChat(){
   const el=document.getElementById('study-chat-messages');
   if(!el) return;
-  if(!studyChatMessages.length){
+  const msgs=_chat();
+  if(!msgs.length){
     el.innerHTML='<div style="font-size:12px;color:var(--faint);padding:8px;">Ask anything about your notes and sources…</div>';
     return;
   }
-  el.innerHTML=studyChatMessages.map(m=>{
+  el.innerHTML=msgs.map(m=>{
     const content=m.content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     return `<div class="chat-msg ${m.role}"><div class="chat-bubble" style="font-size:12px;">${content}</div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
 }
-function getStudy(){ return state.study[activeSubjectId]||{notes:[],flashcards:[],quiz:[],sources:[]}; }
+function clearStudyChat(){ if(!activeSubjectId) return; ensureSubjectStudy(activeSubjectId).chat=[]; saveState(); renderStudyChat(); }
+function getStudy(){ return activeSubjectId ? ensureSubjectStudy(activeSubjectId) : {notes:[],flashcards:[],quizzes:[],mindmap:{topics:[]},sources:[],chat:[]}; }
 
 // NOTES
 let noteTimer=null;
@@ -3660,7 +3681,7 @@ function setActiveNote(id){ activeNoteId=id; renderNotesPanel(); }
 function newNote(){
   if(!activeSubjectId) return;
   const n={id:uid(),title:'',content:'',date:today()};
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].notes.unshift(n);
   activeNoteId=n.id;
   saveState(); renderNotesPanel();
@@ -3705,7 +3726,7 @@ function uploadNote(input){
     const content=e.target.result.trim();
     const name=file.name.replace(/\.[^.]+$/,'');
     const n={id:uid(),title:name,content,date:today()};
-    if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+    ensureSubjectStudy(activeSubjectId);
     state.study[activeSubjectId].notes.unshift(n);
     activeNoteId=n.id;
     saveState(); renderNotesPanel();
@@ -3751,7 +3772,7 @@ async function confirmGenerateNote(){
     content=builtinNoteContent(topic,subj?subj.name:'');
   }
   const n={id:uid(),title:topic,content,date:today()};
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].notes.unshift(n);
   activeNoteId=n.id;
   saveState(); renderNotesPanel();
@@ -3905,7 +3926,7 @@ function openPasteModal(name, ext){
 }
 
 function saveSource(name, content, ext){
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].sources.push({id:uid(),name,content,chars:content.length,date:today(),fileType:ext});
   saveState(); renderSourcesPanel();
   toast('✓ '+name+' added ('+Math.round(content.length/1000)+'k chars)','success');
@@ -3959,14 +3980,14 @@ function addFlashcard(){
   const q=document.getElementById('fc-q')?.value.trim();
   const a=document.getElementById('fc-a')?.value.trim();
   if(!q||!a){ toast('Fill in both fields','error'); return; }
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].flashcards.push({q,a});
   saveState(); closeModal(); renderFlashcardsPanel(); toast('Flashcard added!','success');
 }
 
 // QUIZ
 function renderQuizPanel(){
-  const qs=getStudy().quiz||[];
+  const qs=getStudy().quizzes||[];
   quizAnswered={};
   if(!qs.length){
     document.getElementById('quiz-question').textContent='No questions yet. Add some!';
@@ -3978,7 +3999,7 @@ function renderQuizPanel(){
   showQuizQuestion();
 }
 function showQuizQuestion(){
-  const qs=getStudy().quiz||[];
+  const qs=getStudy().quizzes||[];
   if(!qs.length) return;
   const q=qs[quizIndex];
   document.getElementById('quiz-question').textContent=q.q;
@@ -3992,7 +4013,7 @@ function showQuizQuestion(){
 function answerQuiz(chosen, correct){
   if(quizAnswered[quizIndex]) return;
   quizAnswered[quizIndex]=true;
-  const qs=getStudy().quiz||[];
+  const qs=getStudy().quizzes||[];
   const q=qs[quizIndex];
   q.opts.forEach((_,i)=>{
     const el=document.getElementById('qopt-'+i);
@@ -4001,7 +4022,7 @@ function answerQuiz(chosen, correct){
   });
 }
 function quizPrev(){ if(quizIndex>0){quizIndex--;showQuizQuestion();} }
-function quizNext(){ const qs=getStudy().quiz||[]; if(quizIndex<qs.length-1){quizIndex++;showQuizQuestion();} }
+function quizNext(){ const qs=getStudy().quizzes||[]; if(quizIndex<qs.length-1){quizIndex++;showQuizQuestion();} }
 function openAddQuizModal(){
   openModal('Add Quiz Question',`
     <div class="modal-field"><div class="modal-label">Question</div><textarea class="modal-input" id="qm-q" rows="2"></textarea></div>
@@ -4020,18 +4041,20 @@ function addQuizQuestion(){
   const q=document.getElementById('qm-q')?.value.trim();
   const opts=[0,1,2,3].map(i=>document.getElementById('qm-'+i).value.trim());
   if(!q||opts.some(o=>!o)){ toast('Fill all fields','error'); return; }
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].quiz.push({q,opts,answer:parseInt(document.getElementById('qm-ans').value)});
+  ensureSubjectStudy(activeSubjectId);
+  state.study[activeSubjectId].quizzes.push({q,opts,answer:parseInt(document.getElementById('qm-ans').value)});
   saveState(); closeModal(); renderQuizPanel(); toast('Question added!','success');
 }
 
 // MIND MAP
 function renderMindMap(){
   const svg=document.getElementById('mind-map-svg');
+  if(!svg) return;
   const subj=state.subjects.find(s=>s.id===activeSubjectId);
   if(!subj){ svg.innerHTML=''; return; }
   const sd=getStudy();
-  const topics=sd.notes.map(n=>n.title||'Note').filter(Boolean).slice(0,8);
+  const stored=(sd.mindmap&&Array.isArray(sd.mindmap.topics))?sd.mindmap.topics:[];
+  const topics=stored.length?stored:sd.notes.map(n=>n.title||'Note').filter(Boolean).slice(0,8);
   drawMindMap(svg, subj.name, topics, subj.color||'var(--accent)');
 }
 function drawMindMap(svg, center, topics, color){
@@ -4082,7 +4105,7 @@ function addSource(){
   const name=document.getElementById('sm-name')?.value.trim();
   const content=document.getElementById('sm-content')?.value.trim();
   if(!name||!content){ toast('Fill in all fields','error'); return; }
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].sources.push({id:uid(),name,content,chars:content.length,date:today()});
   saveState(); closeModal(); renderSourcesPanel(); toast('Source added!','success');
 }
@@ -4117,9 +4140,9 @@ async function generateMindMapFromSource(id){
       .filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
   }
   if(!topics.length){ toast('Could not extract topics','error'); return; }
-  const subj=state.subjects.find(s=>s.id===activeSubjectId);
+  ensureSubjectStudy(activeSubjectId).mindmap.topics=topics;
   setStudyToolTab('mindmap', document.querySelector('[data-stab="mindmap"]'));
-  drawMindMap(document.getElementById('mind-map-svg'), subj?subj.name:'Source', topics, (subj&&subj.color)||'var(--accent)');
+  saveState(); renderMindMap();
   toast('Mind map ready!','success');
 }
 
@@ -4368,7 +4391,7 @@ function addSubject(){
   if(!name){ toast('Enter subject name','error'); return; }
   const id=uid();
   state.subjects.push({id,name,icon,color});
-  state.study[id]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(id);
   saveState(); closeModal(); renderStudy(); toast('Subject added!','success');
 }
 function deleteSubject(id){
@@ -4410,19 +4433,18 @@ async function claudeGenerate(type, content){
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
     if(type==='flashcards'){
-      if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+      ensureSubjectStudy(activeSubjectId);
       state.study[activeSubjectId].flashcards.push(...parsed);
       toast('Generated '+parsed.length+' flashcards!','success');
     } else if(type==='quiz'){
-      state.study[activeSubjectId].quiz.push(...parsed);
+      state.study[activeSubjectId].quizzes.push(...parsed);
       toast('Generated '+parsed.length+' quiz questions!','success');
     } else if(type==='mindmap'){
-      const subj=state.subjects.find(s=>s.id===activeSubjectId);
-      drawMindMap(document.getElementById('mind-map-svg'),subj.name,parsed,subj.color);
-      toast('Mind map generated!','success');
-      saveState(); return;
+      ensureSubjectStudy(activeSubjectId).mindmap.topics=parsed;
+      saveState(); renderMindMap();
+      toast('Mind map generated!','success'); return;
     }
-    saveState();
+    saveState(); refreshStudy(false);
   } catch(e){ toast('Generation failed, using fallback','error'); fallbackGenerate(type,content); }
 }
 function fallbackGenerate(type, content){
@@ -4431,8 +4453,8 @@ function fallbackGenerate(type, content){
   else if(type==='summary') showFallbackSummary(content);
   else if(type==='mindmap'){
     const topics=getStudy().notes.map(n=>n.title).filter(Boolean).slice(0,8);
-    const subj=state.subjects.find(s=>s.id===activeSubjectId);
-    if(subj) drawMindMap(document.getElementById('mind-map-svg'),subj.name,topics,subj.color);
+    if(activeSubjectId){ ensureSubjectStudy(activeSubjectId).mindmap.topics=topics; saveState(); }
+    renderMindMap();
     toast('Mind map from note titles','success');
   }
 }
@@ -4447,7 +4469,7 @@ function generateFlashcardsFromText(text){
       cards.push({q:q.trim(),a:words[fillIdx]});
     }
   });
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].flashcards.push(...cards);
   saveState(); toast('Generated '+cards.length+' flashcards (fallback)','success');
 }
@@ -4463,8 +4485,8 @@ function generateQuizFromText(text){
       qs.push({q:'What best completes: "'+words.slice(0,keyIdx).join(' ')+' _____"?',opts:[key,wrong[0]||'none',wrong[1]||'other',wrong[2]||'neither'],answer:0});
     }
   });
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
-  state.study[activeSubjectId].quiz.push(...qs);
+  ensureSubjectStudy(activeSubjectId);
+  state.study[activeSubjectId].quizzes.push(...qs);
   saveState(); toast('Generated '+qs.length+' questions (fallback)','success');
 }
 function showFallbackSummary(text){
@@ -4473,12 +4495,12 @@ function showFallbackSummary(text){
   openModal('Summary (Fallback)',`<div style="font-size:13.5px;line-height:1.8;white-space:pre-wrap;">${bullets}</div>`,null,false);
 }
 async function generateFlashcardsFromText(text){
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   if(state.settings.apikey){ await claudeGenerate('flashcards',text); }
   else fallbackGenerate('flashcards',text);
 }
 async function generateQuizFromText(text){
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   if(state.settings.apikey){ await claudeGenerate('quiz',text); }
   else fallbackGenerate('quiz',text);
 }
@@ -5148,7 +5170,7 @@ function buildChatContext(){
     const sd=state.study[s.id]||{};
     const notes=(sd.notes||[]).slice(0,5).map(n=>'  Note: "'+n.title+'"\n  Content: '+n.content.slice(0,400)).join('\n');
     const fcCount=(sd.flashcards||[]).length;
-    const qCount=(sd.quiz||[]).length;
+    const qCount=(sd.quizzes||[]).length;
     return 'Subject: '+s.name+'\n  Flashcards: '+fcCount+', Quiz questions: '+qCount+'\n'+(notes||'  No notes yet.');
   }).join('\n\n');
   const lines=[
@@ -5372,7 +5394,7 @@ function handleFlashcardUpload(input){
       }
     } catch(err){ toast('Could not parse file. Check the format.','error'); return; }
     if(!cards.length){ toast('No cards found in file.','error'); return; }
-    if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+    ensureSubjectStudy(activeSubjectId);
     state.study[activeSubjectId].flashcards.push(...cards);
     saveState(); renderFlashcardsPanel();
     toast('Imported '+cards.length+' flashcards!','success');
@@ -5495,7 +5517,7 @@ function confirmImport(){
   // Ensure study data exists for all subjects
   if(!state.study) state.study={};
   (state.subjects||[]).forEach(s=>{
-    if(!state.study[s.id]) state.study[s.id]={notes:[],flashcards:[],quiz:[],sources:[]};
+    ensureSubjectStudy(s.id);
   });
   if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
   if(!state.spotify) state.spotify={embedUrl:''};
@@ -5622,7 +5644,7 @@ async function confirmGenerateNoteFromSources(){
     content='── '+topic.toUpperCase()+' ──\nGenerated from: '+selected.map(i=>pool[i].name).join(', ')+'\nDate: '+today()+'\n\nKEY POINTS\n'+sentences.map(s=>'• '+s.trim()).join('\n');
   }
   const n={id:uid(),title:topic,content,date:today()};
-  if(!state.study[activeSubjectId]) state.study[activeSubjectId]={notes:[],flashcards:[],quiz:[],sources:[]};
+  ensureSubjectStudy(activeSubjectId);
   state.study[activeSubjectId].notes.unshift(n);
   activeNoteId=n.id;
   saveState(); renderNotesPanel(); renderStudyPanel();
@@ -5668,7 +5690,7 @@ function switchProfile(id){
   } else {
     // New profile — fresh data
     state.habits=[]; state.tasks=[]; state.goals=[]; state.journal=[]; state.assignments=[]; state.subjects=JSON.parse(JSON.stringify(defaultSubjects)); state.study={}; state.events=[]; state.todos={};
-    state.subjects.forEach(s=>{ state.study[s.id]={notes:[],flashcards:[],quiz:[],sources:[]}; });
+    state.subjects.forEach(s=>{ ensureSubjectStudy(s.id); });
   }
   state.settings.name=state.profiles[id]?.name||'';
   saveState(); applySettings(); navigate('dashboard');
@@ -6596,33 +6618,7 @@ function checkQuizAnswer(btn,selected,correct){
   }
 }
 
-function checkQuiz(btn,opt,answer){
-  if(opt===answer){
-    btn.style.background='#22c55e';
-    btn.style.color='white';
-  }else{
-    btn.style.background='#ef4444';
-    btn.style.color='white';
-  }
-}
-
-function addMindmapNode(){
-  const input = document.getElementById('mindmap-input');
-  const canvas = document.getElementById('mindmap-canvas');
-
-  if(!input || !canvas) return;
-
-  const text = input.value.trim();
-
-  if(!text) return;
-
-  window.studyData.mindmaps.push(text);
-
-  saveStudyData();
-  renderMindmap();
-
-  input.value='';
-}
+// Legacy study architecture fully removed.
 
 function toggleSpotify(){
   const player=document.getElementById('spotify-player');
@@ -6685,312 +6681,9 @@ function clearSpotifyEmbed(){
   localStorage.removeItem('kalamSpotifyEmbed');
 }
 
-function ensureStudySubject(){
-  if(!activeSubjectId){
-    activeSubjectId = 'general';
-  }
-
-  if(!state.study){
-    state.study = {};
-  }
-
-  if(!state.study[activeSubjectId]){
-    state.study[activeSubjectId] = {
-      notes: [],
-      flashcards: [],
-      quiz: [],
-      mindmaps: [],
-      chatHistory: [],
-      sources: []
-    };
-  }
-
-  return state.study[activeSubjectId];
-}
-
-async function loadStudyData(){
-  try{
-    const saved = JSON.parse(localStorage.getItem('kalamStudyTools'));
-    if(saved){
-      window.studyData = saved;
-    }
-  }catch(err){
-    console.error(err);
-  }
-}
-
-async function saveStudyData(){
-  localStorage.setItem('kalamStudyTools', JSON.stringify(window.studyData));
-}
-
-function createFlashcard(){
-  const q = document.getElementById('flashcard-question-input');
-  const a = document.getElementById('flashcard-answer-input');
-
-  if(!q || !a) return;
-
-  const question = q.value.trim();
-  const answer = a.value.trim();
-
-  if(!question || !answer){
-    alert('Enter both question and answer');
-    return;
-  }
-
-  window.studyData.flashcards.push({
-    id: Date.now(),
-    question,
-    answer
-  });
-
-  q.value='';
-  a.value='';
-
-  saveStudyData();
-  renderFlashcards();
-}
-
-function createQuizQuestion(){
-  const q = document.getElementById('quiz-question-input');
-  const o1 = document.getElementById('quiz-option1');
-  const o2 = document.getElementById('quiz-option2');
-  const o3 = document.getElementById('quiz-option3');
-  const o4 = document.getElementById('quiz-option4');
-  const ans = document.getElementById('quiz-answer');
-
-  if(!q || !o1 || !o2 || !o3 || !o4 || !ans) return;
-
-  const quiz = {
-    id: Date.now(),
-    question: q.value.trim(),
-    options: [
-      o1.value.trim(),
-      o2.value.trim(),
-      o3.value.trim(),
-      o4.value.trim()
-    ],
-    answer: ans.value.trim()
-  };
-
-  if(!quiz.question || !quiz.answer){
-    alert('Complete the quiz form');
-    return;
-  }
-
-  window.studyData.quizzes.push(quiz);
-
-  q.value='';
-  o1.value='';
-  o2.value='';
-  o3.value='';
-  o4.value='';
-  ans.value='';
-
-  saveStudyData();
-  renderQuizzes();
-}
-
-async function uploadStudyNote(file){
-  ensureStudySubject();
-
-  if(!file) return;
-
-  try{
-    const text = await file.text();
-
-    const note = {
-      id: crypto.randomUUID(),
-      title: file.name,
-      content: text,
-      createdAt: Date.now(),
-      type: file.type || 'text/plain'
-    };
-
-    state.study[activeSubjectId].notes.push(note);
-
-    saveState();
-    renderNotesPanel();
-
-    toast('Note uploaded successfully','success');
-  }catch(err){
-    console.error(err);
-    toast('Failed to upload note','error');
-  }
-}
-
-function openStudyNote(id){
-  ensureStudySubject();
-
-  const note = state.study[activeSubjectId]
-    .notes
-    .find(n=>n.id===id);
-
-  if(!note) return;
-
-  const viewer = document.getElementById('study-note-viewer');
-
-  if(viewer){
-    viewer.value = note.content;
-  }
-}
-
-function renderFlashcards(){
-  const container = document.getElementById('flashcards-container');
-
-  if(!container) return;
-
-  container.innerHTML='';
-
-  if(!window.studyData.flashcards.length){
-    container.innerHTML = '<div class="empty-state">No flashcards created yet</div>';
-    return;
-  }
-
-  window.studyData.flashcards.forEach(card=>{
-    const div = document.createElement('div');
-
-    div.className='flashcard';
-
-    div.innerHTML=`
-      <div class="flashcard-inner">
-        <div class="flashcard-front">
-          <strong>Q:</strong><br><br>
-          ${card.question}
-        </div>
-
-        <div class="flashcard-back">
-          <strong>A:</strong><br><br>
-          ${card.answer}
-        </div>
-      </div>
-    `;
-
-    div.onclick=()=>{
-      div.classList.toggle('flipped');
-    };
-
-    container.appendChild(div);
-  });
-}
-
-function renderQuizzes(){
-  const container = document.getElementById('quiz-container');
-
-  if(!container) return;
-
-  container.innerHTML='';
-
-  if(!window.studyData.quizzes.length){
-    container.innerHTML='<div class="empty-state">No quiz questions yet</div>';
-    return;
-  }
-
-  window.studyData.quizzes.forEach((quiz,index)=>{
-    const div = document.createElement('div');
-
-    div.className='quiz-card';
-
-    div.innerHTML=`
-      <div class="quiz-question">
-        ${index+1}. ${quiz.question}
-      </div>
-
-      <div class="quiz-options">
-        ${quiz.options.map(opt=>`
-          <button class="quiz-option"
-            onclick="checkQuiz(this,'${opt}','${quiz.answer}')">
-            ${opt}
-          </button>
-        `).join('')}
-      </div>
-    `;
-
-    container.appendChild(div);
-  });
-}
-
-function renderSources(){
-  const container =
-    document.getElementById('sources-list') ||
-    document.getElementById('study-sources-list');
-
-  if(!container) return;
-
-  if(!state.study[activeSubjectId]){
-    state.study[activeSubjectId] = {
-      notes: [],
-      flashcards: [],
-      quiz: [],
-      sources: []
-    };
-  }
-
-  const sources = state.study[activeSubjectId].sources || [];
-
-  container.innerHTML = '';
-
-  if(!sources.length){
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📚</div>
-        <div>No sources uploaded yet</div>
-      </div>
-    `;
-    return;
-  }
-
-  sources.forEach((src,index)=>{
-    const div = document.createElement('div');
-
-    div.className = 'source-item';
-
-    div.innerHTML = `
-      <div class="source-header">
-        <div class="source-name">
-          ${src.name || 'Untitled Source'}
-        </div>
-
-        <button class="icon-btn"
-          onclick="deleteSource(${index})">
-          ✕
-        </button>
-      </div>
-
-      <div class="source-meta">
-        ${(src.type || 'file').toUpperCase()}
-      </div>
-    `;
-
-    container.appendChild(div);
-  });
-}
-
-function renderMindmap(){
-  const canvas = document.getElementById('mindmap-canvas');
-
-  if(!canvas) return;
-
-  const ctx = canvas.getContext('2d');
-
-  canvas.width = canvas.offsetWidth;
-  canvas.height = 500;
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  ctx.font = '16px sans-serif';
-
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-
-  ctx.beginPath();
-  ctx.arc(centerX,centerY,60,0,Math.PI*2);
-  ctx.fillStyle='#B5472A';
-  ctx.fill();
-
-  ctx.fillStyle='#fff';
-  ctx.textAlign='center';
-  ctx.fillText('Study Topic',centerX,centerY+5);
-}
+// Legacy study helpers removed. `state.study[subjectId]` is the single source of truth.
+// Active renderers: renderStudy() (pipeline), renderNotesPanel, renderFlashcardsPanel,
+// renderQuizPanel, renderMindMap, renderNotebookSources / renderSourcesPanel, renderStudyChat.
 
 // ===================== INIT =====================
 function showOnboarding(){
