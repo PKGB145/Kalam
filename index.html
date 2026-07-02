@@ -4147,42 +4147,101 @@ async function generateMindMapFromSource(id){
 }
 
 // ===================== EXAMS =====================
+function _ensureExamShape(e){
+  if(!e) return e;
+  if(!Array.isArray(e.syllabus)) e.syllabus=[];
+  if(typeof e.studySeconds!=='number') e.studySeconds=0;
+  return e;
+}
+function _examDaysOut(e){
+  if(!e.date) return null;
+  return Math.ceil((new Date(e.date)-new Date(today()))/86400000);
+}
+function _fmtStudyDuration(sec){
+  sec=Math.max(0, Math.round(sec||0));
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60);
+  if(h) return h+'h '+m+'m';
+  if(m) return m+'m';
+  return sec+'s';
+}
+function _examCardHTML(e){
+  _ensureExamShape(e);
+  const daysOut=_examDaysOut(e);
+  const isPast = daysOut!=null && daysOut<0;
+  const tag = daysOut==null?'':
+    daysOut<0?`<span style="color:var(--faint);font-size:11px;">${fmtDate(e.date)}</span>`:
+    daysOut===0?'<span style="color:var(--accent);font-size:11px;font-weight:600;">Today</span>':
+    `<span style="color:var(--accent);font-size:11px;font-weight:600;">in ${daysOut} day${daysOut===1?'':'s'}</span>`;
+  const hasScore = e.scored!=null && e.maxMarks;
+  const scoreLine = hasScore
+    ? `<div style="font-size:12px;margin-top:4px;">Score: <strong>${e.scored}/${e.maxMarks}</strong> (${Math.round(e.scored/e.maxMarks*100)}%) <button class="btn-icon" title="Edit score" onclick="openExamScoreModal('${e.id}')" style="padding:0 4px;">✎</button></div>`
+    : (e.maxMarks?`<div style="font-size:11px;color:var(--faint);margin-top:4px;">Max marks: ${e.maxMarks}</div>`:'');
+  // Auto score prompt: exam >=7 days past with maxMarks but no score
+  const daysSince = daysOut==null?null:-daysOut;
+  const needsScorePrompt = isPast && !hasScore && daysSince!=null && daysSince>=7 && e.maxMarks;
+  const scorePrompt = needsScorePrompt
+    ? `<div style="margin-top:8px;padding:8px 10px;background:var(--accent-light);border-radius:8px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+         <span>📊 How did it go? Enter your score.</span>
+         <button class="btn btn-sm btn-primary" onclick="openExamScoreModal('${e.id}')">Enter score</button>
+       </div>`
+    : '';
+  // Syllabus checklist
+  const syl = e.syllabus||[];
+  const doneCount = syl.filter(s=>s.done).length;
+  const syllabusBlock = syl.length
+    ? `<div style="margin-top:8px;">
+         <div style="font-size:11px;color:var(--faint);margin-bottom:4px;">Syllabus · ${doneCount}/${syl.length}</div>
+         <div style="display:flex;flex-direction:column;gap:3px;">
+           ${syl.map((s,i)=>`<label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer;">
+             <input type="checkbox" ${s.done?'checked':''} onchange="toggleExamSyllabus('${e.id}',${i})" style="margin:0;"/>
+             <span style="${s.done?'text-decoration:line-through;color:var(--faint);':''}">${s.text}</span>
+           </label>`).join('')}
+         </div>
+       </div>`
+    : '';
+  const studiedLine = e.studySeconds>0
+    ? `<div style="font-size:11px;color:var(--faint);margin-top:4px;">⏱ Studied ${_fmtStudyDuration(e.studySeconds)}</div>`
+    : '';
+  return `<div class="card" style="padding:12px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+      <div style="min-width:0;flex:1;">
+        <div style="font-weight:600;font-size:14px;">${e.title||'Exam'}</div>
+        <div style="font-size:11px;color:var(--faint);margin-top:2px;">${e.subject||'—'} · ${e.date?fmtDate(e.date):'no date'}</div>
+        ${e.portions?`<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;">📚 ${e.portions}</div>`:''}
+        ${syllabusBlock}
+        ${scoreLine}
+        ${studiedLine}
+        ${scorePrompt}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        ${tag}
+        <div style="display:flex;gap:4px;">
+          ${!isPast?`<button class="btn btn-ghost btn-sm" title="Start a focus session for this exam" onclick="startExamStudy('${e.id}')">📖 Study</button>`:''}
+          <button class="btn-icon" title="Edit" onclick="openEditExamModal('${e.id}')">✎</button>
+          <button class="btn-icon" style="color:var(--accent)" title="Delete" onclick="deleteExam('${e.id}')">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
 function renderExams(){
   if(!Array.isArray(state.exams)) state.exams=[];
+  state.exams.forEach(_ensureExamShape);
   const list=document.getElementById('exams-list');
   if(!list) return;
-  const exams=[...state.exams].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  if(!exams.length){
+  const td=today();
+  const sorted=[...state.exams].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const upcoming=sorted.filter(e=>!e.date || e.date>=td);
+  const past=sorted.filter(e=>e.date && e.date<td).reverse();
+  if(!sorted.length){
     list.innerHTML='<div class="empty-state"><div class="empty-state-icon">📝</div>No exams yet. Add your first one to track scores and trends.</div>';
   } else {
-    const td=today();
-    list.innerHTML=exams.map(e=>{
-      const daysOut = e.date ? Math.ceil((new Date(e.date)-new Date(td))/86400000) : null;
-      const tag = daysOut==null?'':
-        daysOut<0?`<span style="color:var(--faint);font-size:11px;">done · ${fmtDate(e.date)}</span>`:
-        daysOut===0?'<span style="color:var(--accent);font-size:11px;font-weight:600;">Today</span>':
-        `<span style="color:var(--accent);font-size:11px;font-weight:600;">in ${daysOut} day${daysOut===1?'':'s'}</span>`;
-      const scoreLine = (e.scored!=null && e.maxMarks)
-        ? `<div style="font-size:12px;margin-top:4px;">Score: <strong>${e.scored}/${e.maxMarks}</strong> (${Math.round(e.scored/e.maxMarks*100)}%)</div>`
-        : (e.maxMarks?`<div style="font-size:11px;color:var(--faint);margin-top:4px;">Max marks: ${e.maxMarks}</div>`:'');
-      return `<div class="card" style="padding:12px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-          <div style="min-width:0;flex:1;">
-            <div style="font-weight:600;font-size:14px;">${e.title||'Exam'}</div>
-            <div style="font-size:11px;color:var(--faint);margin-top:2px;">${e.subject||'—'} · ${e.date?fmtDate(e.date):'no date'}</div>
-            ${e.portions?`<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;">📚 ${e.portions}</div>`:''}
-            ${scoreLine}
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-            ${tag}
-            <div style="display:flex;gap:4px;">
-              <button class="btn-icon" title="Edit" onclick="openEditExamModal('${e.id}')">✎</button>
-              <button class="btn-icon" style="color:var(--accent)" title="Delete" onclick="deleteExam('${e.id}')">✕</button>
-            </div>
-          </div>
-        </div>
+    const section=(title,arr,empty)=>`
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:8px;">${title} · ${arr.length}</div>
+        ${arr.length?arr.map(_examCardHTML).join(''):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">${empty}</div>`}
       </div>`;
-    }).join('');
+    list.innerHTML = section('Upcoming exams', upcoming, 'Nothing coming up.') + section('Past exams', past, 'No past exams yet.');
   }
   drawExamsChart();
 }
@@ -4193,21 +4252,69 @@ function openEditExamModal(id){
   window._editingExamId=id;
   openModal('Edit Exam', examModalBody(e), 'saveExam');
 }
+function openExamScoreModal(id){
+  const e=state.exams.find(x=>x.id===id);
+  if(!e) return;
+  window._editingExamId=id;
+  const body=`
+    <div class="modal-field"><div class="modal-label">${e.title||'Exam'} — enter your score</div></div>
+    <div class="modal-field" style="display:flex;gap:8px;">
+      <div style="flex:1;"><div class="modal-label">Max marks</div><input type="number" class="modal-input" id="ex-max" value="${e.maxMarks!=null?e.maxMarks:''}" placeholder="100"/></div>
+      <div style="flex:1;"><div class="modal-label">Scored</div><input type="number" class="modal-input" id="ex-scored" value="${e.scored!=null?e.scored:''}" placeholder="0"/></div>
+    </div>`;
+  openModal('Enter Score', body, 'saveExamScore');
+}
+function saveExamScore(){
+  const e=state.exams.find(x=>x.id===window._editingExamId);
+  if(!e){ closeModal(); return; }
+  const max=parseFloat(document.getElementById('ex-max').value);
+  const scored=parseFloat(document.getElementById('ex-scored').value);
+  e.maxMarks=isNaN(max)?e.maxMarks:max;
+  e.scored=isNaN(scored)?null:scored;
+  saveState(); closeModal(); renderExams(); toast('Score saved','success');
+}
+function toggleExamSyllabus(id, idx){
+  const e=state.exams.find(x=>x.id===id);
+  if(!e || !e.syllabus || !e.syllabus[idx]) return;
+  e.syllabus[idx].done=!e.syllabus[idx].done;
+  saveState(); renderExams();
+}
+function _parseSyllabusInput(txt){
+  return (txt||'').split(/\r?\n/).map(l=>l.replace(/^[\s\-\*•\d\.\)]+/,'').trim()).filter(Boolean)
+    .map(text=>({text, done:false}));
+}
 function examModalBody(e){
   const subs=(state.subjects||[]).map(s=>`<option value="${s.name}" ${e&&e.subject===s.name?'selected':''}>${s.name}</option>`).join('');
+  const sylText = e && Array.isArray(e.syllabus) && e.syllabus.length
+    ? e.syllabus.map(s=>(s.done?'[x] ':'[ ] ')+s.text).join('\n')
+    : '';
   return `
     <div class="modal-field"><div class="modal-label">Title</div><input class="modal-input" id="ex-title" value="${e?e.title||'':''}" placeholder="e.g. Physics Midterm"/></div>
     <div class="modal-field"><div class="modal-label">Subject</div><select class="modal-input" id="ex-subject"><option value="">—</option>${subs}</select></div>
     <div class="modal-field"><div class="modal-label">Date</div><input type="date" class="modal-input" id="ex-date" value="${e&&e.date?e.date:''}"/></div>
-    <div class="modal-field"><div class="modal-label">Portions / Syllabus</div><textarea class="modal-input" id="ex-portions" rows="3" placeholder="Chapters, topics covered…">${e&&e.portions?e.portions:''}</textarea></div>
+    <div class="modal-field"><div class="modal-label">Portions / Notes</div><textarea class="modal-input" id="ex-portions" rows="2" placeholder="Chapters, topics covered…">${e&&e.portions?e.portions:''}</textarea></div>
+    <div class="modal-field"><div class="modal-label">Syllabus checklist (one topic per line)</div><textarea class="modal-input" id="ex-syllabus" rows="4" placeholder="Kinematics&#10;Newton's laws&#10;Work & energy">${sylText}</textarea></div>
     <div class="modal-field" style="display:flex;gap:8px;">
       <div style="flex:1;"><div class="modal-label">Max marks</div><input type="number" class="modal-input" id="ex-max" value="${e&&e.maxMarks!=null?e.maxMarks:''}" placeholder="100"/></div>
       <div style="flex:1;"><div class="modal-label">Scored</div><input type="number" class="modal-input" id="ex-scored" value="${e&&e.scored!=null?e.scored:''}" placeholder="optional"/></div>
     </div>`;
 }
-function _readExamForm(){
+function _readExamForm(existing){
   const max=parseFloat(document.getElementById('ex-max').value);
   const scored=parseFloat(document.getElementById('ex-scored').value);
+  const sylRaw=document.getElementById('ex-syllabus');
+  const existingSyl = existing && Array.isArray(existing.syllabus) ? existing.syllabus : [];
+  let syllabus = existingSyl;
+  if(sylRaw){
+    const lines=(sylRaw.value||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    syllabus = lines.map(l=>{
+      const m=l.match(/^\[( |x|X)\]\s*(.*)$/);
+      const done = !!(m && m[1].toLowerCase()==='x');
+      const text = m ? m[2] : l.replace(/^[\-\*•\d\.\)\s]+/, '');
+      const prev = existingSyl.find(s=>s.text===text);
+      return { text, done: done || (prev && prev.done) || false };
+    });
+  }
   return {
     title: document.getElementById('ex-title').value.trim(),
     subject: document.getElementById('ex-subject').value,
@@ -4215,20 +4322,21 @@ function _readExamForm(){
     portions: document.getElementById('ex-portions').value.trim(),
     maxMarks: isNaN(max)?null:max,
     scored: isNaN(scored)?null:scored,
+    syllabus,
   };
 }
 function addExam(){
-  const data=_readExamForm();
+  const data=_readExamForm(null);
   if(!data.title){ toast('Enter a title','error'); return; }
-  const ex={id:uid(), ...data};
+  const ex={id:uid(), studySeconds:0, ...data};
   state.exams.push(ex);
   saveState(); closeModal(); renderExams(); toast('Exam added!','success');
   gcalPushItem('exam',ex);
 }
 function saveExam(){
-  const data=_readExamForm();
   const e=state.exams.find(x=>x.id===window._editingExamId);
   if(!e){ closeModal(); return; }
+  const data=_readExamForm(e);
   Object.assign(e,data); saveState(); closeModal(); renderExams(); toast('Exam updated!','success');
   gcalPushItem('exam',e);
 }
@@ -4237,8 +4345,46 @@ function deleteExam(id){
   const ex=state.exams.find(e=>e.id===id);
   if(ex) gcalDeleteFor('exam',ex);
   state.exams=state.exams.filter(e=>e.id!==id);
+  if(state.pomodoro && state.pomodoro.activeExamId===id) state.pomodoro.activeExamId=null;
   saveState(); renderExams(); toast('Deleted');
 }
+function startExamStudy(id){
+  const e=state.exams.find(x=>x.id===id);
+  if(!e) return;
+  state.pomodoro = state.pomodoro || {};
+  state.pomodoro.activeExamId = id;
+  saveState();
+  navigate('pomodoro');
+  setTimeout(()=>{ setPomoMode('focus'); renderPomoExamBanner(); }, 60);
+  toast('Focus session linked to "'+(e.title||'exam')+'"','success');
+}
+function clearExamStudyLink(){
+  if(!state.pomodoro) return;
+  state.pomodoro.activeExamId=null;
+  saveState();
+  renderPomoExamBanner();
+}
+function renderPomoExamBanner(){
+  const page=document.getElementById('page-pomodoro');
+  if(!page) return;
+  let banner=document.getElementById('pomo-exam-banner');
+  const id=state.pomodoro && state.pomodoro.activeExamId;
+  const ex=id?state.exams.find(x=>x.id===id):null;
+  if(!ex){
+    if(banner) banner.remove();
+    return;
+  }
+  const html=`📖 Linked to <strong>${ex.title||'exam'}</strong>${ex.date?' · '+fmtDate(ex.date):''} · Studied ${_fmtStudyDuration(ex.studySeconds||0)} <button class="btn-icon" title="Unlink" onclick="clearExamStudyLink()" style="margin-left:6px;">✕</button>`;
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='pomo-exam-banner';
+    banner.style.cssText='margin:0 0 12px;padding:8px 12px;background:var(--accent-light);border-radius:8px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+    const layout=page.querySelector('.pomodoro-layout');
+    if(layout) page.insertBefore(banner, layout); else page.prepend(banner);
+  }
+  banner.innerHTML=html;
+}
+
 function drawExamsChart(){
   const canvas=document.getElementById('exams-chart');
   const legendEl=document.getElementById('exams-chart-legend');
@@ -4514,6 +4660,7 @@ function renderPomodoro(){
   updatePomoSettings();
   renderPomoDots();
   updatePomoDisplay();
+  renderPomoExamBanner();
 }
 function updatePomoSettings(){
   const f=parseInt(document.getElementById('rng-focus').value);
@@ -4628,6 +4775,17 @@ function pomoComplete(){
     if(state.pomodoro.lastDate!==td){ state.pomodoro.sessionsToday=0; state.pomodoro.focusMinutesToday=0; state.pomodoro.lastDate=td; }
     state.pomodoro.sessionsToday++;
     state.pomodoro.focusMinutesToday+=pomoSettings.focus;
+    state.pomodoro.totalFocusMinutes=(state.pomodoro.totalFocusMinutes||0)+pomoSettings.focus;
+    // Credit study time to linked exam
+    const linkedId = state.pomodoro.activeExamId;
+    if(linkedId){
+      const ex = state.exams.find(x=>x.id===linkedId);
+      if(ex){
+        _ensureExamShape(ex);
+        ex.studySeconds = (ex.studySeconds||0) + pomoSettings.focus*60;
+        renderPomoExamBanner();
+      }
+    }
     saveState();
     renderPomoDots();
     toast('Focus session complete! 🎉','success');
@@ -5339,7 +5497,7 @@ function modalConfirm(){
     addTask, saveTask,
     addGoal, saveGoal,
     addAssignment,
-    addExam, saveExam,
+    addExam, saveExam, saveExamScore,
     addFlashcard,
     addQuizQuestion,
     addSource,
