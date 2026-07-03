@@ -1919,6 +1919,12 @@ select.modal-input { cursor: pointer; }
             </select>
           </div>
         </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Timezone</div><div class="settings-desc" id="tz-current-desc">Detected automatically from your device</div></div>
+          <div class="settings-control">
+            <select class="settings-select" id="s-timezone" onchange="setTimezone(this.value)"></select>
+          </div>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -2302,8 +2308,17 @@ const EXPORT_EXCLUDE = ['pomodoro'];
 
 // ===================== UTILS =====================
 function uid(){ return Math.random().toString(36).slice(2,9); }
-function today(){ return new Date().toISOString().slice(0,10); }
-function fmtDate(d){ const dt=new Date(d); return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function getUserTZ(){ try{ return (state&&state.settings&&state.settings.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(_){ return 'UTC'; } }
+function today(){
+  try{
+    const tz=getUserTZ();
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const y=parts.find(p=>p.type==='year').value, m=parts.find(p=>p.type==='month').value, d=parts.find(p=>p.type==='day').value;
+    return y+'-'+m+'-'+d;
+  }catch(_){ return new Date().toISOString().slice(0,10); }
+}
+function offsetDate(iso, delta){ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+delta); return dt.toISOString().slice(0,10); }
+function fmtDate(d){ const dt=new Date(d); try{ return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:getUserTZ()}); }catch(_){ return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); } }
 function toast(msg,type=''){
   const t=document.createElement('div');
   t.className='toast'+(type?' '+type:'');
@@ -2544,6 +2559,10 @@ function renderDashAgenda(){
   // Tasks due today
   state.tasks.filter(t=>!t.done&&t.due===td).forEach(t=>{
     items.push({type:'task',icon:'✓',title:t.text,meta:t.tag||'',time:'',color:'var(--accent)'});
+  });
+  // Exams today
+  (state.exams||[]).filter(e=>e.date===td).forEach(e=>{
+    items.push({type:'exam',icon:'📝',title:e.title||'Exam',meta:e.subject||'',time:'',color:'var(--warn)'});
   });
   // Sort by time
   items.sort((a,b)=>(a.time||'99:99')>(b.time||'99:99')?1:-1);
@@ -3333,23 +3352,23 @@ function renderEventsList(){
   if(!el) return;
   ensureEvents();
   const td=today();
-  const seen=new Set();
+  const tomorrowStr=offsetDate(td,1);
+  const days=[td, tomorrowStr];
   const upcoming=[];
-  for(let i=0;i<60;i++){
-    const dt=new Date(); dt.setDate(dt.getDate()+i);
-    const ds=dt.toISOString().slice(0,10);
-    const evs=getEventsOnDate(ds);
-    evs.forEach(ev=>{
-      const key=ev.id+'_'+ds;
-      if(!seen.has(key)){ seen.add(key); upcoming.push({...ev,_showDate:ds}); }
+  days.forEach(ds=>{
+    getEventsOnDate(ds).forEach(ev=>upcoming.push({...ev,_showDate:ds}));
+    // include exams
+    (state.exams||[]).filter(e=>e.date===ds).forEach(e=>{
+      upcoming.push({id:'exam-'+e.id,_showDate:ds,type:'exam',title:'📝 '+(e.title||'Exam'),time:'',_meta:e.subject||''});
     });
-  }
-  upcoming.sort((a,b)=>a._showDate>b._showDate?1:-1);
-  if(!upcoming.length){ el.innerHTML='<div class="empty-state">No upcoming events or classes.</div>'; return; }
+    // include tasks due
+    (state.tasks||[]).filter(t=>!t.done&&t.due===ds).forEach(t=>{
+      upcoming.push({id:'task-'+t.id,_showDate:ds,type:'task',title:'✓ '+t.text,time:'',_meta:t.tag||''});
+    });
+  });
+  if(!upcoming.length){ el.innerHTML='<div class="empty-state">Nothing scheduled today or tomorrow.</div>'; return; }
   const byDate={};
-  upcoming.slice(0,40).forEach(ev=>{ if(!byDate[ev._showDate]) byDate[ev._showDate]=[]; byDate[ev._showDate].push(ev); });
-  const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomorrowStr=tomorrow.toISOString().slice(0,10);
+  upcoming.forEach(ev=>{ if(!byDate[ev._showDate]) byDate[ev._showDate]=[]; byDate[ev._showDate].push(ev); });
   let html='';
   for(const [ds,evs] of Object.entries(byDate)){
     const dt=new Date(ds+'T00:00:00');
@@ -3357,14 +3376,19 @@ function renderEventsList(){
     html+='<div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;padding:8px 0 4px;">'+label+'</div>';
     for(const ev of evs){
       const isZoom=ev.type==='zoom';
-      const color=isZoom?'var(--success)':'var(--info)';
+      const isExam=ev.type==='exam';
+      const isTask=ev.type==='task';
+      const color=isZoom?'var(--success)':isExam?'var(--warn)':isTask?'var(--accent)':'var(--info)';
       html+='<div class="event-item">'+
         '<div class="event-dot" style="background:'+color+'"></div>'+
         '<div class="event-body">'+
           '<div class="event-title">'+ev.title+'</div>'+
           '<div class="event-meta">'+
             (ev.time?'<span>'+ev.time+'</span>':'')+
+            (ev._meta?'<span>'+ev._meta+'</span>':'')+
             (isZoom?'<span class="event-zoom-badge">Zoom</span>':'')+
+            (isExam?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--warn-light,#fde68a);color:var(--warn);">Exam</span>':'')+
+            (isTask?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--accent-light);color:var(--accent);">Task</span>':'')+
             (ev._gcal?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--info-light);color:var(--info);">Google</span>':'')+
             (ev.recur&&ev.recur!=='none'?'<span class="event-recur-badge">↻ '+ev.recur+'</span>':'')+
             (ev.location?'<span>📍 '+ev.location+'</span>':'')+
@@ -3372,7 +3396,7 @@ function renderEventsList(){
           '</div>'+
           (isZoom&&ev.link?'<a href="'+ev.link+'" target="_blank" style="display:inline-block;margin-top:5px;font-size:11px;background:var(--success);color:var(--bg);padding:3px 10px;border-radius:6px;font-weight:600;text-decoration:none;">Join Zoom</a>':'')+
         '</div>'+
-        '<button class="btn-icon" style="color:var(--accent);" onclick="deleteEvent(\''+ev.id+'\')">✕</button>'+
+        (isExam||isTask?'':'<button class="btn-icon" style="color:var(--accent);" onclick="deleteEvent(\''+ev.id+'\')">✕</button>')+
       '</div>';
     }
   }
@@ -4173,8 +4197,12 @@ function _examCardHTML(e){
     daysOut===0?'<span style="color:var(--accent);font-size:11px;font-weight:600;">Today</span>':
     `<span style="color:var(--accent);font-size:11px;font-weight:600;">in ${daysOut} day${daysOut===1?'':'s'}</span>`;
   const hasScore = e.scored!=null && e.maxMarks;
+  const hasExpected = e.expectedScore!=null && e.maxMarks;
+  const expectedLine = hasExpected && !hasScore
+    ? `<div style="font-size:12px;margin-top:4px;color:var(--muted);">🎯 Expected: <strong>${e.expectedScore}/${e.maxMarks}</strong> (${Math.round(e.expectedScore/e.maxMarks*100)}%)</div>`
+    : '';
   const scoreLine = hasScore
-    ? `<div style="font-size:12px;margin-top:4px;">Score: <strong>${e.scored}/${e.maxMarks}</strong> (${Math.round(e.scored/e.maxMarks*100)}%) <button class="btn-icon" title="Edit score" onclick="openExamScoreModal('${e.id}')" style="padding:0 4px;">✎</button></div>`
+    ? `<div style="font-size:12px;margin-top:4px;">Score: <strong>${e.scored}/${e.maxMarks}</strong> (${Math.round(e.scored/e.maxMarks*100)}%)${hasExpected?` <span style="color:var(--faint);">· expected ${e.expectedScore}</span>`:''} <button class="btn-icon" title="Edit score" onclick="openExamScoreModal('${e.id}')" style="padding:0 4px;">✎</button></div>`
     : (e.maxMarks?`<div style="font-size:11px;color:var(--faint);margin-top:4px;">Max marks: ${e.maxMarks}</div>`:'');
   // Auto score prompt: exam >=7 days past with maxMarks but no score
   const daysSince = daysOut==null?null:-daysOut;
@@ -4210,6 +4238,7 @@ function _examCardHTML(e){
         ${e.portions?`<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;">📚 ${e.portions}</div>`:''}
         ${syllabusBlock}
         ${scoreLine}
+        ${expectedLine}
         ${studiedLine}
         ${scorePrompt}
       </div>
@@ -4236,12 +4265,19 @@ function renderExams(){
   if(!sorted.length){
     list.innerHTML='<div class="empty-state"><div class="empty-state-icon">📝</div>No exams yet. Add your first one to track scores and trends.</div>';
   } else {
-    const section=(title,arr,empty)=>`
+    const upcomingHTML=`
       <div style="margin-bottom:14px;">
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:8px;">${title} · ${arr.length}</div>
-        ${arr.length?arr.map(_examCardHTML).join(''):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">${empty}</div>`}
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:8px;">Upcoming exams · ${upcoming.length}</div>
+        ${upcoming.length?upcoming.map(_examCardHTML).join(''):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">Nothing coming up.</div>`}
       </div>`;
-    list.innerHTML = section('Upcoming exams', upcoming, 'Nothing coming up.') + section('Past exams', past, 'No past exams yet.');
+    const pastHTML=`
+      <details style="margin-bottom:14px;" ${past.length?'':'open'}>
+        <summary style="cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:8px;user-select:none;list-style:none;">▸ Past exams · ${past.length}</summary>
+        <div style="margin-top:8px;">
+          ${past.length?past.map(_examCardHTML).join(''):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">No past exams yet.</div>`}
+        </div>
+      </details>`;
+    list.innerHTML = upcomingHTML + pastHTML;
   }
   drawExamsChart();
 }
@@ -4296,12 +4332,15 @@ function examModalBody(e){
     <div class="modal-field"><div class="modal-label">Syllabus checklist (one topic per line)</div><textarea class="modal-input" id="ex-syllabus" rows="4" placeholder="Kinematics&#10;Newton's laws&#10;Work & energy">${sylText}</textarea></div>
     <div class="modal-field" style="display:flex;gap:8px;">
       <div style="flex:1;"><div class="modal-label">Max marks</div><input type="number" class="modal-input" id="ex-max" value="${e&&e.maxMarks!=null?e.maxMarks:''}" placeholder="100"/></div>
+      <div style="flex:1;"><div class="modal-label">Expected marks 🎯</div><input type="number" class="modal-input" id="ex-expected" value="${e&&e.expectedScore!=null?e.expectedScore:''}" placeholder="optional"/></div>
       <div style="flex:1;"><div class="modal-label">Scored</div><input type="number" class="modal-input" id="ex-scored" value="${e&&e.scored!=null?e.scored:''}" placeholder="optional"/></div>
     </div>`;
 }
 function _readExamForm(existing){
   const max=parseFloat(document.getElementById('ex-max').value);
   const scored=parseFloat(document.getElementById('ex-scored').value);
+  const expEl=document.getElementById('ex-expected');
+  const expected=expEl?parseFloat(expEl.value):NaN;
   const sylRaw=document.getElementById('ex-syllabus');
   const existingSyl = existing && Array.isArray(existing.syllabus) ? existing.syllabus : [];
   let syllabus = existingSyl;
@@ -4322,6 +4361,7 @@ function _readExamForm(existing){
     portions: document.getElementById('ex-portions').value.trim(),
     maxMarks: isNaN(max)?null:max,
     scored: isNaN(scored)?null:scored,
+    expectedScore: isNaN(expected)?(existing?existing.expectedScore:null):expected,
     syllabus,
   };
 }
@@ -4491,6 +4531,29 @@ function checkTaskReminders(){
         notified[key].overdueCount++;
         notified[key].lastNudge=Date.now();
       }
+    }
+  });
+  // Exam score reminder — exactly 7 days after exam date, once
+  (state.exams||[]).forEach(e=>{
+    if(!e.date) return;
+    const dt=new Date(e.date+'T00:00:00');
+    const daysSince=Math.floor((now-dt)/86400000);
+    const hasScore = e.scored!=null;
+    if(daysSince>=7 && !hasScore && !e.scoreReminded){
+      _fireNotif('Enter your exam score', 'It\'s been a week since '+(e.title||'your exam')+'. How did it go?');
+      e.scoreReminded=true;
+      try{
+        if(typeof showFullscreenReminder==='function'){
+          showFullscreenReminder({
+            icon:'📊',
+            title:'Time to record your score',
+            message: 'It\'s been a week since '+(e.title||'your exam')+'. Enter your marks to keep tracking progress.',
+            actionLabel:'Enter score',
+            onAction: ()=>{ try{ navigate('exams'); openExamScoreModal(e.id); }catch(_){} }
+          });
+        }
+      }catch(_){}
+      saveState();
     }
   });
   _setNotified(notified);
@@ -5383,9 +5446,30 @@ function renderSettings(){
   document.getElementById('rng-sidebar').value=state.settings.sidebarWidth||220;
   document.getElementById('s-font').value=state.settings.font||"'DM Sans',sans-serif";
   document.getElementById('s-density').value=state.settings.density||'spacious';
+  populateTimezoneSelect();
   const tog=document.getElementById('eye-notif-toggle');
   if(state.settings.eyeNotif) tog.classList.add('on'); else tog.classList.remove('on');
   updateFirebaseStatus();
+}
+function populateTimezoneSelect(){
+  const sel=document.getElementById('s-timezone'); if(!sel) return;
+  const detected=(function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(_){ return 'UTC'; } })();
+  const current=state.settings.timezone||detected;
+  let zones=[];
+  try{ if(typeof Intl.supportedValuesOf==='function') zones=Intl.supportedValuesOf('timeZone'); }catch(_){}
+  if(!zones.length){ zones=['UTC','Asia/Kolkata','Asia/Dubai','Asia/Singapore','Asia/Tokyo','Europe/London','Europe/Paris','Europe/Berlin','America/New_York','America/Chicago','America/Denver','America/Los_Angeles','Australia/Sydney','Africa/Johannesburg']; }
+  if(!zones.includes(current)) zones.unshift(current);
+  sel.innerHTML=zones.map(z=>`<option value="${z}" ${z===current?'selected':''}>${z}</option>`).join('');
+  const desc=document.getElementById('tz-current-desc');
+  if(desc) desc.textContent='Detected: '+detected+' · Currently using: '+current;
+}
+function setTimezone(tz){
+  state.settings.timezone=tz; saveState();
+  toast('Timezone set to '+tz,'success');
+  const desc=document.getElementById('tz-current-desc');
+  if(desc) desc.textContent='Currently using: '+tz;
+  // Re-render date-dependent views
+  try{ renderDashboard&&renderDashboard(); renderCalendar&&renderCalendar(); renderExams&&renderExams(); }catch(_){}
 }
 function saveSetting(key,value){ state.settings[key]=value; saveState(); }
 function setBg(color, swatchEl){
