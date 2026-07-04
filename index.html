@@ -1359,35 +1359,48 @@ select.modal-input { cursor: pointer; }
         </div>
       </div>
 
-      <!-- MIDDLE ROW: Journal + right column (tasks + agenda) -->
+      <!-- MIDDLE ROW: compact journal editor + right column (mini cal + journal list + tasks + screen time) -->
       <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px;" class="dash-main-row">
-        <!-- Journal card -->
-        <div class="dash-section card" id="dash-journal-widget">
+        <!-- Brain Dump → compact journal editor -->
+        <div class="dash-section card" id="dash-brainDump-widget">
           <div class="dash-section-header" style="margin-bottom:10px;">
-            <div class="card-title" style="margin-bottom:0;">Journal</div>
+            <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
             <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-              <button class="btn btn-primary btn-sm" onclick="dashNewJournalEntry()">+ Entry</button>
+              <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+              <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
             </div>
           </div>
-          <div class="dash-section-body" id="dash-journal-body">
-            <div id="dash-journal-quick">
-              <input class="journal-small-input" id="dash-jq-title" placeholder="Entry title…" style="width:100%;margin-bottom:8px;display:block;"/>
-              <textarea class="journal-textarea" id="dash-jq-content" placeholder="What's on your mind today? Write freely…" style="width:100%;min-height:180px;height:180px;font-size:13.5px;line-height:1.85;resize:vertical;display:block;box-sizing:border-box;"></textarea>
-              <div style="display:flex;gap:6px;justify-content:space-between;align-items:center;margin-top:8px;">
-                <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
-                <div style="display:flex;gap:6px;">
-                  <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
-                  <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save Entry</button>
-                </div>
-              </div>
-            </div>
-            <div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;margin:12px 0 6px;">Recent Entries</div>
-            <div id="dash-journal-list"></div>
+          <div class="dash-section-body" id="dash-brainDump-body">
+            <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
+            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — it saves to your journal." style="width:100%;min-height:140px;height:140px;font-size:13px;line-height:1.7;resize:vertical;display:block;box-sizing:border-box;"></textarea>
           </div>
         </div>
 
-        <!-- Right column: Tasks + Brain Dump quick + Screen time -->
+        <!-- Right column: Mini calendar + small Journal + Tasks + Screen time -->
         <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="dash-section card" id="dash-minical-widget">
+            <div class="dash-section-header">
+              <div class="card-title" style="margin-bottom:0;">Calendar</div>
+              <div style="display:flex;gap:4px;align-items:center;">
+                <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(-1)">←</button>
+                <span id="dash-minical-label" style="font-size:11px;color:var(--faint);min-width:80px;text-align:center;"></span>
+                <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(1)">→</button>
+              </div>
+            </div>
+            <div class="dash-section-body">
+              <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;"></div>
+            </div>
+          </div>
+          <div class="dash-section card" id="dash-journal-widget">
+            <div class="dash-section-header">
+              <div class="card-title" style="margin-bottom:0;">Journal</div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('journal')" style="font-size:11px;">Open →</button>
+            </div>
+            <div class="dash-section-body" id="dash-journal-body">
+              <div id="dash-journal-list"></div>
+            </div>
+          </div>
           <div class="dash-section card" id="dash-tasks-widget">
             <div class="dash-section-header">
               <div class="card-title" style="margin-bottom:0;">Tasks</div>
@@ -1397,16 +1410,6 @@ select.modal-input { cursor: pointer; }
             </div>
             <div class="dash-section-body" id="dash-tasks-body">
               <div id="dash-tasks-list"></div>
-            </div>
-          </div>
-          <div class="dash-section card" id="dash-brainDump-widget">
-            <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
-              <button class="btn btn-ghost btn-sm" onclick="navigate('brainDump')" style="font-size:11px;">Open →</button>
-            </div>
-            <div class="dash-section-body" id="dash-brainDump-body">
-              <input class="search-input" id="dash-bd-input" placeholder="Quick dump — Enter to save…" style="margin-bottom:8px;font-size:12px;" onkeydown="if(event.key==='Enter')dashQuickBrainDump()"/>
-              <div id="dash-bd-list"></div>
             </div>
           </div>
           <div class="dash-section card" id="dash-screentime-widget">
@@ -1603,7 +1606,7 @@ select.modal-input { cursor: pointer; }
       <div class="grid-2" style="align-items:start;">
         <div class="card">
           <div class="section-header" style="margin-bottom:12px;">
-            <div class="section-title">Events & Classes</div>
+            <div class="section-title">Today's Schedule</div>
             <div style="display:flex;gap:6px;">
               <button class="btn btn-primary btn-sm" onclick="openAddEventModal()">+ Event</button>
               <button class="btn btn-ghost btn-sm" onclick="openAddZoomModal()">+ Zoom</button>
@@ -2474,6 +2477,7 @@ function renderDashboard(){
   renderDashTasks();
   renderDashJournal();
   renderDashAgenda();
+  try{ renderDashMiniCal(); }catch(e){}
   renderDashTodo();
   applyAllDashSections();
   initDashJournalWordCount();
@@ -2533,15 +2537,40 @@ function renderDashTasks(){
 }
 function renderDashJournal(){
   const el=document.getElementById('dash-journal-list');
-  if(!state.journal.length){ el.innerHTML='<div class="empty-state">No journal entries yet.</div>'; return; }
-  el.innerHTML=state.journal.slice(0,2).map(e=>`
-    <div class="journal-entry-card" onclick="navigate('journal')">
-      <div class="journal-entry-date">${fmtDate(e.date)}</div>
-      <div class="journal-entry-title">${e.title||'Untitled'}</div>
-      <div class="journal-entry-preview">${(e.content||'').slice(0,80)}…</div>
-      ${e.mood?`<span class="journal-mood-badge">${e.mood}</span>`:''}
+  if(!el) return;
+  if(!state.journal.length){ el.innerHTML='<div class="empty-state" style="padding:8px 0;font-size:11px;">No entries yet.</div>'; return; }
+  el.innerHTML=state.journal.slice(0,3).map(e=>`
+    <div onclick="navigate('journal')" style="padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="font-size:10px;color:var(--faint);">${fmtDate(e.date)}</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(e.title||'Untitled')}</div>
+      <div style="font-size:10px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${((e.content||'').slice(0,60))}…</div>
     </div>
   `).join('');
+}
+// Mini calendar on dashboard
+let dashMiniCalOffset=0; // months from current
+function dashMiniCalNav(delta){ dashMiniCalOffset+=delta; renderDashMiniCal(); }
+function renderDashMiniCal(){
+  const grid=document.getElementById('dash-minical-grid');
+  const label=document.getElementById('dash-minical-label');
+  if(!grid) return;
+  const now=new Date();
+  const view=new Date(now.getFullYear(), now.getMonth()+dashMiniCalOffset, 1);
+  const y=view.getFullYear(), m=view.getMonth();
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(label) label.textContent=months[m]+' '+y;
+  const first=new Date(y,m,1).getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const td=today();
+  let html=['S','M','T','W','T','F','S'].map(d=>'<div style="text-align:center;font-size:9px;color:var(--faint);font-weight:700;padding:2px 0;">'+d+'</div>').join('');
+  for(let i=0;i<first;i++) html+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isToday=ds===td;
+    const hasEv=(getEventsOnDate(ds).length>0)||((state.exams||[]).some(e=>e.date===ds))||(state.assignments||[]).some(a=>a.due===ds&&!a.done);
+    html+='<div onclick="calSelectedDate=\''+ds+'\';navigate(\'calendar\');" style="cursor:pointer;text-align:center;padding:3px 0;border-radius:5px;font-size:11px;position:relative;'+(isToday?'background:var(--accent);color:var(--bg);font-weight:700;':'')+'">'+d+(hasEv?'<div style="position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:'+(isToday?'var(--bg)':'var(--accent)')+';"></div>':'')+'</div>';
+  }
+  grid.innerHTML=html;
 }
 function renderDashAgenda(){
   const el=document.getElementById('dash-agenda-list');
@@ -2597,7 +2626,7 @@ function saveDashJournal(){
   state.journal.unshift(entry);
   activeJournalId=entry.id;
   saveState();
-  cancelDashJournal();
+  clearDashJournalEditor();
   renderDashJournal();
   toast('Entry saved!','success');
 }
@@ -3352,34 +3381,48 @@ function renderEventsList(){
   if(!el) return;
   ensureEvents();
   const td=today();
-  const tomorrowStr=offsetDate(td,1);
-  const days=[td, tomorrowStr];
-  const upcoming=[];
+  const now=new Date();
+  const curMin=now.getHours()*60+now.getMinutes();
+  const parseHM=(t)=>{ if(!t) return null; const m=String(t).match(/^(\d{1,2}):(\d{2})/); return m?(+m[1])*60+(+m[2]):null; };
+  // Build 7-day window: today + next 6 days. No tasks. Events + exams only.
+  const days=[]; for(let i=0;i<7;i++) days.push(offsetDate(td,i));
+  const items=[];
   days.forEach(ds=>{
-    getEventsOnDate(ds).forEach(ev=>upcoming.push({...ev,_showDate:ds}));
-    // include exams
+    getEventsOnDate(ds).forEach(ev=>items.push({...ev,_showDate:ds}));
     (state.exams||[]).filter(e=>e.date===ds).forEach(e=>{
-      upcoming.push({id:'exam-'+e.id,_showDate:ds,type:'exam',title:'📝 '+(e.title||'Exam'),time:'',_meta:e.subject||''});
-    });
-    // include tasks due
-    (state.tasks||[]).filter(t=>!t.done&&t.due===ds).forEach(t=>{
-      upcoming.push({id:'task-'+t.id,_showDate:ds,type:'task',title:'✓ '+t.text,time:'',_meta:t.tag||''});
+      items.push({id:'exam-'+e.id,_showDate:ds,type:'exam',title:'📝 '+(e.title||'Exam'),time:e.time||'',_meta:e.subject||''});
     });
   });
-  if(!upcoming.length){ el.innerHTML='<div class="empty-state">Nothing scheduled today or tomorrow.</div>'; return; }
+  // For today: hide timed events that already ended; mark past (started but not ended) as dim
+  const filtered=[];
+  for(const ev of items){
+    if(ev._showDate!==td){ filtered.push(ev); continue; }
+    const startMin=parseHM(ev.time);
+    if(startMin==null){ filtered.push(ev); continue; }
+    const dur=Number(ev.duration)||0;
+    const endMin=startMin+(dur>0?dur:60); // default 60min if no duration
+    if(dur>0 && curMin>=endMin) continue; // hide fully ended timed events
+    if(curMin>=startMin && curMin<endMin) ev._dim=false; // in progress
+    if(curMin>=startMin) ev._past=true;
+    filtered.push(ev);
+  }
+  if(!filtered.length){ el.innerHTML='<div class="empty-state">Nothing scheduled today or in the next 7 days.</div>'; return; }
   const byDate={};
-  upcoming.forEach(ev=>{ if(!byDate[ev._showDate]) byDate[ev._showDate]=[]; byDate[ev._showDate].push(ev); });
+  filtered.forEach(ev=>{ (byDate[ev._showDate]=byDate[ev._showDate]||[]).push(ev); });
+  const tomorrowStr=offsetDate(td,1);
   let html='';
-  for(const [ds,evs] of Object.entries(byDate)){
+  for(const ds of days){
+    const evs=byDate[ds]; if(!evs||!evs.length) continue;
+    evs.sort((a,b)=>(a.time||'99:99')>(b.time||'99:99')?1:-1);
     const dt=new Date(ds+'T00:00:00');
-    const label=ds===td?'Today':ds===tomorrowStr?'Tomorrow':dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    html+='<div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;padding:8px 0 4px;">'+label+'</div>';
+    const label=ds===td?"Today's Schedule":ds===tomorrowStr?'Tomorrow':dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+    html+='<div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.06em;padding:10px 0 4px;">'+label+'</div>';
     for(const ev of evs){
       const isZoom=ev.type==='zoom';
       const isExam=ev.type==='exam';
-      const isTask=ev.type==='task';
-      const color=isZoom?'var(--success)':isExam?'var(--warn)':isTask?'var(--accent)':'var(--info)';
-      html+='<div class="event-item">'+
+      const color=isZoom?'var(--success)':isExam?'var(--warn)':'var(--info)';
+      const dimStyle=ev._past?'opacity:0.5;':'';
+      html+='<div class="event-item" style="'+dimStyle+'">'+
         '<div class="event-dot" style="background:'+color+'"></div>'+
         '<div class="event-body">'+
           '<div class="event-title">'+ev.title+'</div>'+
@@ -3388,15 +3431,15 @@ function renderEventsList(){
             (ev._meta?'<span>'+ev._meta+'</span>':'')+
             (isZoom?'<span class="event-zoom-badge">Zoom</span>':'')+
             (isExam?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--warn-light,#fde68a);color:var(--warn);">Exam</span>':'')+
-            (isTask?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--accent-light);color:var(--accent);">Task</span>':'')+
             (ev._gcal?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--info-light);color:var(--info);">Google</span>':'')+
             (ev.recur&&ev.recur!=='none'?'<span class="event-recur-badge">↻ '+ev.recur+'</span>':'')+
             (ev.location?'<span>📍 '+ev.location+'</span>':'')+
             (ev.duration&&isZoom?'<span>'+ev.duration+' min</span>':'')+
+            (ev._past?'<span style="font-size:10px;color:var(--faint);">· past</span>':'')+
           '</div>'+
           (isZoom&&ev.link?'<a href="'+ev.link+'" target="_blank" style="display:inline-block;margin-top:5px;font-size:11px;background:var(--success);color:var(--bg);padding:3px 10px;border-radius:6px;font-weight:600;text-decoration:none;">Join Zoom</a>':'')+
         '</div>'+
-        (isExam||isTask?'':'<button class="btn-icon" style="color:var(--accent);" onclick="deleteEvent(\''+ev.id+'\')">✕</button>')+
+        (isExam?'':'<button class="btn-icon" style="color:var(--accent);" onclick="deleteEvent(\''+ev.id+'\')">✕</button>')+
       '</div>';
     }
   }
