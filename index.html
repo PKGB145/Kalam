@@ -1325,8 +1325,8 @@ select.modal-input { cursor: pointer; }
         <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0</div></div>
       </div>
 
-      <!-- TOP ROW: Habits + Todo + Today's Agenda -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;" class="dash-top-row">
+      <!-- TOP ROW: Habits + Todo + Today's Agenda + Tasks -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px;" class="dash-top-row">
         <!-- Habits -->
         <div class="dash-section card" id="dash-habits-widget">
           <div class="dash-section-header">
@@ -1357,10 +1357,23 @@ select.modal-input { cursor: pointer; }
             <div id="dash-agenda-list"></div>
           </div>
         </div>
+        <!-- Tasks -->
+        <div class="dash-section card" id="dash-tasks-widget">
+          <div class="dash-section-header">
+            <div class="card-title" style="margin-bottom:0;">Tasks</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button class="btn btn-primary btn-sm" onclick="openAddTaskModal();setTimeout(()=>{if(currentPage==='dashboard')renderDashboard();},100)">+</button>
+            </div>
+          </div>
+          <div class="dash-section-body" id="dash-tasks-body">
+            <div id="dash-tasks-list"></div>
+          </div>
+        </div>
       </div>
 
+
       <!-- MIDDLE ROW: compact journal editor + right column (mini cal + journal list + tasks + screen time) -->
-      <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px;" class="dash-main-row">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;" class="dash-main-row">
         <!-- Brain Dump → compact journal editor -->
         <div class="dash-section card" id="dash-brainDump-widget">
           <div class="dash-section-header" style="margin-bottom:10px;">
@@ -1373,12 +1386,26 @@ select.modal-input { cursor: pointer; }
           </div>
           <div class="dash-section-body" id="dash-brainDump-body">
             <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — it saves to your journal." style="width:100%;min-height:140px;height:140px;font-size:13px;line-height:1.7;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — it saves to your journal." style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
           </div>
         </div>
 
-        <!-- Right column: Mini calendar + small Journal + Tasks + Screen time -->
+        <!-- Right column: Journal + Mini calendar + Screen time -->
         <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="dash-section card" id="dash-journal-widget">
+            <div class="dash-section-header" style="margin-bottom:10px;">
+              <div class="card-title" style="margin-bottom:0;">Journal</div>
+              <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
+                <span id="dash-j2-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+                <button class="btn btn-ghost btn-sm" onclick="clearDashJournal2()">Clear</button>
+                <button class="btn btn-primary btn-sm" onclick="saveDashJournal2()">Save</button>
+              </div>
+            </div>
+            <div class="dash-section-body" id="dash-journal-body">
+              <input class="journal-small-input" id="dash-j2-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
+              <textarea class="journal-textarea" id="dash-j2-content" placeholder="Dump anything on your mind — it saves to your journal." style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+            </div>
+          </div>
           <div class="dash-section card" id="dash-minical-widget">
             <div class="dash-section-header">
               <div class="card-title" style="margin-bottom:0;">Calendar</div>
@@ -1390,26 +1417,6 @@ select.modal-input { cursor: pointer; }
             </div>
             <div class="dash-section-body">
               <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;"></div>
-            </div>
-          </div>
-          <div class="dash-section card" id="dash-journal-widget">
-            <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;">Journal</div>
-              <button class="btn btn-ghost btn-sm" onclick="navigate('journal')" style="font-size:11px;">Open →</button>
-            </div>
-            <div class="dash-section-body" id="dash-journal-body">
-              <div id="dash-journal-list"></div>
-            </div>
-          </div>
-          <div class="dash-section card" id="dash-tasks-widget">
-            <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;">Tasks</div>
-              <div style="display:flex;gap:6px;align-items:center;">
-                <button class="btn btn-primary btn-sm" onclick="openAddTaskModal();setTimeout(()=>{if(currentPage==='dashboard')renderDashboard();},100)">+</button>
-              </div>
-            </div>
-            <div class="dash-section-body" id="dash-tasks-body">
-              <div id="dash-tasks-list"></div>
             </div>
           </div>
           <div class="dash-section card" id="dash-screentime-widget">
@@ -2481,6 +2488,7 @@ function renderDashboard(){
   renderDashTodo();
   applyAllDashSections();
   initDashJournalWordCount();
+  initDashJournal2WordCount();
   const q=quotes[Math.floor(Date.now()/86400000)%quotes.length];
   document.getElementById('quote-text').textContent='"'+q.text+'"';
   document.getElementById('quote-author').textContent='— '+q.author;
@@ -2622,13 +2630,14 @@ function saveDashJournal(){
   const title=document.getElementById('dash-jq-title')?.value.trim()||'Untitled';
   const content=document.getElementById('dash-jq-content')?.value.trim()||'';
   if(!content){ toast('Write something first','error'); return; }
-  const entry={id:uid(),date:today(),title,mood:'',tags:[],content};
-  state.journal.unshift(entry);
-  activeJournalId=entry.id;
+  if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
+  const now=Date.now();
+  const d={id:uid(),title,body:content,createdAt:now,updatedAt:now};
+  state.brainDumps.unshift(d);
+  activeBrainDumpId=d.id;
   saveState();
   clearDashJournalEditor();
-  renderDashJournal();
-  toast('Entry saved!','success');
+  toast('Brain dump saved!','success');
 }
 
 // ===================== HABITS =====================
@@ -3081,6 +3090,7 @@ function openTemplateModal(){
     '<div class="card" style="cursor:pointer;padding:14px;" onclick="applyTemplate(\'gratitude\')"><div style="font-weight:600;margin-bottom:4px;">🙏 Gratitude Journal</div><div style="font-size:12px;color:var(--faint);">3 things + why they matter.</div></div>'+
     '<div class="card" style="cursor:pointer;padding:14px;" onclick="applyTemplate(\'study\')"><div style="font-weight:600;margin-bottom:4px;">📚 Study Session Log</div><div style="font-size:12px;color:var(--faint);">What I studied, understood, and need to revisit.</div></div>'+
     '<div class="card" style="cursor:pointer;padding:14px;" onclick="applyTemplate(\'reflect\')"><div style="font-weight:600;margin-bottom:4px;">🔍 Weekly Reflection</div><div style="font-size:12px;color:var(--faint);">Big picture — goals, progress, next week plan.</div></div>'+
+    '<div class="card" style="cursor:pointer;padding:14px;" onclick="applyTemplate(\'timelog\')"><div style="font-weight:600;margin-bottom:4px;">⏱ Time Log</div><div style="font-size:12px;color:var(--faint);">Hour-by-hour log of how you spent your day.</div></div>'+
     '<div class="card" style="cursor:pointer;padding:14px;" onclick="applyTemplate(\'dump\')"><div style="font-weight:600;margin-bottom:4px;">🧠 Brain Dump</div><div style="font-size:12px;color:var(--faint);">Empty your head — thoughts, worries, ideas, anything.</div></div>'+
     '</div>'
   , null, false);
@@ -3249,6 +3259,44 @@ function applyTemplate(type){
       '────────────────────────────────────\n'+
       'AFTER THE DUMP — pick ONE thing to act on:\n'+
       '→ ',
+
+    timelog:
+      '⏱ TIME LOG — '+ds+'\n'+
+      '════════════════════════════════════\n'+
+      'Track how you actually spent your day, hour by hour.\n\n'+
+      '┌───────┬──────────────────────────────┬──────────┐\n'+
+      '│ Time  │ Activity                     │ Category │\n'+
+      '├───────┼──────────────────────────────┼──────────┤\n'+
+      '│ 06:00 │                              │          │\n'+
+      '│ 07:00 │                              │          │\n'+
+      '│ 08:00 │                              │          │\n'+
+      '│ 09:00 │                              │          │\n'+
+      '│ 10:00 │                              │          │\n'+
+      '│ 11:00 │                              │          │\n'+
+      '│ 12:00 │                              │          │\n'+
+      '│ 13:00 │                              │          │\n'+
+      '│ 14:00 │                              │          │\n'+
+      '│ 15:00 │                              │          │\n'+
+      '│ 16:00 │                              │          │\n'+
+      '│ 17:00 │                              │          │\n'+
+      '│ 18:00 │                              │          │\n'+
+      '│ 19:00 │                              │          │\n'+
+      '│ 20:00 │                              │          │\n'+
+      '│ 21:00 │                              │          │\n'+
+      '│ 22:00 │                              │          │\n'+
+      '│ 23:00 │                              │          │\n'+
+      '└───────┴──────────────────────────────┴──────────┘\n\n'+
+      '📊 TOTALS BY CATEGORY (hours)\n'+
+      '• Study / academic : \n'+
+      '• Work / project   : \n'+
+      '• Health / exercise: \n'+
+      '• Social / family  : \n'+
+      '• Screen / leisure : \n'+
+      '• Sleep / rest     : \n\n'+
+      '🔍 WHERE DID TIME LEAK?\n'+
+      '→ \n\n'+
+      '✅ ONE CHANGE FOR TOMORROW\n'+
+      '→ ',
   };
   const el=document.getElementById('journal-content');
   if(el){ el.value=templates[type]||''; }
@@ -3384,8 +3432,8 @@ function renderEventsList(){
   const now=new Date();
   const curMin=now.getHours()*60+now.getMinutes();
   const parseHM=(t)=>{ if(!t) return null; const m=String(t).match(/^(\d{1,2}):(\d{2})/); return m?(+m[1])*60+(+m[2]):null; };
-  // Build 7-day window: today + next 6 days. No tasks. Events + exams only.
-  const days=[]; for(let i=0;i<7;i++) days.push(offsetDate(td,i));
+  // Build 2-day window: today + tomorrow only. No tasks. Events + exams only.
+  const days=[]; for(let i=0;i<2;i++) days.push(offsetDate(td,i));
   const items=[];
   days.forEach(ds=>{
     getEventsOnDate(ds).forEach(ev=>items.push({...ev,_showDate:ds}));
@@ -3406,7 +3454,7 @@ function renderEventsList(){
     if(curMin>=startMin) ev._past=true;
     filtered.push(ev);
   }
-  if(!filtered.length){ el.innerHTML='<div class="empty-state">Nothing scheduled today or in the next 7 days.</div>'; return; }
+  if(!filtered.length){ el.innerHTML='<div class="empty-state">Nothing scheduled today or tomorrow.</div>'; return; }
   const byDate={};
   filtered.forEach(ev=>{ (byDate[ev._showDate]=byDate[ev._showDate]||[]).push(ev); });
   const tomorrowStr=offsetDate(td,1);
@@ -6358,6 +6406,35 @@ function initDashJournalWordCount(){
     el.addEventListener('input', () => {
       const words = (el.value.trim().split(/\s+/).filter(Boolean).length);
       const wc = document.getElementById('dash-jq-wordcount');
+      if(wc) wc.textContent = words + ' word' + (words!==1?'s':'');
+    });
+  }
+}
+function clearDashJournal2(){
+  const t = document.getElementById('dash-j2-title');
+  const c = document.getElementById('dash-j2-content');
+  const wc = document.getElementById('dash-j2-wordcount');
+  if(t) t.value = '';
+  if(c) c.value = '';
+  if(wc) wc.textContent = '0 words';
+}
+function saveDashJournal2(){
+  const title=document.getElementById('dash-j2-title')?.value.trim()||'Untitled';
+  const content=document.getElementById('dash-j2-content')?.value.trim()||'';
+  if(!content){ toast('Write something first','error'); return; }
+  const entry={id:uid(),date:today(),title,mood:'',tags:[],content};
+  state.journal.unshift(entry);
+  activeJournalId=entry.id;
+  saveState();
+  clearDashJournal2();
+  toast('Entry saved!','success');
+}
+function initDashJournal2WordCount(){
+  const el = document.getElementById('dash-j2-content');
+  if(el){
+    el.addEventListener('input', () => {
+      const words = (el.value.trim().split(/\s+/).filter(Boolean).length);
+      const wc = document.getElementById('dash-j2-wordcount');
       if(wc) wc.textContent = words + ' word' + (words!==1?'s':'');
     });
   }
