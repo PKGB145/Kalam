@@ -1372,26 +1372,24 @@ select.modal-input { cursor: pointer; }
       </div>
 
 
-      <!-- MIDDLE ROW: compact journal editor + right column (mini cal + journal list + tasks + screen time) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;" class="dash-main-row">
-        <!-- Brain Dump → compact journal editor -->
-        <div class="dash-section card" id="dash-brainDump-widget">
-          <div class="dash-section-header" style="margin-bottom:10px;">
-            <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
-            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-              <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
-              <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
-              <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
+      <!-- MIDDLE ROW: brain dump + journal (left, stacked) · thin right column (mini cal + screen time) -->
+      <div style="display:grid;grid-template-columns:1fr 260px;gap:16px;margin-bottom:16px;align-items:start;" class="dash-main-row">
+        <!-- Left column: Brain Dump then Journal -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="dash-section card" id="dash-brainDump-widget">
+            <div class="dash-section-header" style="margin-bottom:10px;">
+              <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
+              <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
+                <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+                <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
+                <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
+              </div>
+            </div>
+            <div class="dash-section-body" id="dash-brainDump-body">
+              <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
+              <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — saves to Brain Dump." style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
             </div>
           </div>
-          <div class="dash-section-body" id="dash-brainDump-body">
-            <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — it saves to your journal." style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
-          </div>
-        </div>
-
-        <!-- Right column: Journal + Mini calendar + Screen time -->
-        <div style="display:flex;flex-direction:column;gap:14px;">
           <div class="dash-section card" id="dash-journal-widget">
             <div class="dash-section-header" style="margin-bottom:10px;">
               <div class="card-title" style="margin-bottom:0;">Journal</div>
@@ -1403,34 +1401,39 @@ select.modal-input { cursor: pointer; }
             </div>
             <div class="dash-section-body" id="dash-journal-body">
               <input class="journal-small-input" id="dash-j2-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-              <textarea class="journal-textarea" id="dash-j2-content" placeholder="Dump anything on your mind — it saves to your journal." style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+              <textarea class="journal-textarea" id="dash-j2-content" placeholder="Today's journal entry…" style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
             </div>
           </div>
-          <div class="dash-section card" id="dash-minical-widget">
+        </div>
+
+        <!-- Right column (thin): Mini calendar + Screen time -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="dash-section card" id="dash-minical-widget" style="padding:12px;">
             <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;">Calendar</div>
-              <div style="display:flex;gap:4px;align-items:center;">
-                <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(-1)">←</button>
-                <span id="dash-minical-label" style="font-size:11px;color:var(--faint);min-width:80px;text-align:center;"></span>
-                <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(1)">→</button>
+              <div class="card-title" style="margin-bottom:0;font-size:13px;">Calendar</div>
+              <div style="display:flex;gap:2px;align-items:center;">
+                <button class="btn-icon" style="font-size:11px;padding:1px 4px;" onclick="dashMiniCalNav(-1)">←</button>
+                <span id="dash-minical-label" style="font-size:10px;color:var(--faint);min-width:62px;text-align:center;"></span>
+                <button class="btn-icon" style="font-size:11px;padding:1px 4px;" onclick="dashMiniCalNav(1)">→</button>
               </div>
             </div>
             <div class="dash-section-body">
-              <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;"></div>
+              <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:10px;"></div>
             </div>
           </div>
-          <div class="dash-section card" id="dash-screentime-widget">
+          <div class="dash-section card" id="dash-screentime-widget" style="padding:12px;">
             <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;">Screen Time</div>
+              <div class="card-title" style="margin-bottom:0;font-size:13px;">Screen Time</div>
               <span id="dash-screentime-value" style="font-size:11px;color:var(--faint);">0m</span>
             </div>
             <div class="dash-section-body" id="dash-screentime-body">
-              <svg id="dash-screentime-chart" width="100%" height="70" style="display:block;"></svg>
-              <div style="font-size:10px;color:var(--faint);margin-top:4px;">Last 7 days · only counts time with Kalam focused</div>
+              <svg id="dash-screentime-chart" width="100%" height="56" style="display:block;"></svg>
+              <div style="font-size:10px;color:var(--faint);margin-top:4px;">Last 7 days · active time</div>
             </div>
           </div>
         </div>
       </div>
+
     </div>
 
     <!-- HABITS -->
@@ -1928,6 +1931,10 @@ select.modal-input { cursor: pointer; }
               <option value="compact">Compact</option>
             </select>
           </div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Journal reminder time</div><div class="settings-desc">When to remind you to write today's journal</div></div>
+          <div class="settings-control"><input class="settings-input" type="time" id="s-journal-remind" onchange="setJournalReminderTime(this.value)"/></div>
         </div>
         <div class="settings-row">
           <div><div class="settings-label">Timezone</div><div class="settings-desc" id="tz-current-desc">Detected automatically from your device</div></div>
@@ -2631,12 +2638,14 @@ function saveDashJournal(){
   const content=document.getElementById('dash-jq-content')?.value.trim()||'';
   if(!content){ toast('Write something first','error'); return; }
   if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
-  const now=Date.now();
+  const now=new Date().toISOString();
   const d={id:uid(),title,body:content,createdAt:now,updatedAt:now};
   state.brainDumps.unshift(d);
   activeBrainDumpId=d.id;
   saveState();
   clearDashJournalEditor();
+  try{ renderDashBrainDump(); }catch(e){}
+  try{ if(currentPage==='brainDump') renderBrainDump(); }catch(e){}
   toast('Brain dump saved!','success');
 }
 
@@ -5538,9 +5547,18 @@ function renderSettings(){
   document.getElementById('s-font').value=state.settings.font||"'DM Sans',sans-serif";
   document.getElementById('s-density').value=state.settings.density||'spacious';
   populateTimezoneSelect();
+  const jr=document.getElementById('s-journal-remind');
+  if(jr) jr.value=(state.journalReminder&&state.journalReminder.notifyTime)||'20:00';
   const tog=document.getElementById('eye-notif-toggle');
   if(state.settings.eyeNotif) tog.classList.add('on'); else tog.classList.remove('on');
   updateFirebaseStatus();
+}
+function setJournalReminderTime(v){
+  if(!state.journalReminder) state.journalReminder={dismissedDate:'',notifyTime:'20:00'};
+  state.journalReminder.notifyTime = v || '20:00';
+  state.journalReminder.dismissedDate='';
+  saveState();
+  toast('Journal reminder set for '+state.journalReminder.notifyTime,'success');
 }
 function populateTimezoneSelect(){
   const sel=document.getElementById('s-timezone'); if(!sel) return;
@@ -5879,10 +5897,27 @@ function confirmClearAll(){
 }
 
 // ===================== DAILY TODO LIST =====================
+function carryOverTodos(){
+  const td=today();
+  if(!state.todos) state.todos={};
+  if(!state.todos[td]) state.todos[td]=[];
+  let moved=0;
+  Object.keys(state.todos).forEach(date=>{
+    if(date>=td) return;
+    const list=state.todos[date]||[];
+    const pending=list.filter(t=>!t.done);
+    if(!pending.length) return;
+    pending.forEach(t=>{ state.todos[td].push({...t,carriedFrom:t.carriedFrom||date}); moved++; });
+    state.todos[date]=list.filter(t=>t.done);
+  });
+  if(moved) saveState();
+  return moved;
+}
 function renderDashTodo(){
   const td=today();
   if(!state.todos) state.todos={};
   if(!state.todos[td]) state.todos[td]=[];
+  carryOverTodos();
   const todos=state.todos[td];
   const done=todos.filter(t=>t.done).length;
   const prog=document.getElementById('dash-todo-progress');
@@ -5893,7 +5928,7 @@ function renderDashTodo(){
   el.innerHTML=todos.map((t,i)=>
     '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">'+
     '<div style="width:16px;height:16px;border-radius:4px;border:2px solid '+(t.done?'var(--accent)':'var(--border)')+';background:'+(t.done?'var(--accent)':'transparent')+';cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bg);font-size:10px;" onclick="toggleDashTodo(\''+td+'\','+i+')">'+( t.done?'✓':'')+'</div>'+
-    '<span style="flex:1;font-size:13px;'+(t.done?'text-decoration:line-through;color:var(--faint)':'')+'">'+(t.text||'')+'</span>'+
+    '<span style="flex:1;font-size:13px;'+(t.done?'text-decoration:line-through;color:var(--faint)':'')+'">'+(t.text||'')+(t.carriedFrom?' <span style="font-size:9px;color:var(--faint);border:1px solid var(--border);border-radius:4px;padding:1px 4px;">carried over</span>':'')+'</span>'+
     '<button class="btn-icon" style="color:var(--accent);font-size:11px;" onclick="deleteDashTodo(\''+td+'\','+i+')">✕</button>'+
     '</div>'
   ).join('');
@@ -6100,6 +6135,7 @@ function gcalConnect(){
       prompt: 'select_account',
       callback: (resp)=>{
         if(resp.error){ toast('Google sign-in failed: '+resp.error,'error'); return; }
+        localStorage.setItem('gcal_connected','1');
         gcalAccessToken = resp.access_token;
         const expiresIn = parseInt(resp.expires_in||'3600');
         gcalTokenExpiry = Date.now() + expiresIn*1000;
@@ -6124,6 +6160,8 @@ function gcalConnect(){
 function gcalDisconnect(){
   gcalAccessToken=null;
   gcalTokenExpiry=0;
+  localStorage.removeItem('gcal_connected');
+  _gcalSilentClient=null;
   localStorage.removeItem('gcal_token');
   localStorage.removeItem('gcal_expiry');
   sessionStorage.removeItem('gcal_token');
@@ -6237,6 +6275,38 @@ async function gcalSync(){
   }
 }
 
+// Silently mint a fresh access token when the stored one expired. Works
+// without any user click because Google already has consent for this client.
+let _gcalSilentClient=null;
+function gcalSilentReconnect(onDone){
+  const clientId=state.settings.gcalClientId||'';
+  if(!clientId || localStorage.getItem('gcal_connected')!=='1'){ if(onDone) onDone(false); return; }
+  const go=()=>{
+    if(!(window.google && window.google.accounts && window.google.accounts.oauth2)){ if(onDone) onDone(false); return; }
+    try{
+      _gcalSilentClient = _gcalSilentClient || window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/calendar.events',
+        prompt: '',
+        callback: (resp)=>{
+          if(resp && resp.access_token){
+            gcalAccessToken = resp.access_token;
+            gcalTokenExpiry = Date.now() + parseInt(resp.expires_in||'3600')*1000;
+            localStorage.setItem('gcal_token', gcalAccessToken);
+            localStorage.setItem('gcal_expiry', String(gcalTokenExpiry));
+            gcalUpdateUI();
+            if(state.settings.gcalAutoSync) gcalSync();
+            if(onDone) onDone(true);
+          } else { if(onDone) onDone(false); }
+        },
+        error_callback: ()=>{ if(onDone) onDone(false); }
+      });
+      _gcalSilentClient.requestAccessToken({prompt:''});
+    }catch(e){ if(onDone) onDone(false); }
+  };
+  // GIS script may still be loading on a cold start
+  if(window.google && window.google.accounts) go(); else setTimeout(go, 1500);
+}
 function gcalRestoreSession(){
   // Prefer localStorage (survives browser restart) but fall back to sessionStorage for older sessions
   const t=localStorage.getItem('gcal_token')||sessionStorage.getItem('gcal_token');
@@ -6248,11 +6318,25 @@ function gcalRestoreSession(){
     localStorage.setItem('gcal_token',t);
     localStorage.setItem('gcal_expiry',e);
     if(state.settings.gcalAutoSync) gcalSync();
+  } else {
+    // Token gone/expired (e.g. browser restarted) — refresh it silently.
+    gcalSilentReconnect();
   }
   gcalUpdateUI();
+  // Keep the token alive while the app is open.
+  setInterval(()=>{
+    if(localStorage.getItem('gcal_connected')==='1' && Date.now() > gcalTokenExpiry - 5*60*1000){
+      gcalSilentReconnect();
+    }
+  }, 4*60*1000);
 }
 function _gcalHandleAuthError(status){
   gcalAccessToken=null; gcalTokenExpiry=0;
+  if(status===401 && localStorage.getItem('gcal_connected')==='1'){
+    localStorage.removeItem('gcal_token'); localStorage.removeItem('gcal_expiry');
+    gcalSilentReconnect(ok=>{ if(!ok) toast('Google sign-in expired — reconnect in Settings','error'); });
+    return;
+  }
   localStorage.removeItem('gcal_token'); localStorage.removeItem('gcal_expiry');
   sessionStorage.removeItem('gcal_token'); sessionStorage.removeItem('gcal_expiry');
   gcalUpdateUI();
@@ -7077,6 +7161,11 @@ function renderBrainDump(){
   else if(!activeBrainDumpId) clearBrainDumpEditor();
   else setActiveBrainDump(activeBrainDumpId);
 }
+function _bdDateLabel(d){
+  const raw=d.updatedAt||d.createdAt||'';
+  if(!raw) return '';
+  try{ const dt=new Date(raw); if(isNaN(dt.getTime())) return ''; return fmtDate(dt.toISOString().slice(0,10)); }catch(_){ return ''; }
+}
 function renderBrainDumpList(){
   const el=document.getElementById('bd-entries-list'); if(!el) return;
   const q=(document.getElementById('bd-search')?.value||'').toLowerCase();
@@ -7084,7 +7173,7 @@ function renderBrainDumpList(){
   if(!list.length){ el.innerHTML='<div class="empty-state">No dumps yet.</div>'; return; }
   el.innerHTML=list.map(d=>`
     <div class="journal-entry-card ${d.id===activeBrainDumpId?'active':''}" onclick="setActiveBrainDump('${d.id}')">
-      <div class="journal-entry-date">${fmtDate((d.updatedAt||d.createdAt||'').slice(0,10))}</div>
+      <div class="journal-entry-date">${_bdDateLabel(d)}</div>
       <div class="journal-entry-title">${(d.title||'Untitled').replace(/</g,'&lt;')}</div>
       <div class="journal-entry-preview">${(d.body||'').slice(0,60).replace(/</g,'&lt;')}</div>
     </div>`).join('');
@@ -7330,24 +7419,33 @@ function _ensureScreenTime(){
     state.screenTime.secondsToday = 0;
   }
 }
+let _stLastActivity = Date.now();
+const _ST_IDLE_MS = 5*60*1000; // stop counting after 5 min with no activity
 function startScreenTimeTracker(){
   _ensureScreenTime();
   _stLastTick = Date.now();
+  ['mousemove','mousedown','keydown','wheel','touchstart','scroll','visibilitychange','focus'].forEach(ev=>{
+    window.addEventListener(ev, ()=>{ _stLastActivity = Date.now(); }, {passive:true});
+  });
   setInterval(()=>{
-    const visible = document.visibilityState === 'visible' && document.hasFocus();
     const now = Date.now();
+    // Count all active time: the tab may be in the background as long as the
+    // user is still active on the machine (any recent interaction with Kalam
+    // or the tab being visible keeps the clock running).
+    const active = document.visibilityState === 'visible' || (now - _stLastActivity) < _ST_IDLE_MS;
     const elapsed = Math.round((now - _stLastTick) / 1000);
     _stLastTick = now;
-    if(visible && elapsed > 0 && elapsed < 30){
+    if(active && elapsed > 0 && elapsed < 30){
       _ensureScreenTime();
       state.screenTime.secondsToday = (state.screenTime.secondsToday || 0) + elapsed;
       if(_stSaveDebounce) clearTimeout(_stSaveDebounce);
-      _stSaveDebounce = setTimeout(()=>{ saveState(); if(currentPage==='dashboard') renderDashScreenTime(); }, 5000);
+      _stSaveDebounce = setTimeout(()=>{ _ensureScreenTime(); state.screenTime.history = state.screenTime.history || {}; state.screenTime.history[state.screenTime.today] = state.screenTime.secondsToday||0; saveState(); if(currentPage==='dashboard') renderDashScreenTime(); }, 5000);
     }
   }, 5000);
   // Initial paint
   setTimeout(()=>{ if(currentPage==='dashboard') renderDashScreenTime(); }, 1000);
 }
+window.addEventListener('beforeunload', ()=>{ try{ _ensureScreenTime(); state.screenTime.history=state.screenTime.history||{}; state.screenTime.history[state.screenTime.today]=state.screenTime.secondsToday||0; saveState(); }catch(e){} });
 function _fmtMins(secs){
   const m = Math.round((secs||0)/60);
   if(m < 60) return m+'m';
@@ -7367,7 +7465,7 @@ function renderDashScreenTime(){
     days.push({k, secs, label: d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,1)});
   }
   const max = Math.max(60, ...days.map(d=>d.secs));
-  const W = svg.clientWidth || 280, H = 70, pad = 10, gap = 6;
+  const W = svg.clientWidth || 220, H = 56, pad = 8, gap = 5;
   const bw = (W - pad*2 - gap*6) / 7;
   let html = '';
   days.forEach((d,i)=>{
