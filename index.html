@@ -1077,9 +1077,27 @@ select.modal-input { cursor: pointer; }
   justify-content: space-between;
   margin-bottom: 12px;
 }
-@media (max-width: 768px) {
-  .dash-main-row { grid-template-columns: 1fr !important; }
+/* Compact "above the fold" dashboard */
+#page-dashboard .quote-card { padding: 10px 16px; margin-bottom: 12px; }
+#page-dashboard .quote-text { font-size: 13px; line-height: 1.5; }
+#page-dashboard .quote-author { font-size: 11px; margin-top: 2px; }
+#page-dashboard .stat-card { padding: 10px 14px; }
+#page-dashboard .stat-value { font-size: 20px; }
+#page-dashboard .stat-label { font-size: 10px; }
+#page-dashboard .dash-section.card { padding: 12px 14px; }
+#page-dashboard .dash-section-header { margin-bottom: 8px; }
+.dash-scroll { max-height: 190px; overflow-y: auto; }
+.dash-scroll-sm { max-height: 150px; overflow-y: auto; }
+@media (max-width: 1100px) {
+  .dash-top-row { grid-template-columns: 1fr 1fr !important; }
+  .dash-main-row { grid-template-columns: 1fr 1fr !important; }
 }
+@media (max-width: 768px) {
+  .dash-top-row { grid-template-columns: 1fr !important; }
+  .dash-main-row { grid-template-columns: 1fr !important; }
+  .dash-scroll, .dash-scroll-sm { max-height: none; }
+}
+
 
 
 /* ===== GOALS ===== */
@@ -1312,13 +1330,13 @@ select.modal-input { cursor: pointer; }
 
 
       <!-- Quote -->
-      <div id="quote-widget" class="quote-card" style="margin-bottom:16px;">
+      <div id="quote-widget" class="quote-card" style="margin-bottom:12px;">
         <div class="quote-text" id="quote-text"></div>
         <div class="quote-author" id="quote-author"></div>
       </div>
 
       <!-- Stats -->
-      <div class="grid-4" style="margin-bottom:16px;" id="stats-bar">
+      <div class="grid-4" style="margin-bottom:12px;" id="stats-bar">
         <div class="stat-card"><div class="stat-label">Habits Today</div><div class="stat-value" id="stat-habits">0/7</div></div>
         <div class="stat-card"><div class="stat-label">Focus Today</div><div class="stat-value" id="stat-focus">0m</div></div>
         <div class="stat-card"><div class="stat-label">Tasks Done</div><div class="stat-value" id="stat-tasks">0/0</div></div>
@@ -1326,13 +1344,13 @@ select.modal-input { cursor: pointer; }
       </div>
 
       <!-- TOP ROW: Habits + Todo + Today's Agenda + Tasks -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px;" class="dash-top-row">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px;align-items:start;" class="dash-top-row">
         <!-- Habits -->
         <div class="dash-section card" id="dash-habits-widget">
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Habits Today</div>
           </div>
-          <div class="dash-section-body" id="dash-habits-body">
+          <div class="dash-section-body dash-scroll" id="dash-habits-body">
             <div id="dash-habits-list"></div>
           </div>
         </div>
@@ -1345,7 +1363,7 @@ select.modal-input { cursor: pointer; }
             <div style="display:flex;gap:6px;margin-bottom:8px;">
               <input class="search-input" id="dash-todo-input" placeholder="Add — press Enter…" style="margin-bottom:0;flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')addDashTodo()"/>
             </div>
-            <div id="dash-todo-list"></div>
+            <div id="dash-todo-list" class="dash-scroll-sm"></div>
           </div>
         </div>
         <!-- Today's full agenda -->
@@ -1353,7 +1371,7 @@ select.modal-input { cursor: pointer; }
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Today's Schedule</div>
           </div>
-          <div class="dash-section-body" id="dash-agenda-body">
+          <div class="dash-section-body dash-scroll" id="dash-agenda-body">
             <div id="dash-agenda-list"></div>
           </div>
         </div>
@@ -1365,49 +1383,46 @@ select.modal-input { cursor: pointer; }
               <button class="btn btn-primary btn-sm" onclick="openAddTaskModal();setTimeout(()=>{if(currentPage==='dashboard')renderDashboard();},100)">+</button>
             </div>
           </div>
-          <div class="dash-section-body" id="dash-tasks-body">
+          <div class="dash-section-body dash-scroll" id="dash-tasks-body">
             <div id="dash-tasks-list"></div>
           </div>
         </div>
       </div>
 
 
-      <!-- MIDDLE ROW: brain dump + journal (left, stacked) · thin right column (mini cal + screen time) -->
-      <div style="display:grid;grid-template-columns:1fr 260px;gap:16px;margin-bottom:16px;align-items:start;" class="dash-main-row">
-        <!-- Left column: Brain Dump then Journal -->
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div class="dash-section card" id="dash-brainDump-widget">
-            <div class="dash-section-header" style="margin-bottom:10px;">
-              <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
-              <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-                <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
-                <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
-                <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
-              </div>
-            </div>
-            <div class="dash-section-body" id="dash-brainDump-body">
-              <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-              <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — saves to Brain Dump." style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+      <!-- MIDDLE ROW: brain dump · journal · thin right column (mini cal + screen time) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 240px;gap:12px;margin-bottom:12px;align-items:start;" class="dash-main-row">
+        <div class="dash-section card" id="dash-brainDump-widget">
+          <div class="dash-section-header" style="margin-bottom:8px;">
+            <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
+            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
+              <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+              <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
             </div>
           </div>
-          <div class="dash-section card" id="dash-journal-widget">
-            <div class="dash-section-header" style="margin-bottom:10px;">
-              <div class="card-title" style="margin-bottom:0;">Journal</div>
-              <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-                <span id="dash-j2-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
-                <button class="btn btn-ghost btn-sm" onclick="clearDashJournal2()">Clear</button>
-                <button class="btn btn-primary btn-sm" onclick="saveDashJournal2()">Save</button>
-              </div>
+          <div class="dash-section-body" id="dash-brainDump-body">
+            <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
+            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — saves to Brain Dump." style="width:100%;min-height:76px;height:76px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+          </div>
+        </div>
+        <div class="dash-section card" id="dash-journal-widget">
+          <div class="dash-section-header" style="margin-bottom:8px;">
+            <div class="card-title" style="margin-bottom:0;">Journal</div>
+            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
+              <span id="dash-j2-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+              <button class="btn btn-ghost btn-sm" onclick="clearDashJournal2()">Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="saveDashJournal2()">Save</button>
             </div>
-            <div class="dash-section-body" id="dash-journal-body">
-              <input class="journal-small-input" id="dash-j2-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-              <textarea class="journal-textarea" id="dash-j2-content" placeholder="Today's journal entry…" style="width:100%;min-height:80px;height:80px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
-            </div>
+          </div>
+          <div class="dash-section-body" id="dash-journal-body">
+            <input class="journal-small-input" id="dash-j2-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
+            <textarea class="journal-textarea" id="dash-j2-content" placeholder="Today's journal entry…" style="width:100%;min-height:76px;height:76px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
           </div>
         </div>
 
-        <!-- Right column (thin): Mini calendar + Screen time -->
-        <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Right column (thin): Mini calendar -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
           <div class="dash-section card" id="dash-minical-widget" style="padding:12px;">
             <div class="dash-section-header">
               <div class="card-title" style="margin-bottom:0;font-size:13px;">Calendar</div>
@@ -1421,18 +1436,44 @@ select.modal-input { cursor: pointer; }
               <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:10px;"></div>
             </div>
           </div>
-          <div class="dash-section card" id="dash-screentime-widget" style="padding:12px;">
-            <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;font-size:13px;">Screen Time</div>
-              <span id="dash-screentime-value" style="font-size:11px;color:var(--faint);">0m</span>
-            </div>
-            <div class="dash-section-body" id="dash-screentime-body">
-              <svg id="dash-screentime-chart" width="100%" height="56" style="display:block;"></svg>
-              <div style="font-size:10px;color:var(--faint);margin-top:4px;">Last 7 days · active time</div>
+        </div>
+      </div>
+
+      <!-- BOTTOM ROW: screen time + progress (secondary) -->
+      <div style="display:grid;grid-template-columns:240px 1fr;gap:12px;margin-bottom:16px;align-items:start;" class="dash-main-row">
+        <div class="dash-section card" id="dash-screentime-widget" style="padding:12px;">
+          <div class="dash-section-header">
+            <div class="card-title" style="margin-bottom:0;font-size:13px;">Screen Time</div>
+            <span id="dash-screentime-value" style="font-size:11px;color:var(--faint);">0m</span>
+          </div>
+          <div class="dash-section-body" id="dash-screentime-body">
+            <svg id="dash-screentime-chart" width="100%" height="56" style="display:block;"></svg>
+            <div style="font-size:10px;color:var(--faint);margin-top:4px;">Last 7 days · active time</div>
+          </div>
+        </div>
+        <div class="dash-section card" id="dash-progress-widget" style="padding:12px;">
+          <div class="dash-section-header">
+            <div class="card-title" style="margin-bottom:0;font-size:13px;">Progress</div>
+          </div>
+          <div class="dash-section-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:center;">
+              <div>
+                <div style="font-size:10px;color:var(--faint);margin-bottom:2px;">Focus minutes · last 7 days</div>
+                <svg id="dash-progress-focus" width="100%" height="56" style="display:block;"></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <svg id="dash-progress-donut" width="64" height="64" style="flex-shrink:0;"></svg>
+                <div style="font-size:10px;color:var(--faint);line-height:1.5;" id="dash-progress-goals-label"></div>
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--faint);margin-bottom:2px;">Tasks completed · last 14 days</div>
+                <svg id="dash-progress-tasks" width="100%" height="40" style="display:block;"></svg>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
 
     </div>
 
@@ -1935,6 +1976,10 @@ select.modal-input { cursor: pointer; }
         <div class="settings-row">
           <div><div class="settings-label">Journal reminder time</div><div class="settings-desc">When to remind you to write today's journal</div></div>
           <div class="settings-control"><input class="settings-input" type="time" id="s-journal-remind" onchange="setJournalReminderTime(this.value)"/></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Daily review time</div><div class="settings-desc">Full-screen wrap-up of focus time and open tasks</div></div>
+          <div class="settings-control"><input class="settings-input" type="time" id="s-daily-review" onchange="setDailyReviewTime(this.value)"/></div>
         </div>
         <div class="settings-row">
           <div><div class="settings-label">Timezone</div><div class="settings-desc" id="tz-current-desc">Detected automatically from your device</div></div>
@@ -2826,7 +2871,7 @@ function renderTaskList(elId,tasks,isDone){
 }
 function toggleTask(id,fromDash=false){
   const t=state.tasks.find(x=>x.id===id);
-  if(t) t.done=!t.done;
+  if(t){ t.done=!t.done; t.completedAt = t.done ? new Date().toISOString() : null; }
   saveState();
   if(fromDash) renderDashboard();
   else renderTasks();
@@ -4938,6 +4983,8 @@ function pomoComplete(){
     if(state.pomodoro.lastDate!==td){ state.pomodoro.sessionsToday=0; state.pomodoro.focusMinutesToday=0; state.pomodoro.lastDate=td; }
     state.pomodoro.sessionsToday++;
     state.pomodoro.focusMinutesToday+=pomoSettings.focus;
+    state.pomodoro.history=state.pomodoro.history||{};
+    state.pomodoro.history[td]=(state.pomodoro.history[td]||0)+pomoSettings.focus;
     state.pomodoro.totalFocusMinutes=(state.pomodoro.totalFocusMinutes||0)+pomoSettings.focus;
     // Credit study time to linked exam
     const linkedId = state.pomodoro.activeExamId;
@@ -5549,6 +5596,8 @@ function renderSettings(){
   populateTimezoneSelect();
   const jr=document.getElementById('s-journal-remind');
   if(jr) jr.value=(state.journalReminder&&state.journalReminder.notifyTime)||'20:00';
+  const dr=document.getElementById('s-daily-review');
+  if(dr) dr.value=(state.dailyReview&&state.dailyReview.time)||'21:00';
   const tog=document.getElementById('eye-notif-toggle');
   if(state.settings.eyeNotif) tog.classList.add('on'); else tog.classList.remove('on');
   updateFirebaseStatus();
@@ -5559,6 +5608,12 @@ function setJournalReminderTime(v){
   state.journalReminder.dismissedDate='';
   saveState();
   toast('Journal reminder set for '+state.journalReminder.notifyTime,'success');
+}
+function setDailyReviewTime(v){
+  if(!state.dailyReview) state.dailyReview={time:'21:00',lastFired:''};
+  state.dailyReview.time = v || '21:00';
+  saveState();
+  toast('Daily review set for '+state.dailyReview.time,'success');
 }
 function populateTimezoneSelect(){
   const sel=document.getElementById('s-timezone'); if(!sel) return;
@@ -7372,8 +7427,11 @@ function init(){
   loadState();
   // Pomodoro daily reset — zero counters when the date changes
   const td=today();
-  if(!state.pomodoro) state.pomodoro={sessionsToday:0,focusMinutesToday:0,lastDate:''};
+  if(!state.pomodoro) state.pomodoro={sessionsToday:0,focusMinutesToday:0,lastDate:'',history:{}};
+  if(!state.pomodoro.history) state.pomodoro.history={};
   if(state.pomodoro.lastDate!==td){
+    if(state.pomodoro.lastDate && state.pomodoro.focusMinutesToday)
+      state.pomodoro.history[state.pomodoro.lastDate]=Math.max(state.pomodoro.history[state.pomodoro.lastDate]||0, state.pomodoro.focusMinutesToday);
     state.pomodoro.sessionsToday=0;
     state.pomodoro.focusMinutesToday=0;
     state.pomodoro.lastDate=td;
@@ -7562,12 +7620,106 @@ function dashQuickBrainDump(){
   toast('Saved to Brain Dump','success');
 }
 
+// ===================== DASHBOARD PROGRESS CARD =====================
+function _dayKeyOffset(off){ const d=new Date(); d.setDate(d.getDate()+off); return d.toISOString().slice(0,10); }
+function renderDashProgress(){
+  const hist=(state.pomodoro&&state.pomodoro.history)||{};
+  const td=today();
+  // Focus minutes bars (last 7 days)
+  const svg=document.getElementById('dash-progress-focus');
+  if(svg){
+    const days=[];
+    for(let i=6;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      const k=d.toISOString().slice(0,10);
+      const mins=(k===td)?Math.max(hist[k]||0,state.pomodoro.focusMinutesToday||0):(hist[k]||0);
+      days.push({mins,label:d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,1)});
+    }
+    const max=Math.max(25,...days.map(d=>d.mins));
+    const W=svg.clientWidth||220,H=56,pad=8,gap=5;
+    const bw=(W-pad*2-gap*6)/7;
+    let html='';
+    days.forEach((d,i)=>{
+      const h=Math.max(2,(d.mins/max)*(H-18));
+      const x=pad+i*(bw+gap), y=H-h-12;
+      html+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="3" fill="var(--accent)" opacity="${i===6?1:0.55}"/>`;
+      html+=`<text x="${x+bw/2}" y="${H-2}" text-anchor="middle" font-size="9" fill="var(--faint)">${d.label}</text>`;
+    });
+    svg.innerHTML=html;
+  }
+  // Goal donut
+  const donut=document.getElementById('dash-progress-donut');
+  const lbl=document.getElementById('dash-progress-goals-label');
+  if(donut){
+    const goals=(state.goals||[]).filter(g=>!g.archived);
+    let pct=0;
+    if(goals.length && typeof goalProgress==='function'){
+      pct=Math.round(goals.reduce((a,g)=>a+(goalProgress(g).pct||0),0)/goals.length);
+    }
+    const r=26,c=2*Math.PI*r,off=c*(1-pct/100);
+    donut.innerHTML=`<g transform="translate(32,32)">
+      <circle r="${r}" fill="none" stroke="var(--border)" stroke-width="7"/>
+      <circle r="${r}" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"
+        stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90)"/>
+      <text text-anchor="middle" y="4" font-size="13" font-weight="700" fill="var(--text)">${pct}%</text>
+    </g>`;
+    if(lbl) lbl.innerHTML=goals.length?('Average across<br>'+goals.length+' active goal'+(goals.length>1?'s':'')):'No active goals';
+  }
+  // Task throughput sparkline (14 days)
+  const tsvg=document.getElementById('dash-progress-tasks');
+  if(tsvg){
+    const counts=[];
+    for(let i=13;i>=0;i--){
+      const k=_dayKeyOffset(-i);
+      counts.push((state.tasks||[]).filter(t=>t.done&&(t.completedAt||'').slice(0,10)===k).length);
+    }
+    const max=Math.max(1,...counts);
+    const W=tsvg.clientWidth||220,H=40,pad=4;
+    const step=(W-pad*2)/13;
+    const pts=counts.map((c,i)=>`${pad+i*step},${H-4-(c/max)*(H-10)}`).join(' ');
+    tsvg.innerHTML=`<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>`+
+      counts.map((c,i)=>`<circle cx="${pad+i*step}" cy="${H-4-(c/max)*(H-10)}" r="1.8" fill="var(--accent)" opacity="${c?1:0.3}"/>`).join('');
+  }
+}
+
+// ===================== DAILY REVIEW REMINDER =====================
+function scheduleDailyReview(){
+  if(!state.dailyReview) state.dailyReview={time:'21:00',lastFired:''};
+  try{
+    const [hh,mm]=(state.dailyReview.time||'21:00').split(':').map(n=>parseInt(n));
+    const now=new Date();
+    const fire=new Date(); fire.setHours(hh||21,mm||0,0,0);
+    if(fire<=now) fire.setDate(fire.getDate()+1);
+    setTimeout(()=>{
+      const td=today();
+      if(state.dailyReview.lastFired!==td){
+        state.dailyReview.lastFired=td; saveState();
+        const pending=(state.tasks||[]).filter(t=>!t.done).length;
+        try{ if(typeof Notification!=='undefined'&&Notification.permission==='granted') new Notification('Kalam — Daily review',{body:pending+' task'+(pending===1?'':'s')+' still open. Close the day out.'}); }catch(e){}
+        if(typeof showFullscreenReminder==='function'){
+          showFullscreenReminder({
+            icon:'🌙', title:'Daily review',
+            body:'Focus today: '+(state.pomodoro.focusMinutesToday||0)+' min · '+pending+' task'+(pending===1?'':'s')+' open. Tidy up and plan tomorrow.',
+            actions:[
+              {label:'Later', onClick:()=>{}},
+              {label:'Open Tasks', primary:true, onClick:()=>{ try{ navigate('tasks'); }catch(e){} }}
+            ]
+          });
+        }
+      }
+      scheduleDailyReview();
+    }, Math.max(1000, fire-now));
+  }catch(e){}
+}
+try{ scheduleDailyReview(); }catch(e){}
+
 // Hook dashboard render
 const _origRenderDashboard = renderDashboard;
 renderDashboard = function(){
   _origRenderDashboard();
   try { renderDashBrainDump(); } catch(e){}
   try { renderDashScreenTime(); } catch(e){}
+  try { renderDashProgress(); } catch(e){}
 };
 
 // Exclude screenTime + pomodoro counters from export (already excluded for pomodoro)
