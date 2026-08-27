@@ -1075,28 +1075,36 @@ select.modal-input { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-/* Compact "above the fold" dashboard */
-#page-dashboard .quote-card { padding: 10px 16px; margin-bottom: 12px; }
-#page-dashboard .quote-text { font-size: 13px; line-height: 1.5; }
-#page-dashboard .quote-author { font-size: 11px; margin-top: 2px; }
-#page-dashboard .stat-card { padding: 10px 14px; }
-#page-dashboard .stat-value { font-size: 20px; }
-#page-dashboard .stat-label { font-size: 10px; }
-#page-dashboard .dash-section.card { padding: 12px 14px; }
-#page-dashboard .dash-section-header { margin-bottom: 8px; }
-.dash-scroll { max-height: 190px; overflow-y: auto; }
-.dash-scroll-sm { max-height: 150px; overflow-y: auto; }
-@media (max-width: 1100px) {
-  .dash-top-row { grid-template-columns: 1fr 1fr !important; }
-  .dash-main-row { grid-template-columns: 1fr 1fr !important; }
+
+/* Spacious dashboard — widgets grow with their content; page scrolls instead of clipping */
+#page-dashboard { padding-bottom: 36px; }
+#page-dashboard .quote-card { padding: 20px 24px; margin-bottom: 20px; border-left-width: 4px; }
+#page-dashboard .quote-text { font-size: 16px; line-height: 1.7; }
+#page-dashboard .quote-author { font-size: 13px; margin-top: 6px; }
+#page-dashboard .stat-card { padding: 16px 20px; }
+#page-dashboard .stat-value { font-size: 26px; }
+#page-dashboard .stat-label { font-size: 11px; }
+#page-dashboard .dash-section.card { padding: 22px; }
+#page-dashboard .dash-section-header { margin-bottom: 14px; }
+#page-dashboard .dash-section-body { min-height: 0; }
+#page-dashboard .dash-scroll,
+#page-dashboard .dash-scroll-sm { max-height: none; overflow-y: visible; }
+
+.dash-top-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
+.dash-mid-row { display: grid; grid-template-columns: 1fr 1fr 280px; gap: 20px; align-items: start; }
+.dash-bottom-row { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
+
+@media (max-width: 1200px) {
+  .dash-top-row { grid-template-columns: 1fr 1fr; }
+  .dash-mid-row { grid-template-columns: 1fr 1fr; }
+  .dash-bottom-row { grid-template-columns: 1fr; }
 }
-@media (max-width: 768px) {
-  .dash-top-row { grid-template-columns: 1fr !important; }
-  .dash-main-row { grid-template-columns: 1fr !important; }
-  .dash-scroll, .dash-scroll-sm { max-height: none; }
+@media (max-width: 720px) {
+  .dash-top-row, .dash-mid-row, .dash-bottom-row { grid-template-columns: 1fr; }
 }
+
 
 
 
@@ -1328,15 +1336,14 @@ select.modal-input { cursor: pointer; }
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
 
-
       <!-- Quote -->
-      <div id="quote-widget" class="quote-card" style="margin-bottom:12px;">
+      <div id="quote-widget" class="quote-card">
         <div class="quote-text" id="quote-text"></div>
         <div class="quote-author" id="quote-author"></div>
       </div>
 
       <!-- Stats -->
-      <div class="grid-4" style="margin-bottom:12px;" id="stats-bar">
+      <div class="grid-4" style="margin-bottom:20px;" id="stats-bar">
         <div class="stat-card"><div class="stat-label">Habits Today</div><div class="stat-value" id="stat-habits">0/7</div></div>
         <div class="stat-card"><div class="stat-label">Focus Today</div><div class="stat-value" id="stat-focus">0m</div></div>
         <div class="stat-card"><div class="stat-label">Tasks Done</div><div class="stat-value" id="stat-tasks">0/0</div></div>
@@ -1344,26 +1351,26 @@ select.modal-input { cursor: pointer; }
       </div>
 
       <!-- TOP ROW: Habits + Todo + Today's Agenda + Tasks -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px;align-items:start;" class="dash-top-row">
+      <div class="dash-top-row" style="margin-bottom:20px;">
         <!-- Habits -->
         <div class="dash-section card" id="dash-habits-widget">
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Habits Today</div>
           </div>
-          <div class="dash-section-body dash-scroll" id="dash-habits-body">
+          <div class="dash-section-body" id="dash-habits-body">
             <div id="dash-habits-list"></div>
           </div>
         </div>
         <!-- Todo -->
         <div class="dash-section card" id="dash-todo-widget">
           <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;">To-Do <span id="dash-todo-progress" style="font-size:10px;color:var(--faint);font-family:inherit;font-weight:400;"></span></div>
+            <div class="card-title" style="margin-bottom:0;">To-Do <span id="dash-todo-progress" style="font-size:11px;color:var(--faint);font-family:inherit;font-weight:400;"></span></div>
           </div>
           <div class="dash-section-body" id="dash-todo-body">
-            <div style="display:flex;gap:6px;margin-bottom:8px;">
-              <input class="search-input" id="dash-todo-input" placeholder="Add — press Enter…" style="margin-bottom:0;flex:1;font-size:12px;" onkeydown="if(event.key==='Enter')addDashTodo()"/>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+              <input class="search-input" id="dash-todo-input" placeholder="Add a todo and press Enter…" style="margin-bottom:0;flex:1;font-size:13px;" onkeydown="if(event.key==='Enter')addDashTodo()"/>
             </div>
-            <div id="dash-todo-list" class="dash-scroll-sm"></div>
+            <div id="dash-todo-list"></div>
           </div>
         </div>
         <!-- Today's full agenda -->
@@ -1371,7 +1378,7 @@ select.modal-input { cursor: pointer; }
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Today's Schedule</div>
           </div>
-          <div class="dash-section-body dash-scroll" id="dash-agenda-body">
+          <div class="dash-section-body" id="dash-agenda-body">
             <div id="dash-agenda-list"></div>
           </div>
         </div>
@@ -1383,97 +1390,93 @@ select.modal-input { cursor: pointer; }
               <button class="btn btn-primary btn-sm" onclick="openAddTaskModal();setTimeout(()=>{if(currentPage==='dashboard')renderDashboard();},100)">+</button>
             </div>
           </div>
-          <div class="dash-section-body dash-scroll" id="dash-tasks-body">
+          <div class="dash-section-body" id="dash-tasks-body">
             <div id="dash-tasks-list"></div>
           </div>
         </div>
       </div>
 
-
-      <!-- MIDDLE ROW: brain dump · journal · thin right column (mini cal + screen time) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 240px;gap:12px;margin-bottom:12px;align-items:start;" class="dash-main-row">
+      <!-- MIDDLE ROW: Brain Dump + Journal + Calendar -->
+      <div class="dash-mid-row" style="margin-bottom:20px;">
         <div class="dash-section card" id="dash-brainDump-widget">
-          <div class="dash-section-header" style="margin-bottom:8px;">
+          <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
-            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-              <span id="dash-jq-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+            <div style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
+              <span id="dash-jq-wordcount" style="font-size:12px;color:var(--faint);">0 words</span>
               <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
               <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
             </div>
           </div>
           <div class="dash-section-body" id="dash-brainDump-body">
-            <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — saves to Brain Dump." style="width:100%;min-height:76px;height:76px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+            <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:8px;display:block;"/>
+            <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — saves to Brain Dump." style="width:100%;min-height:90px;height:90px;font-size:13px;line-height:1.7;resize:vertical;display:block;box-sizing:border-box;"></textarea>
           </div>
         </div>
         <div class="dash-section card" id="dash-journal-widget">
-          <div class="dash-section-header" style="margin-bottom:8px;">
+          <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;">Journal</div>
-            <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-              <span id="dash-j2-wordcount" style="font-size:11px;color:var(--faint);">0 words</span>
+            <div style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
+              <span id="dash-j2-wordcount" style="font-size:12px;color:var(--faint);">0 words</span>
               <button class="btn btn-ghost btn-sm" onclick="clearDashJournal2()">Clear</button>
               <button class="btn btn-primary btn-sm" onclick="saveDashJournal2()">Save</button>
             </div>
           </div>
           <div class="dash-section-body" id="dash-journal-body">
-            <input class="journal-small-input" id="dash-j2-title" placeholder="Title…" style="width:100%;margin-bottom:6px;display:block;"/>
-            <textarea class="journal-textarea" id="dash-j2-content" placeholder="Today's journal entry…" style="width:100%;min-height:76px;height:76px;font-size:12px;line-height:1.6;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+            <input class="journal-small-input" id="dash-j2-title" placeholder="Title…" style="width:100%;margin-bottom:8px;display:block;"/>
+            <textarea class="journal-textarea" id="dash-j2-content" placeholder="Today's journal entry…" style="width:100%;min-height:90px;height:90px;font-size:13px;line-height:1.7;resize:vertical;display:block;box-sizing:border-box;"></textarea>
           </div>
         </div>
 
-        <!-- Right column (thin): Mini calendar -->
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div class="dash-section card" id="dash-minical-widget" style="padding:12px;">
-            <div class="dash-section-header">
-              <div class="card-title" style="margin-bottom:0;font-size:13px;">Calendar</div>
-              <div style="display:flex;gap:2px;align-items:center;">
-                <button class="btn-icon" style="font-size:11px;padding:1px 4px;" onclick="dashMiniCalNav(-1)">←</button>
-                <span id="dash-minical-label" style="font-size:10px;color:var(--faint);min-width:62px;text-align:center;"></span>
-                <button class="btn-icon" style="font-size:11px;padding:1px 4px;" onclick="dashMiniCalNav(1)">→</button>
-              </div>
+        <!-- Mini calendar -->
+        <div class="dash-section card" id="dash-minical-widget">
+          <div class="dash-section-header">
+            <div class="card-title" style="margin-bottom:0;font-size:13px;">Calendar</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(-1)">←</button>
+              <span id="dash-minical-label" style="font-size:11px;color:var(--faint);min-width:70px;text-align:center;"></span>
+              <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(1)">→</button>
             </div>
-            <div class="dash-section-body">
-              <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:10px;"></div>
-            </div>
+          </div>
+          <div class="dash-section-body">
+            <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:11px;"></div>
           </div>
         </div>
       </div>
 
-      <!-- BOTTOM ROW: screen time + progress (secondary) -->
-      <div style="display:grid;grid-template-columns:240px 1fr;gap:12px;margin-bottom:16px;align-items:start;" class="dash-main-row">
-        <div class="dash-section card" id="dash-screentime-widget" style="padding:12px;">
+      <!-- BOTTOM ROW: Screen time + Progress -->
+      <div class="dash-bottom-row" style="margin-bottom:16px;">
+        <div class="dash-section card" id="dash-screentime-widget">
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;font-size:13px;">Screen Time</div>
-            <span id="dash-screentime-value" style="font-size:11px;color:var(--faint);">0m</span>
+            <span id="dash-screentime-value" style="font-size:12px;color:var(--faint);">0m</span>
           </div>
           <div class="dash-section-body" id="dash-screentime-body">
-            <svg id="dash-screentime-chart" width="100%" height="56" style="display:block;"></svg>
-            <div style="font-size:10px;color:var(--faint);margin-top:4px;">Last 7 days · active time</div>
+            <svg id="dash-screentime-chart" width="100%" height="72" style="display:block;"></svg>
+            <div style="font-size:11px;color:var(--faint);margin-top:6px;">Last 7 days · active time</div>
           </div>
         </div>
-        <div class="dash-section card" id="dash-progress-widget" style="padding:12px;">
+        <div class="dash-section card" id="dash-progress-widget">
           <div class="dash-section-header">
             <div class="card-title" style="margin-bottom:0;font-size:13px;">Progress</div>
           </div>
           <div class="dash-section-body">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:center;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;align-items:center;">
               <div>
-                <div style="font-size:10px;color:var(--faint);margin-bottom:2px;">Focus minutes · last 7 days</div>
-                <svg id="dash-progress-focus" width="100%" height="56" style="display:block;"></svg>
+                <div style="font-size:11px;color:var(--faint);margin-bottom:2px;">Focus minutes · last 7 days</div>
+                <svg id="dash-progress-focus" width="100%" height="72" style="display:block;"></svg>
               </div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <svg id="dash-progress-donut" width="64" height="64" style="flex-shrink:0;"></svg>
-                <div style="font-size:10px;color:var(--faint);line-height:1.5;" id="dash-progress-goals-label"></div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <svg id="dash-progress-donut" width="72" height="72" style="flex-shrink:0;"></svg>
+                <div style="font-size:11px;color:var(--faint);line-height:1.5;" id="dash-progress-goals-label"></div>
               </div>
               <div>
-                <div style="font-size:10px;color:var(--faint);margin-bottom:2px;">Tasks completed · last 14 days</div>
-                <svg id="dash-progress-tasks" width="100%" height="40" style="display:block;"></svg>
+                <div style="font-size:11px;color:var(--faint);margin-bottom:2px;">Tasks completed · last 14 days</div>
+                <svg id="dash-progress-tasks" width="100%" height="48" style="display:block;"></svg>
               </div>
             </div>
           </div>
         </div>
       </div>
-
 
     </div>
 
