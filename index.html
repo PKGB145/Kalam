@@ -1244,6 +1244,26 @@ select.modal-input { cursor: pointer; }
   .notebook-sidebar { max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
   .notebook-sidebar:last-child { border-left: none; border-top: 1px solid var(--border); }
 }
+/* ===== STUDY PLANNER ===== */
+.planner-layout { display:grid; grid-template-columns:1fr 280px; gap:14px; align-items:start; }
+@media (max-width:1080px){ .planner-layout { grid-template-columns:1fr; } }
+.planner-viewtabs { display:flex; background:var(--accent-light); border-radius:8px; padding:2px; }
+.planner-viewtab { border:none; background:transparent; color:var(--muted); font:inherit; font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer; }
+.planner-viewtab.active { background:var(--card); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.planner-weekhead { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+.planner-weekhead div { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--faint); text-align:center; }
+.planner-month { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.planner-day { min-height:92px; border:1px solid var(--border); border-radius:8px; padding:6px; background:var(--card); cursor:pointer; transition:border-color .15s, background .15s; overflow:hidden; }
+.planner-day:hover { border-color:var(--accent-mid); background:var(--accent-light); }
+.planner-day.other { opacity:.45; }
+.planner-day.today { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.planner-daynum { font-size:11px; font-weight:600; color:var(--muted); margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; }
+.planner-chip { font-size:10.5px; line-height:1.35; padding:3px 5px; border-radius:5px; margin-bottom:3px; background:var(--accent-light); color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.planner-chip.exam { background:var(--accent); color:var(--bg); font-weight:600; }
+.planner-chip.done { opacity:.55; text-decoration:line-through; }
+.planner-week { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.planner-week .planner-day { min-height:320px; }
+.planner-more { font-size:10px; color:var(--faint); }
 </style>
 </head>
 <body>
@@ -1298,6 +1318,10 @@ select.modal-input { cursor: pointer; }
   <div class="nav-item" data-page="exams" data-label="Exams">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2" width="11" height="13" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
     <span class="nav-label">Exams</span>
+  </div>
+  <div class="nav-item" data-page="planner" data-label="Study Planner">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v2M10.5 1.5v2"/><path d="M5 9.5h2.5M9 11.5h2"/></svg>
+    <span class="nav-label">Study Planner</span>
   </div>
   <div class="nav-item" data-page="pomodoro" data-label="Pomodoro">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="6"/><path d="M8 6v3l2 1.5"/><path d="M6 1h4"/></svg>
@@ -1485,9 +1509,9 @@ select.modal-input { cursor: pointer; }
       <div class="card">
         <!-- Week navigation -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 14px;border-bottom:1px solid var(--border);margin-bottom:4px;">
-          <button class="btn btn-ghost btn-sm" onclick="habitWeekOffset--;renderHabits()">← Prev Week</button>
+          <button class="btn btn-ghost btn-sm" onclick="setHabitWeek(-1)">← Prev Week</button>
           <div id="habits-week-label" style="font-size:13px;font-weight:600;color:var(--muted);"></div>
-          <button class="btn btn-ghost btn-sm" id="habits-next-btn" onclick="habitWeekOffset++;renderHabits()">Next Week →</button>
+          <button class="btn btn-ghost btn-sm" id="habits-next-btn" onclick="setHabitWeek(1)">Next Week →</button>
         </div>
         <div class="habits-grid-header">
           <div style="width:10px"></div>
@@ -1564,6 +1588,43 @@ select.modal-input { cursor: pointer; }
         </div>
       </div>
     </div>
+
+
+    <!-- STUDY PLANNER -->
+    <div class="page" id="page-planner">
+      <div class="card" style="padding:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="plannerShift(-1)">◀</button>
+            <div id="planner-range" style="font-weight:600;font-size:15px;min-width:170px;text-align:center;">—</div>
+            <button class="btn btn-ghost btn-sm" onclick="plannerShift(1)">▶</button>
+            <button class="btn btn-ghost btn-sm" onclick="plannerToday()">Today</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <div class="planner-viewtabs">
+              <button class="planner-viewtab" id="planner-tab-month" onclick="setPlannerView('month')">Month</button>
+              <button class="planner-viewtab" id="planner-tab-week" onclick="setPlannerView('week')">Week</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="openAutoPlanModal()">✨ Auto-plan from exam</button>
+            <button class="btn btn-primary btn-sm" onclick="openPlannerBlockModal(null, plannerFocusDate())">+ Study block</button>
+          </div>
+        </div>
+      </div>
+      <div class="planner-layout">
+        <div class="card" style="padding:12px;overflow:hidden;">
+          <div class="planner-weekhead" id="planner-weekhead"></div>
+          <div id="planner-grid"></div>
+        </div>
+        <div class="card" style="padding:14px;">
+          <div class="card-title" style="font-size:13px;margin-bottom:10px;">Exam countdown</div>
+          <div id="planner-exams"></div>
+          <div class="card-title" style="font-size:13px;margin:16px 0 10px;">Plan progress</div>
+          <div id="planner-progress"></div>
+        </div>
+      </div>
+    </div>
+
+
 
     <!-- JOURNAL -->
     <div class="page" id="page-journal">
@@ -2382,7 +2443,8 @@ function today(){
     return y+'-'+m+'-'+d;
   }catch(_){ return new Date().toISOString().slice(0,10); }
 }
-function offsetDate(iso, delta){ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+delta); return dt.toISOString().slice(0,10); }
+function localISO(dt){ const y=dt.getFullYear(), m=String(dt.getMonth()+1).padStart(2,'0'), d=String(dt.getDate()).padStart(2,'0'); return y+'-'+m+'-'+d; }
+function offsetDate(iso, delta){ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+delta); return localISO(dt); }
 function fmtDate(d){ const dt=new Date(d); try{ return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:getUserTZ()}); }catch(_){ return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); } }
 function toast(msg,type=''){
   const t=document.createElement('div');
@@ -2497,8 +2559,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',exams:'Exams',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2525,6 +2587,7 @@ function renderPage(page){
     case 'calendar': renderCalendar(); break;
     case 'study': renderStudy(); break;
     case 'exams': renderExams(); break;
+    case 'planner': renderPlanner(); break;
     case 'pomodoro': renderPomodoro(); break;
     case 'brainDump': renderBrainDump(); break;
     case 'ai': renderAI(); break;
@@ -2702,19 +2765,20 @@ let habitDays=[];
 let habitWeekOffset=0; // 0=current week, -1=last week, etc.
 
 function getWeekDays(offset){
-  // Returns Mon-Sun of the week at 'offset' weeks from current week
+  // Returns Mon-Sun of the week at 'offset' weeks from current week (user's local/tz date)
   const days=[];
-  const now=new Date();
-  // Find Monday of current week
+  const td=today();
+  const now=new Date(td+'T00:00:00');
   const day=now.getDay(); // 0=Sun
-  const monday=new Date(now);
-  monday.setDate(now.getDate()-(day===0?6:day-1)+offset*7);
+  const mondayISO=offsetDate(td, -(day===0?6:day-1) + offset*7);
   for(let i=0;i<7;i++){
-    const d=new Date(monday);
-    d.setDate(monday.getDate()+i);
-    days.push({date:d.toISOString().slice(0,10),label:['Mo','Tu','We','Th','Fr','Sa','Su'][i]});
+    days.push({date:offsetDate(mondayISO,i),label:['Mo','Tu','We','Th','Fr','Sa','Su'][i]});
   }
   return days;
+}
+function setHabitWeek(delta){
+  habitWeekOffset = Math.min(0, habitWeekOffset + delta);
+  renderHabits();
 }
 function getWeekLabel(days){
   if(!days.length) return '';
@@ -5749,6 +5813,7 @@ function modalConfirm(){
     addGoal, saveGoal,
     addAssignment,
     addExam, saveExam, saveExamScore,
+    savePlannerBlock, confirmAutoPlan,
     addFlashcard,
     addQuizQuestion,
     addSource,
@@ -5930,6 +5995,7 @@ function confirmImport(){
   });
   if(!Array.isArray(state.brainDumps)) state.brainDumps=[];
   if(!state.spotify) state.spotify={embedUrl:''};
+  plannerState();
   if(!state.journalReminder) state.journalReminder={dismissedDate:'',notifyTime:'20:00'};
   saveState();
   applySettings();
@@ -7426,6 +7492,242 @@ clearSpotifyEmbed = function(){
   state.spotify=state.spotify||{}; state.spotify.embedUrl='';
   saveState();
 };
+// ===================== STUDY PLANNER =====================
+function plannerState(){
+  if(!state.planner) state.planner={view:'month',anchor:today(),blocks:[]};
+  if(!Array.isArray(state.planner.blocks)) state.planner.blocks=[];
+  if(!state.planner.view) state.planner.view='month';
+  if(!state.planner.anchor) state.planner.anchor=today();
+  return state.planner;
+}
+function plannerFocusDate(){ const p=plannerState(); return p.anchor>=today()?p.anchor:today(); }
+function setPlannerView(v){ const p=plannerState(); p.view=v; saveState(); renderPlanner(); }
+function plannerToday(){ const p=plannerState(); p.anchor=today(); saveState(); renderPlanner(); }
+function plannerShift(delta){
+  const p=plannerState();
+  const dt=new Date(p.anchor+'T00:00:00');
+  if(p.view==='week') dt.setDate(dt.getDate()+delta*7);
+  else dt.setMonth(dt.getMonth()+delta);
+  p.anchor=localISO(dt); saveState(); renderPlanner();
+}
+function _plannerWeekStart(iso){
+  const dt=new Date(iso+'T00:00:00');
+  const dow=(dt.getDay()+6)%7; // Monday-first
+  dt.setDate(dt.getDate()-dow);
+  return localISO(dt);
+}
+function _plannerDays(){
+  const p=plannerState();
+  if(p.view==='week'){
+    const s=_plannerWeekStart(p.anchor);
+    return Array.from({length:7},(_,i)=>({date:offsetDate(s,i),other:false}));
+  }
+  const dt=new Date(p.anchor+'T00:00:00');
+  const first=new Date(dt.getFullYear(),dt.getMonth(),1);
+  const monthIdx=dt.getMonth();
+  const start=_plannerWeekStart(localISO(first));
+  return Array.from({length:42},(_,i)=>{
+    const d=offsetDate(start,i);
+    return {date:d, other:new Date(d+'T00:00:00').getMonth()!==monthIdx};
+  });
+}
+function plannerBlocksOn(ds){
+  return plannerState().blocks.filter(b=>b.date===ds)
+    .sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
+}
+function plannerExamsOn(ds){ return (state.exams||[]).filter(e=>e.date===ds); }
+function renderPlanner(){
+  const p=plannerState();
+  const grid=document.getElementById('planner-grid');
+  if(!grid) return;
+  document.getElementById('planner-tab-month')?.classList.toggle('active',p.view==='month');
+  document.getElementById('planner-tab-week')?.classList.toggle('active',p.view==='week');
+  const head=document.getElementById('planner-weekhead');
+  if(head) head.innerHTML=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>'<div>'+d+'</div>').join('');
+  const label=document.getElementById('planner-range');
+  if(label){
+    if(p.view==='week'){
+      const s=_plannerWeekStart(p.anchor), e=offsetDate(s,6);
+      label.textContent=fmtDate(s)+' – '+fmtDate(e);
+    } else {
+      const dt=new Date(p.anchor+'T00:00:00');
+      label.textContent=dt.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    }
+  }
+  const td=today();
+  const maxChips=p.view==='week'?12:3;
+  grid.className=p.view==='week'?'planner-week':'planner-month';
+  grid.innerHTML=_plannerDays().map(d=>{
+    const exams=plannerExamsOn(d.date);
+    const blocks=plannerBlocksOn(d.date);
+    const chips=[
+      ...exams.map(e=>'<div class="planner-chip exam" title="Exam: '+(e.title||'')+'">📝 '+(e.title||'Exam')+'</div>'),
+      ...blocks.slice(0,maxChips).map(b=>'<div class="planner-chip'+(b.done?' done':'')+'" title="'+((b.start||'')+' '+(b.title||''))+'">'+(b.start?b.start+' ':'')+(b.title||'Study')+'</div>')
+    ];
+    const more=blocks.length>maxChips?'<div class="planner-more">+'+(blocks.length-maxChips)+' more</div>':'';
+    const dnum=new Date(d.date+'T00:00:00').getDate();
+    return '<div class="planner-day'+(d.other?' other':'')+(d.date===td?' today':'')+'" onclick="openPlannerDay(\''+d.date+'\')">'
+      + '<div class="planner-daynum"><span>'+dnum+'</span>'+(blocks.length?'<span style="font-size:9px;color:var(--faint);">'+blocks.filter(b=>b.done).length+'/'+blocks.length+'</span>':'')+'</div>'
+      + chips.join('') + more + '</div>';
+  }).join('');
+  renderPlannerSidebar();
+}
+function renderPlannerSidebar(){
+  const td=today();
+  const ex=document.getElementById('planner-exams');
+  if(ex){
+    const upcoming=(state.exams||[]).filter(e=>e.date && e.date>=td).sort((a,b)=>a.date.localeCompare(b.date));
+    ex.innerHTML=upcoming.length?upcoming.slice(0,6).map(e=>{
+      const days=Math.round((new Date(e.date+'T00:00:00')-new Date(td+'T00:00:00'))/86400000);
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--border);">'
+        +'<div style="font-size:12.5px;font-weight:600;">'+(e.title||'Exam')+'</div>'
+        +'<div style="font-size:11px;color:var(--faint);margin-top:2px;">'+fmtDate(e.date)+' · '+(days===0?'today':days+' day'+(days===1?'':'s')+' left')+'</div>'
+        +'<button class="btn btn-ghost btn-sm" style="font-size:10.5px;margin-top:6px;" onclick="event.stopPropagation();openAutoPlanModal(\''+e.id+'\')">✨ Plan sessions</button>'
+        +'</div>';
+    }).join(''):'<div style="font-size:12px;color:var(--faint);">No upcoming exams. Add them in Exams.</div>';
+  }
+  const pr=document.getElementById('planner-progress');
+  if(pr){
+    const blocks=plannerState().blocks;
+    const groups={};
+    blocks.forEach(b=>{ const k=b.examId||'__free'; (groups[k]=groups[k]||[]).push(b); });
+    const keys=Object.keys(groups);
+    pr.innerHTML=keys.length?keys.map(k=>{
+      const list=groups[k];
+      const exm=(state.exams||[]).find(e=>e.id===k);
+      const name=exm?(exm.title||'Exam'):'Unlinked sessions';
+      const done=list.filter(b=>b.done).length;
+      const pct=Math.round(done/list.length*100);
+      return '<div style="margin-bottom:10px;">'
+        +'<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;"><span>'+name+'</span><span style="color:var(--faint);">'+done+'/'+list.length+'</span></div>'
+        +'<div style="height:6px;border-radius:4px;background:var(--accent-light);overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:var(--accent);"></div></div>'
+        +'</div>';
+    }).join(''):'<div style="font-size:12px;color:var(--faint);">No study blocks planned yet.</div>';
+  }
+}
+function _plannerExamOptions(sel){
+  return '<option value="">No exam</option>'+(state.exams||[]).map(e=>
+    '<option value="'+e.id+'"'+(sel===e.id?' selected':'')+'>'+(e.title||'Exam')+(e.date?' · '+e.date:'')+'</option>').join('');
+}
+function openPlannerDay(ds){
+  const blocks=plannerBlocksOn(ds);
+  const exams=plannerExamsOn(ds);
+  const body='<div style="font-size:12px;color:var(--faint);margin-bottom:10px;">'+fmtDate(ds)+'</div>'
+    +(exams.length?exams.map(e=>'<div style="padding:8px 10px;border-radius:8px;background:var(--accent);color:var(--bg);font-size:12px;margin-bottom:8px;">📝 '+(e.title||'Exam')+(e.portions?' — '+e.portions:'')+'</div>').join(''):'')
+    +(blocks.length?blocks.map(b=>'<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">'
+        +'<input type="checkbox" '+(b.done?'checked':'')+' onchange="togglePlannerBlock(\''+b.id+'\')"/>'
+        +'<div style="flex:1;min-width:0;"><div style="font-size:12.5px;'+(b.done?'text-decoration:line-through;opacity:.6;':'')+'">'+(b.title||'Study')+'</div>'
+        +'<div style="font-size:10.5px;color:var(--faint);">'+[(b.start||'')+(b.end?'–'+b.end:''),b.subject||''].filter(Boolean).join(' · ')+'</div></div>'
+        +(b.examId?'<button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="closeModal();startExamStudy(\''+b.examId+'\')">📖</button>':'')
+        +'<button class="btn-icon" title="Edit" onclick="openPlannerBlockModal(\''+b.id+'\')">✎</button>'
+        +'<button class="btn-icon" style="color:var(--accent)" title="Delete" onclick="deletePlannerBlock(\''+b.id+'\')">✕</button>'
+      +'</div>').join(''):'<div style="font-size:12px;color:var(--faint);padding:6px 0;">Nothing planned for this day.</div>')
+    +'<button class="btn btn-primary btn-sm" style="margin-top:12px;width:100%;" onclick="openPlannerBlockModal(null,\''+ds+'\')">+ Add study block</button>';
+  openModal('Plan · '+fmtDate(ds), body, null, false);
+}
+function openPlannerBlockModal(id, ds){
+  const b=id?plannerState().blocks.find(x=>x.id===id):null;
+  window._editingPlannerBlockId=id||null;
+  const subjects=state.subjects.map(s=>'<option value="'+s.name+'"'+(b&&b.subject===s.name?' selected':'')+'>'+s.icon+' '+s.name+'</option>').join('');
+  const body='<div class="modal-field"><div class="modal-label">What are you studying?</div><input class="modal-input" id="pb-title" placeholder="e.g. Revise Unit 3" value="'+((b&&b.title)||'').replace(/"/g,'&quot;')+'"/></div>'
+    +'<div class="modal-field"><div class="modal-label">Date</div><input class="modal-input" type="date" id="pb-date" value="'+((b&&b.date)||ds||today())+'"/></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    +'<div class="modal-field"><div class="modal-label">Start</div><input class="modal-input" type="time" id="pb-start" value="'+((b&&b.start)||'')+'"/></div>'
+    +'<div class="modal-field"><div class="modal-label">End</div><input class="modal-input" type="time" id="pb-end" value="'+((b&&b.end)||'')+'"/></div>'
+    +'</div>'
+    +'<div class="modal-field"><div class="modal-label">Linked exam</div><select class="modal-input" id="pb-exam">'+_plannerExamOptions(b&&b.examId)+'</select></div>'
+    +'<div class="modal-field"><div class="modal-label">Subject</div><select class="modal-input" id="pb-subject"><option value="">None</option>'+subjects+'</select></div>'
+    +'<div class="modal-field"><div class="modal-label">Notes</div><textarea class="modal-input" id="pb-notes" rows="2">'+((b&&b.notes)||'')+'</textarea></div>';
+  openModal(id?'Edit study block':'New study block', body, 'savePlannerBlock');
+}
+function savePlannerBlock(){
+  const p=plannerState();
+  const title=document.getElementById('pb-title').value.trim();
+  const date=document.getElementById('pb-date').value;
+  if(!title){ toast('Enter what you will study','error'); return; }
+  if(!date){ toast('Pick a date','error'); return; }
+  const data={
+    title, date,
+    start:document.getElementById('pb-start').value||'',
+    end:document.getElementById('pb-end').value||'',
+    examId:document.getElementById('pb-exam').value||'',
+    subject:document.getElementById('pb-subject').value||'',
+    notes:document.getElementById('pb-notes').value.trim(),
+  };
+  const id=window._editingPlannerBlockId;
+  if(id){
+    const b=p.blocks.find(x=>x.id===id);
+    if(b) Object.assign(b,data);
+  } else {
+    p.blocks.push({id:uid(),done:false,...data});
+  }
+  window._editingPlannerBlockId=null;
+  saveState(); closeModal(); renderPlanner(); toast(id?'Block updated':'Study block added','success');
+}
+function togglePlannerBlock(id){
+  const b=plannerState().blocks.find(x=>x.id===id);
+  if(!b) return;
+  b.done=!b.done; b.doneAt=b.done?new Date().toISOString():null;
+  saveState(); renderPlanner();
+}
+function deletePlannerBlock(id){
+  const p=plannerState();
+  const b=p.blocks.find(x=>x.id===id);
+  if(!b) return;
+  const ds=b.date;
+  p.blocks=p.blocks.filter(x=>x.id!==id);
+  saveState(); renderPlanner();
+  if(document.getElementById('modal-overlay').classList.contains('open')) openPlannerDay(ds);
+  toast('Block removed');
+}
+function openAutoPlanModal(examId){
+  const upcoming=(state.exams||[]).filter(e=>e.date && e.date>=today());
+  if(!upcoming.length){ toast('Add an exam with a date first','error'); return; }
+  const body='<div class="modal-field"><div class="modal-label">Exam</div><select class="modal-input" id="ap-exam">'
+      +upcoming.map(e=>'<option value="'+e.id+'"'+(examId===e.id?' selected':'')+'>'+(e.title||'Exam')+' · '+e.date+'</option>').join('')+'</select></div>'
+    +'<div class="modal-field"><div class="modal-label">Topics (one per line — each becomes a session)</div><textarea class="modal-input" id="ap-topics" rows="4" placeholder="Unit 1&#10;Unit 2&#10;Past papers"></textarea></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    +'<div class="modal-field"><div class="modal-label">Sessions / day</div><input class="modal-input" type="number" id="ap-per-day" min="1" max="6" value="1"/></div>'
+    +'<div class="modal-field"><div class="modal-label">Start time</div><input class="modal-input" type="time" id="ap-start" value="18:00"/></div>'
+    +'</div>'
+    +'<div class="modal-field"><div class="modal-label">Session length (minutes)</div><input class="modal-input" type="number" id="ap-len" min="15" step="15" value="60"/></div>'
+    +'<div style="font-size:11px;color:var(--faint);">Sessions are spread across the days before the exam, ending the day before, plus a final revision block on exam eve.</div>';
+  openModal('Auto-plan study sessions', body, 'confirmAutoPlan');
+}
+function confirmAutoPlan(){
+  const p=plannerState();
+  const examId=document.getElementById('ap-exam').value;
+  const exam=(state.exams||[]).find(e=>e.id===examId);
+  if(!exam){ toast('Pick an exam','error'); return; }
+  let topics=document.getElementById('ap-topics').value.split('\n').map(t=>t.trim()).filter(Boolean);
+  if(!topics.length){
+    topics=(exam.portions||'').split(/[,;\n]/).map(t=>t.trim()).filter(Boolean);
+  }
+  if(!topics.length) topics=['Revise '+(exam.title||'exam')];
+  const perDay=Math.max(1,parseInt(document.getElementById('ap-per-day').value)||1);
+  const startTime=document.getElementById('ap-start').value||'18:00';
+  const len=Math.max(15,parseInt(document.getElementById('ap-len').value)||60);
+  const td=today();
+  const totalDays=Math.max(1,Math.round((new Date(exam.date+'T00:00:00')-new Date(td+'T00:00:00'))/86400000));
+  const studyDays=Math.max(1,totalDays-0);
+  const sessions=[...topics,'Final revision · '+(exam.title||'exam')];
+  let added=0;
+  sessions.forEach((topic,i)=>{
+    const dayIdx=Math.min(studyDays-1, Math.floor(i/perDay) % Math.max(1,studyDays));
+    const date=offsetDate(td,dayIdx);
+    const slot=i%perDay;
+    const [hh,mm]=startTime.split(':').map(n=>parseInt(n));
+    const startMin=hh*60+mm+slot*(len+15);
+    const endMin=startMin+len;
+    const f=m=>String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+    p.blocks.push({id:uid(),done:false,title:topic,date,start:f(startMin),end:f(endMin),examId:exam.id,subject:exam.subject||'',notes:''});
+    added++;
+  });
+  p.anchor=td;
+  saveState(); closeModal(); renderPlanner();
+  toast(added+' study sessions planned','success');
+}
+
 function init(){
   loadState();
   // Pomodoro daily reset — zero counters when the date changes
