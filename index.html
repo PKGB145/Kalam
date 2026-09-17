@@ -1093,7 +1093,9 @@ select.modal-input { cursor: pointer; }
 #page-dashboard .dash-scroll-sm { max-height: none; overflow-y: visible; }
 
 .dash-top-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
-.dash-mid-row { display: grid; grid-template-columns: 1fr 1fr 280px; gap: 20px; align-items: start; }
+.dash-mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.dash-quote-row { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; margin-bottom: 20px; }
+@media (max-width: 900px){ .dash-quote-row { grid-template-columns: 1fr; } }
 .dash-bottom-row { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
 
 @media (max-width: 1200px) {
@@ -1305,6 +1307,10 @@ select.modal-input { cursor: pointer; }
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5C3.3 2.5 2 3.8 2 5.5c0 1 .5 1.9 1.3 2.4-.2.4-.3.8-.3 1.3 0 1.5 1.2 2.8 2.8 2.8.4 0 .8-.1 1.1-.2.5.9 1.5 1.5 2.6 1.5 1.7 0 3-1.3 3-3 0-.3 0-.5-.1-.8.9-.5 1.6-1.4 1.6-2.5 0-1.7-1.3-3-3-3-.4 0-.7.1-1 .2C9.6 3 8.5 2.5 7.4 2.5c-.9 0-1.7.3-2.4.9z"/></svg>
     <span class="nav-label">Brain Dump</span>
   </div>
+  <div class="nav-item" data-page="shortcuts" data-label="Shortcuts">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.2"/></svg>
+    <span class="nav-label">Shortcuts</span>
+  </div>
   <div class="nav-item" data-page="calendar" data-label="Calendar">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="11.5" rx="1.5"/><path d="M1.5 7h13M5 1v4M11 1v4"/></svg>
     <span class="nav-label">Calendar</span>
@@ -1360,10 +1366,27 @@ select.modal-input { cursor: pointer; }
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
 
-      <!-- Quote -->
-      <div id="quote-widget" class="quote-card">
-        <div class="quote-text" id="quote-text"></div>
-        <div class="quote-author" id="quote-author"></div>
+      <!-- Quote + mini calendar -->
+      <div class="dash-quote-row">
+        <div id="quote-widget" class="quote-card" style="margin-bottom:0;">
+          <div class="quote-text" id="quote-text"></div>
+          <div class="quote-author" id="quote-author"></div>
+        </div>
+        <!-- Mini calendar -->
+        <div class="dash-section card" id="dash-minical-widget">
+          <div class="dash-section-header">
+            <div class="card-title" style="margin-bottom:0;font-size:13px;">Calendar</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(-1)">←</button>
+              <span id="dash-minical-label" style="font-size:11px;color:var(--faint);min-width:70px;text-align:center;"></span>
+              <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(1)">→</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;" onclick="dashMiniCalToday()">Today</button>
+            </div>
+          </div>
+          <div class="dash-section-body">
+            <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:11px;"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Stats -->
@@ -1434,6 +1457,8 @@ select.modal-input { cursor: pointer; }
           <div class="dash-section-body" id="dash-brainDump-body">
             <input class="journal-small-input" id="dash-jq-title" placeholder="Title…" style="width:100%;margin-bottom:8px;display:block;"/>
             <textarea class="journal-textarea" id="dash-jq-content" placeholder="Dump anything on your mind — saves to Brain Dump." style="width:100%;min-height:90px;height:90px;font-size:13px;line-height:1.7;resize:vertical;display:block;box-sizing:border-box;"></textarea>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:10px 0 4px;">All dumps</div>
+            <div id="dash-bd-list" style="max-height:170px;overflow-y:auto;padding-right:4px;"></div>
           </div>
         </div>
         <div class="dash-section card" id="dash-journal-widget">
@@ -1451,20 +1476,6 @@ select.modal-input { cursor: pointer; }
           </div>
         </div>
 
-        <!-- Mini calendar -->
-        <div class="dash-section card" id="dash-minical-widget">
-          <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;font-size:13px;">Calendar</div>
-            <div style="display:flex;gap:4px;align-items:center;">
-              <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(-1)">←</button>
-              <span id="dash-minical-label" style="font-size:11px;color:var(--faint);min-width:70px;text-align:center;"></span>
-              <button class="btn-icon" style="font-size:12px;padding:2px 6px;" onclick="dashMiniCalNav(1)">→</button>
-            </div>
-          </div>
-          <div class="dash-section-body">
-            <div id="dash-minical-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:11px;"></div>
-          </div>
-        </div>
       </div>
 
       <!-- BOTTOM ROW: Screen time + Progress -->
@@ -1476,6 +1487,7 @@ select.modal-input { cursor: pointer; }
           </div>
           <div class="dash-section-body" id="dash-screentime-body">
             <svg id="dash-screentime-chart" width="100%" height="72" style="display:block;"></svg>
+            <div id="dash-screentime-apps" style="display:none;margin-top:6px;"></div>
             <div style="font-size:11px;color:var(--faint);margin-top:6px;">Last 7 days · active time</div>
           </div>
         </div>
@@ -1511,7 +1523,10 @@ select.modal-input { cursor: pointer; }
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 14px;border-bottom:1px solid var(--border);margin-bottom:4px;">
           <button class="btn btn-ghost btn-sm" onclick="setHabitWeek(-1)">← Prev Week</button>
           <div id="habits-week-label" style="font-size:13px;font-weight:600;color:var(--muted);"></div>
-          <button class="btn btn-ghost btn-sm" id="habits-next-btn" onclick="setHabitWeek(1)">Next Week →</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="habitThisWeek()">This Week</button>
+            <button class="btn btn-ghost btn-sm" id="habits-next-btn" onclick="setHabitWeek(1)">Next Week →</button>
+          </div>
         </div>
         <div class="habits-grid-header">
           <div style="width:10px"></div>
@@ -1689,6 +1704,20 @@ select.modal-input { cursor: pointer; }
     </div>
 
 
+    <!-- SHORTCUTS -->
+    <div class="page" id="page-shortcuts">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div class="card-title" style="margin-bottom:2px;">Your shortcuts</div>
+            <div style="font-size:12px;color:var(--faint);">Websites open in a new tab. Desktop apps open through their own link (e.g. <code>zoommtg://</code>, <code>ms-word:</code>, <code>spotify:</code>).</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openShortcutModal()">+ Add shortcut</button>
+        </div>
+        <div id="shortcuts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"></div>
+      </div>
+    </div>
+
     <!-- CALENDAR -->
     <div class="page" id="page-calendar">
       <!-- Calendar grid full width -->
@@ -1697,6 +1726,7 @@ select.modal-input { cursor: pointer; }
           <button class="btn-icon" onclick="calPrev()">←</button>
           <div id="cal-month-label" style="font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--text);"></div>
           <button class="btn-icon" onclick="calNext()">→</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="calToday()">Today</button>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px;">
           <button class="btn btn-ghost btn-sm" id="gcal-cal-sync-btn" onclick="gcalSync()" style="display:none;font-size:11px;">↓ Sync Google Calendar</button>
@@ -2038,6 +2068,12 @@ select.modal-input { cursor: pointer; }
           </div>
         </div>
         <div class="settings-row">
+          <div><div class="settings-label">Brightness</div><div class="settings-desc" id="brightness-lbl">100%</div></div>
+          <div class="settings-control" style="width:200px;">
+            <input type="range" min="50" max="130" value="100" id="rng-brightness" oninput="setBrightness(this.value)"/>
+          </div>
+        </div>
+        <div class="settings-row">
           <div><div class="settings-label">Journal reminder time</div><div class="settings-desc">When to remind you to write today's journal</div></div>
           <div class="settings-control"><input class="settings-input" type="time" id="s-journal-remind" onchange="setJournalReminderTime(this.value)"/></div>
         </div>
@@ -2190,6 +2226,35 @@ select.modal-input { cursor: pointer; }
         </div>
         <div style="font-size:12px;color:var(--faint);padding:8px 0;line-height:1.7;">
           20-20-20 rule reminders help reduce eye strain. Set the interval in Pomodoro settings.
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Kalam Companion — Device Screen Time &amp; Background Reminders</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Companion status</div>
+            <div class="settings-desc" id="ext-status-desc">Not installed — Kalam only tracks time spent in this tab.</div>
+          </div>
+          <div class="settings-control" style="display:flex;gap:8px;align-items:center;">
+            <div id="ext-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--faint);"></div>
+            <button class="btn btn-primary btn-sm" onclick="downloadCompanion()">&#8595; Download Companion</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--faint);padding:6px 0;line-height:1.8;">
+          <strong style="color:var(--muted);">Install (Chrome, Edge, Brave, Arc, Opera):</strong><br>
+          1. Download and unzip the file.<br>
+          2. Open <code>chrome://extensions</code> in your browser.<br>
+          3. Turn on <strong>Developer mode</strong> (top-right).<br>
+          4. Click <strong>Load unpacked</strong> and pick the unzipped folder.<br>
+          5. Reload Kalam — the status dot above turns green.<br><br>
+          <strong style="color:var(--muted);">What it adds:</strong> screen time across <em>every</em> tab and site you use (not just Kalam), split per app/site, and reminders that keep firing even when Kalam is closed.<br><br>
+          <strong style="color:var(--muted);">Limits:</strong> it tracks browser activity only — native desktop apps like Word or games can't be seen by any website. Reminders run while your browser is open; quitting the browser entirely stops them.
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Usage — Per-App Breakdown</div>
+        <div id="usage-breakdown-ui" style="font-size:12px;color:var(--faint);padding:6px 0;">Install Kalam Companion to see time split by app and site.</div>
       </div>
 
       <div class="settings-section">
@@ -2559,8 +2624,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2588,6 +2653,7 @@ function renderPage(page){
     case 'study': renderStudy(); break;
     case 'exams': renderExams(); break;
     case 'planner': renderPlanner(); break;
+    case 'shortcuts': renderShortcuts(); break;
     case 'pomodoro': renderPomodoro(); break;
     case 'brainDump': renderBrainDump(); break;
     case 'ai': renderAI(); break;
@@ -2601,6 +2667,7 @@ function renderDashboard(){
   renderDashHabits();
   renderDashTasks();
   renderDashJournal();
+  try{ renderDashBrainDump(); }catch(e){}
   renderDashAgenda();
   try{ renderDashMiniCal(); }catch(e){}
   renderDashTodo();
@@ -2676,6 +2743,7 @@ function renderDashJournal(){
 // Mini calendar on dashboard
 let dashMiniCalOffset=0; // months from current
 function dashMiniCalNav(delta){ dashMiniCalOffset+=delta; renderDashMiniCal(); }
+function dashMiniCalToday(){ dashMiniCalOffset=0; renderDashMiniCal(); }
 function renderDashMiniCal(){
   const grid=document.getElementById('dash-minical-grid');
   const label=document.getElementById('dash-minical-label');
@@ -2776,6 +2844,7 @@ function getWeekDays(offset){
   }
   return days;
 }
+function habitThisWeek(){ habitWeekOffset=0; renderHabits(); }
 function setHabitWeek(delta){
   habitWeekOffset = Math.min(0, habitWeekOffset + delta);
   renderHabits();
@@ -3462,6 +3531,7 @@ function getEventsOnDate(dateStr){
 
 function renderCalendar(){ ensureEvents(); renderCalGrid(); renderEventsList(); renderAssignments(); }
 function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalGrid(); }
+function calToday(){ const n=new Date(); calYear=n.getFullYear(); calMonth=n.getMonth(); calSelectedDate=today(); renderCalGrid(); }
 function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalGrid(); }
 
 function renderCalGrid(){
@@ -4768,6 +4838,37 @@ function checkTaskReminders(){
       saveState();
     }
   });
+  // Study block reminders — 10 minutes before start, and at start time
+  try{
+    const p=(state.planner&&Array.isArray(state.planner.blocks))?state.planner.blocks:[];
+    p.forEach(b=>{
+      if(b.done || !b.date || !b.start) return;
+      if(b.date!==td) return;
+      const startAt=new Date(b.date+'T'+b.start+':00');
+      const mins=(startAt-now)/60000;
+      b._notif=b._notif||{};
+      if(mins<=10 && mins>0 && !b.notifiedSoon){
+        _fireNotif('Study session soon', (b.title||'Study')+' at '+b.start);
+        b.notifiedSoon=true; saveState();
+      }
+      if(mins<=0 && mins>-5 && !b.notifiedStart){
+        _fireNotif('Study session now', (b.title||'Study')+(b.end?' until '+b.end:''));
+        b.notifiedStart=true; saveState();
+        try{
+          if(typeof showFullscreenReminder==='function'){
+            showFullscreenReminder({
+              icon:'📚', title:'Time to study: '+(b.title||'Study block'),
+              body:[b.subject||'', (b.start||'')+(b.end?'–'+b.end:''), b.notes||''].filter(Boolean).join('\n'),
+              actions:[
+                {label:'Later'},
+                {label:'Start focus', primary:true, onClick:()=>{ try{ navigate('pomodoro'); }catch(_){} }}
+              ]
+            });
+          }
+        }catch(_){}
+      }
+    });
+  }catch(e){}
   _setNotified(notified);
   _renderOverdueBanner();
 }
@@ -5644,6 +5745,7 @@ function getFallbackReply(text){
 // ===================== SETTINGS =====================
 function renderSettings(){
   document.getElementById('s-name').value=state.settings.name||'';
+  try{ renderExtStatus(); renderUsageBreakdown(); extRequestScreenTime(); }catch(e){}
   const provEl=document.getElementById('s-ai-provider');
   if(provEl) provEl.value=state.settings.aiProvider||'builtin';
   checkApiKey();
@@ -5660,6 +5762,8 @@ function renderSettings(){
   document.getElementById('rng-sidebar').value=state.settings.sidebarWidth||220;
   document.getElementById('s-font').value=state.settings.font||"'DM Sans',sans-serif";
   document.getElementById('s-density').value=state.settings.density||'spacious';
+  const rb=document.getElementById('rng-brightness');
+  if(rb){ rb.value=state.settings.brightness||100; const bl=document.getElementById('brightness-lbl'); if(bl) bl.textContent=(state.settings.brightness||100)+'%'; }
   populateTimezoneSelect();
   const jr=document.getElementById('s-journal-remind');
   if(jr) jr.value=(state.journalReminder&&state.journalReminder.notifyTime)||'20:00';
@@ -5757,6 +5861,12 @@ function setFont(font){ state.settings.font=font; document.documentElement.style
 function setFontSize(v){ state.settings.fontSize=parseInt(v); document.documentElement.style.setProperty('--font-size',v+'px'); document.getElementById('font-size-lbl').textContent=v+'px'; saveState(); }
 function setSidebarWidth(v){ state.settings.sidebarWidth=parseInt(v); document.documentElement.style.setProperty('--sidebar-width',v+'px'); saveState(); }
 function setDensity(v){ state.settings.density=v; saveState(); }
+function applyBrightness(){
+  const v=(state.settings&&state.settings.brightness)||100;
+  document.body.style.filter = v==100 ? '' : 'brightness('+(v/100)+')';
+  const lbl=document.getElementById('brightness-lbl'); if(lbl) lbl.textContent=v+'%';
+}
+function setBrightness(v){ state.settings.brightness=parseInt(v)||100; applyBrightness(); saveState(); }
 function toggleEyeNotif(){
   const tog=document.getElementById('eye-notif-toggle');
   state.settings.eyeNotif=!state.settings.eyeNotif;
@@ -5845,6 +5955,7 @@ function applySettings(){
   if(s.font) document.documentElement.style.setProperty('--font',s.font);
   if(s.fontSize) document.documentElement.style.setProperty('--font-size',s.fontSize+'px');
   if(s.sidebarWidth) document.documentElement.style.setProperty('--sidebar-width',s.sidebarWidth+'px');
+  try{ applyBrightness(); }catch(e){}
 }
 
 // ===================== FLASHCARD UPLOAD =====================
@@ -7424,6 +7535,14 @@ function scheduleJournalReminder(){
     if(fire<=now) fire.setDate(fire.getDate()+1);
     const ms=fire-now;
     setTimeout(()=>{
+      _fireJournalReminderNow();
+      // re-arm for tomorrow
+      scheduleJournalReminder();
+    }, Math.max(1000, ms));
+  } catch(e){}
+}
+function _fireJournalReminderNow(){
+  {
       if(!_wroteJournalToday()){
         try { if(typeof Notification!=='undefined' && Notification.permission==='granted') new Notification('Kalam', {body:"Write today's journal — even one line is enough."}); } catch(e){}
         // Full-screen reminder (only fires while the tab is focused)
@@ -7432,16 +7551,13 @@ function scheduleJournalReminder(){
             icon:'📔', title:"Time to write today's journal",
             body:"Even one line counts. Capture how today felt.",
             actions:[
-              {label:'Snooze 30 min', onClick:()=>{ setTimeout(()=>{ if(!_wroteJournalToday()) scheduleJournalReminder(); }, 30*60*1000); }},
+              {label:'Snooze 30 min', onClick:()=>{ toast('Snoozed for 30 minutes'); setTimeout(_fireJournalReminderNow, 30*60*1000); }},
               {label:"Open Journal", primary:true, onClick:()=>{ try { navigate('journal'); } catch(e){} }}
             ]
           });
         }
       }
-      // re-arm for tomorrow
-      scheduleJournalReminder();
-    }, Math.max(1000, ms));
-  } catch(e){}
+  }
 }
 function refreshJournalReminderBanner(){
   const el=document.getElementById('journal-reminder-banner');
@@ -7562,7 +7678,11 @@ function renderPlanner(){
     const blocks=plannerBlocksOn(d.date);
     const chips=[
       ...exams.map(e=>'<div class="planner-chip exam" title="Exam: '+(e.title||'')+'">📝 '+(e.title||'Exam')+'</div>'),
-      ...blocks.slice(0,maxChips).map(b=>'<div class="planner-chip'+(b.done?' done':'')+'" title="'+((b.start||'')+' '+(b.title||''))+'">'+(b.start?b.start+' ':'')+(b.title||'Study')+'</div>')
+      ...blocks.slice(0,maxChips).map(b=>'<div class="planner-chip'+(b.done?' done':'')+'" title="'+((b.start||'')+' '+(b.title||''))+'" style="display:flex;align-items:center;gap:4px;">'
+        +'<span onclick="event.stopPropagation();togglePlannerBlock(\''+b.id+'\')" title="Mark complete" style="cursor:pointer;flex-shrink:0;">'+(b.done?'☑':'☐')+'</span>'
+        +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(b.start?b.start+' ':'')+(b.title||'Study')+'</span>'
+        +'<span onclick="event.stopPropagation();deletePlannerBlock(\''+b.id+'\')" title="Delete" style="cursor:pointer;color:var(--accent);flex-shrink:0;">✕</span>'
+        +'</div>')
     ];
     const more=blocks.length>maxChips?'<div class="planner-more">+'+(blocks.length-maxChips)+' more</div>':'';
     const dnum=new Date(d.date+'T00:00:00').getDate();
@@ -7576,7 +7696,7 @@ function renderPlannerSidebar(){
   const td=today();
   const ex=document.getElementById('planner-exams');
   if(ex){
-    const upcoming=(state.exams||[]).filter(e=>e.date && e.date>=td).sort((a,b)=>a.date.localeCompare(b.date));
+    const upcoming=plannerActiveExams().filter(e=>e.date).sort((a,b)=>a.date.localeCompare(b.date));
     ex.innerHTML=upcoming.length?upcoming.slice(0,6).map(e=>{
       const days=Math.round((new Date(e.date+'T00:00:00')-new Date(td+'T00:00:00'))/86400000);
       return '<div style="padding:8px 0;border-bottom:1px solid var(--border);">'
@@ -7605,8 +7725,12 @@ function renderPlannerSidebar(){
     }).join(''):'<div style="font-size:12px;color:var(--faint);">No study blocks planned yet.</div>';
   }
 }
+function plannerActiveExams(){
+  const td=today();
+  return (state.exams||[]).filter(e=>e.scored==null && (!e.date || e.date>=td));
+}
 function _plannerExamOptions(sel){
-  return '<option value="">No exam</option>'+(state.exams||[]).map(e=>
+  return '<option value="">No exam</option>'+plannerActiveExams().map(e=>
     '<option value="'+e.id+'"'+(sel===e.id?' selected':'')+'>'+(e.title||'Exam')+(e.date?' · '+e.date:'')+'</option>').join('');
 }
 function openPlannerDay(ds){
@@ -7681,7 +7805,7 @@ function deletePlannerBlock(id){
   toast('Block removed');
 }
 function openAutoPlanModal(examId){
-  const upcoming=(state.exams||[]).filter(e=>e.date && e.date>=today());
+  const upcoming=plannerActiveExams().filter(e=>e.date);
   if(!upcoming.length){ toast('Add an exam with a date first','error'); return; }
   const body='<div class="modal-field"><div class="modal-label">Exam</div><select class="modal-input" id="ap-exam">'
       +upcoming.map(e=>'<option value="'+e.id+'"'+(examId===e.id?' selected':'')+'>'+(e.title||'Exam')+' · '+e.date+'</option>').join('')+'</select></div>'
@@ -7811,6 +7935,7 @@ function startScreenTimeTracker(){
 window.addEventListener('beforeunload', ()=>{ try{ _ensureScreenTime(); state.screenTime.history=state.screenTime.history||{}; state.screenTime.history[state.screenTime.today]=state.screenTime.secondsToday||0; saveState(); }catch(e){} });
 function _fmtMins(secs){
   const m = Math.round((secs||0)/60);
+  if(m === 0) return (secs||0) > 0 ? '<1m' : '0m';
   if(m < 60) return m+'m';
   return Math.floor(m/60)+'h '+(m%60)+'m';
 }
@@ -7818,13 +7943,42 @@ function renderDashScreenTime(){
   _ensureScreenTime();
   const valEl = document.getElementById('dash-screentime-value');
   const svg = document.getElementById('dash-screentime-chart');
-  if(valEl) valEl.textContent = _fmtMins(state.screenTime.secondsToday);
+  const useExt = extPresent && extScreenTime;
+  const td = _stDayKey();
+
+  if(valEl){
+    const todaySecs = useExt ? ((extScreenTime[td]||{}).total||0) : (state.screenTime.secondsToday||0);
+    valEl.textContent = _fmtMins(todaySecs) + (useExt ? ' · all apps' : '');
+  }
+
+  // Per-site breakdown is only possible with the companion extension installed
+  const appsEl = document.getElementById('dash-screentime-apps');
+  if(appsEl){
+    if(useExt){
+      const apps = Object.entries(((extScreenTime[td]||{}).apps)||{}).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      const mx = Math.max(1, ...apps.map(a=>a[1]));
+      appsEl.innerHTML = apps.length ? apps.map(([dom,secs])=>`
+        <div style="display:flex;align-items:center;gap:6px;padding:2px 0;">
+          <div style="flex:0 0 84px;font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_prettyApp(dom)}</div>
+          <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${(secs/mx*100).toFixed(1)}%;background:var(--accent);border-radius:3px;"></div>
+          </div>
+          <div style="flex:0 0 44px;text-align:right;font-size:10px;color:var(--faint);">${_fmtMins(secs)}</div>
+        </div>`).join('') : '<div style="font-size:10px;color:var(--faint);">No activity yet.</div>';
+      appsEl.style.display = '';
+    } else {
+      appsEl.innerHTML = '';
+      appsEl.style.display = 'none';
+    }
+  }
+
   if(!svg) return;
   const days = [];
   for(let i=6;i>=0;i--){
     const d = new Date(); d.setDate(d.getDate()-i);
-    const k = d.toISOString().slice(0,10);
-    const secs = (i===0) ? (state.screenTime.secondsToday||0) : ((state.screenTime.history||{})[k]||0);
+    const k = _stDayKey(d);
+    const secs = useExt ? (((extScreenTime[k]||{}).total)||0)
+      : ((i===0) ? (state.screenTime.secondsToday||0) : ((state.screenTime.history||{})[k]||0));
     days.push({k, secs, label: d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,1)});
   }
   const max = Math.max(60, ...days.map(d=>d.secs));
@@ -7841,7 +7995,193 @@ function renderDashScreenTime(){
   svg.innerHTML = html;
 }
 
+// ===================== KALAM COMPANION EXTENSION BRIDGE =====================
+// The companion extension tracks time across every browser tab and fires
+// reminders even when Kalam is closed. Everything below degrades gracefully
+// when the extension is not installed.
+let extPresent = false;
+let extScreenTime = null; // { 'YYYY-MM-DD': { total, apps: {domain:secs} } }
+
+function _stDayKey(d){ return (d||new Date()).toLocaleDateString('en-CA'); }
+function extPost(msg){ try{ window.postMessage(msg, '*'); }catch(e){} }
+function extRequestScreenTime(){ extPost({type:'kalam:get-screentime'}); }
+
+function _extConnected(){
+  if(extPresent) return;
+  extPresent = true;
+  extRequestScreenTime();
+  syncScheduleToExtension();
+}
+
+function startCompanionBridge(){
+  window.addEventListener('message', (e)=>{
+    const d = e.data;
+    if(!d || typeof d !== 'object') return;
+    if(d.type === 'kalam-ext:present'){ _extConnected(); renderExtStatus(); }
+    if(d.type === 'kalam-ext:response' && d.request === 'kalam:ping' && d.payload && d.payload.ok){
+      _extConnected(); renderExtStatus();
+    }
+    if(d.type === 'kalam-ext:response' && d.request === 'kalam:get-screentime' && d.payload && d.payload.ok){
+      extScreenTime = d.payload.screentime || {};
+      try{ if(currentPage==='dashboard') renderDashScreenTime(); }catch(err){}
+      try{ if(currentPage==='settings') renderUsageBreakdown(); }catch(err){}
+    }
+  });
+  // Ping a few times at startup in case the content script loaded before us
+  let pings = 0;
+  const pingTimer = setInterval(()=>{
+    extPost({type:'kalam:ping'});
+    if(++pings > 10 || extPresent) clearInterval(pingTimer);
+  }, 700);
+  extPost({type:'kalam:ping'});
+  setInterval(()=>{ if(extPresent) extRequestScreenTime(); }, 30000);
+  setInterval(()=>{ if(extPresent) syncScheduleToExtension(); }, 5*60*1000);
+}
+
+function syncScheduleToExtension(){
+  if(!extPresent) return;
+  try{
+    const payload = {
+      hourly: !(state.settings && state.settings.hourlyRemindersOff),
+      journalTime: (state.settings && state.settings.journalReminderTime) || '20:00',
+      dailyReviewTime: (state.settings && state.settings.dailyReviewTime) || '21:00',
+      lastJournalDate: ((state.journal||[])[0]||{}).date || '',
+      tasks: (state.tasks||[]).map(t=>({done:!!t.done, dueDate:t.due||t.dueDate||''})),
+      exams: (state.exams||[]).map(e=>({id:e.id, title:e.title||'Exam', date:e.date||''})),
+      studyBlocks: (((state.planner||{}).blocks)||[]).filter(b=>!b.done && b.date && b.start)
+        .map(b=>({id:b.id, title:b.title||'Study', date:b.date, start:b.start})),
+    };
+    extPost({type:'kalam:sync-schedule', payload});
+  }catch(e){}
+}
+
+function renderExtStatus(){
+  const dot = document.getElementById('ext-status-dot');
+  const desc = document.getElementById('ext-status-desc');
+  if(dot) dot.style.background = extPresent ? '#2e9e5b' : 'var(--faint)';
+  if(desc) desc.textContent = extPresent
+    ? 'Connected — tracking all browser activity and running background reminders.'
+    : 'Not installed — Kalam only tracks time spent in this tab.';
+}
+
+function downloadCompanion(){
+  fetch('/kalam-companion.zip')
+    .then(r=>{ if(!r.ok) throw new Error('Download failed: '+r.status); return r.blob(); })
+    .then(b=>{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(b); a.download='kalam-companion.zip'; a.click();
+      URL.revokeObjectURL(a.href);
+      toast('Companion downloaded — unzip it, then load it in chrome://extensions','success');
+    })
+    .catch(e=>toast(e.message,'error'));
+}
+
+function _prettyApp(dom){
+  if(!dom) return 'Unknown';
+  if(dom === location.hostname || dom === 'localhost') return 'Kalam';
+  const map = {'youtube.com':'YouTube','docs.google.com':'Google Docs','drive.google.com':'Google Drive',
+    'mail.google.com':'Gmail','github.com':'GitHub','chat.openai.com':'ChatGPT','x.com':'X',
+    'instagram.com':'Instagram','whatsapp.com':'WhatsApp','web.whatsapp.com':'WhatsApp','notion.so':'Notion'};
+  if(map[dom]) return map[dom];
+  const base = dom.replace(/\.(com|org|net|io|co|in|dev|app)$/,'').split('.').pop() || dom;
+  return base.charAt(0).toUpperCase()+base.slice(1);
+}
+
+function renderUsageBreakdown(){
+  const el = document.getElementById('usage-breakdown-ui');
+  if(!el) return;
+  if(!extPresent){
+    el.innerHTML = 'Install Kalam Companion to see time split by app and site.';
+    return;
+  }
+  if(!extScreenTime || !Object.keys(extScreenTime).length){
+    el.innerHTML = 'No activity recorded yet — give it a few minutes.';
+    return;
+  }
+  const days = Object.keys(extScreenTime).sort().reverse().slice(0,7);
+  el.innerHTML = days.map(day=>{
+    const rec = extScreenTime[day] || {total:0, apps:{}};
+    const apps = Object.entries(rec.apps||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const mx = Math.max(1, ...apps.map(a=>a[1]));
+    const label = day === _stDayKey() ? 'Today'
+      : new Date(day+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short', day:'numeric', month:'short'});
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <strong style="color:var(--text);font-size:12px;">${label}</strong>
+        <span style="color:var(--muted);font-size:12px;">${_fmtMins(rec.total||0)}</span>
+      </div>
+      ${apps.length ? apps.map(([dom,secs])=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:2px 0;">
+          <div style="flex:0 0 110px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_prettyApp(dom)}</div>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${(secs/mx*100).toFixed(1)}%;background:var(--accent);border-radius:3px;"></div>
+          </div>
+          <div style="flex:0 0 52px;text-align:right;font-size:11px;color:var(--faint);">${_fmtMins(secs)}</div>
+        </div>`).join('') : '<div style="font-size:11px;">No activity.</div>'}
+    </div>`;
+  }).join('');
+}
+
 // ===================== FULL-SCREEN REMINDER =====================
+// ===================== SHORTCUTS =====================
+const DEFAULT_SHORTCUTS=[
+  {id:'sc-gmail', icon:'📧', label:'Gmail', url:'https://mail.google.com'},
+  {id:'sc-drive', icon:'📁', label:'Drive', url:'https://drive.google.com'},
+  {id:'sc-gcal', icon:'📅', label:'Google Calendar', url:'https://calendar.google.com'},
+  {id:'sc-yt', icon:'▶️', label:'YouTube', url:'https://youtube.com'},
+  {id:'sc-spotify', icon:'🎧', label:'Spotify app', url:'spotify:'},
+];
+function shortcutsState(){
+  if(!Array.isArray(state.shortcuts)) state.shortcuts=DEFAULT_SHORTCUTS.slice();
+  return state.shortcuts;
+}
+function renderShortcuts(){
+  const grid=document.getElementById('shortcuts-grid');
+  if(!grid) return;
+  const list=shortcutsState();
+  if(!list.length){ grid.innerHTML='<div class="empty-state" style="grid-column:1/-1;">No shortcuts yet. Add your favourite apps and links.</div>'; return; }
+  grid.innerHTML=list.map(sc=>'<div class="card" style="padding:14px;text-align:center;position:relative;cursor:pointer;" onclick="openShortcut(\''+sc.id+'\')">'
+    +'<div style="font-size:28px;margin-bottom:8px;">'+(sc.icon||'🔗')+'</div>'
+    +'<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(sc.label||'Shortcut').replace(/</g,'&lt;')+'</div>'
+    +'<div style="font-size:10px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(sc.url||'').replace(/</g,'&lt;')+'</div>'
+    +'<div style="position:absolute;top:6px;right:6px;display:flex;gap:2px;">'
+      +'<button class="btn-icon" title="Edit" onclick="event.stopPropagation();openShortcutModal(\''+sc.id+'\')">✎</button>'
+      +'<button class="btn-icon" style="color:var(--accent)" title="Remove" onclick="event.stopPropagation();deleteShortcut(\''+sc.id+'\')">✕</button>'
+    +'</div></div>').join('');
+}
+function openShortcut(id){
+  const sc=shortcutsState().find(x=>x.id===id);
+  if(!sc||!sc.url) return;
+  try{ window.open(sc.url,'_blank','noopener'); }catch(e){ location.href=sc.url; }
+}
+function openShortcutModal(id){
+  const sc=id?shortcutsState().find(x=>x.id===id):null;
+  window._editingShortcutId=id||null;
+  const body='<div class="modal-field"><div class="modal-label">Name</div><input class="modal-input" id="sc-label" placeholder="e.g. Notion" value="'+((sc&&sc.label)||'').replace(/"/g,'&quot;')+'"/></div>'
+    +'<div class="modal-field"><div class="modal-label">Link or app URL</div><input class="modal-input" id="sc-url" placeholder="https://… or zoommtg://" value="'+((sc&&sc.url)||'').replace(/"/g,'&quot;')+'"/></div>'
+    +'<div class="modal-field"><div class="modal-label">Icon (emoji)</div><input class="modal-input" id="sc-icon" maxlength="4" placeholder="🔗" value="'+((sc&&sc.icon)||'').replace(/"/g,'&quot;')+'"/></div>'
+    +'<div style="font-size:11px;color:var(--faint);">Desktop apps need their own link scheme — for example <code>ms-excel:</code>, <code>slack://</code>, <code>vscode://</code>, <code>whatsapp://</code>.</div>';
+  openModal(id?'Edit shortcut':'New shortcut', body, 'saveShortcut');
+}
+function saveShortcut(){
+  const list=shortcutsState();
+  const label=document.getElementById('sc-label').value.trim();
+  let url=document.getElementById('sc-url').value.trim();
+  const icon=document.getElementById('sc-icon').value.trim()||'🔗';
+  if(!label){ toast('Give it a name','error'); return; }
+  if(!url){ toast('Add a link','error'); return; }
+  if(!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) url='https://'+url;
+  const id=window._editingShortcutId;
+  if(id){ const sc=list.find(x=>x.id===id); if(sc) Object.assign(sc,{label,url,icon}); }
+  else list.push({id:uid(),label,url,icon});
+  window._editingShortcutId=null;
+  saveState(); closeModal(); renderShortcuts(); toast(id?'Shortcut updated':'Shortcut added','success');
+}
+function deleteShortcut(id){
+  state.shortcuts=shortcutsState().filter(x=>x.id!==id);
+  saveState(); renderShortcuts(); toast('Shortcut removed');
+}
+
 function showFullscreenReminder(opts){
   opts = opts || {};
   const id = 'kalam-fsr-overlay';
@@ -7902,7 +8242,7 @@ function renderDashBrainDump(){
   const list = document.getElementById('dash-bd-list');
   if(!list) return;
   if(!Array.isArray(state.brainDumps)) state.brainDumps = [];
-  const recent = state.brainDumps.slice(0,3);
+  const recent = state.brainDumps;
   if(!recent.length){
     list.innerHTML = '<div class="empty-state" style="padding:8px 0;font-size:11px;">No dumps yet.</div>';
     return;
@@ -8036,6 +8376,17 @@ if(_origExportData){
     try { _origExportData(); } finally { state.screenTime = stash; }
   };
 }
+
+// Companion extension bridge: device-wide screen time + background reminders
+try{ startCompanionBridge(); }catch(e){}
+// Keep the extension's reminder schedule in step with app data
+const _origSaveState = saveState;
+let _extSyncDebounce = 0;
+saveState = function(){
+  _origSaveState.apply(this, arguments);
+  if(_extSyncDebounce) clearTimeout(_extSyncDebounce);
+  _extSyncDebounce = setTimeout(()=>{ try{ syncScheduleToExtension(); }catch(e){} }, 2000);
+};
 
 init();
 </script>
