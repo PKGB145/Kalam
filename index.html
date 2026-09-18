@@ -2520,10 +2520,101 @@ function toast(msg,type=''){
 }
 
 // ===================== STORAGE =====================
-function saveState(){
-  localStorage.setItem('kalam_data', JSON.stringify(state));
-  if(state.settings.storage==='firebase' && window._fbDb){ syncFirebase(); }
+function _isQuotaError(e){
+  return !!e && (e.name==='QuotaExceededError' || e.name==='NS_ERROR_DOM_QUOTA_REACHED' || e.code===22 || e.code===1014 || /quota/i.test(e.message||''));
 }
+// Frees space by trimming the heaviest, least critical data first.
+// Returns true if something was trimmed.
+function _pruneStateForStorage(step){
+  let changed=false;
+  if(step===0){
+    // 1) Drop old screen-time history (keep last 14 days)
+    const st=state.screentime;
+    if(st && typeof st==='object'){
+      const keys=Object.keys(st).sort();
+      while(keys.length>14){ delete st[keys.shift()]; changed=true; }
+    }
+    // 2) Drop AI chat transcripts in study subjects
+    for(const id in (state.study||{})){
+      const sd=state.study[id];
+      if(sd && Array.isArray(sd.chat) && sd.chat.length>10){ sd.chat=sd.chat.slice(-10); changed=true; }
+    }
+  }
+  if(step===1){
+    // Shrink stored source text (keep first 20k chars — enough for AI context)
+    for(const id in (state.study||{})){
+      const sd=state.study[id];
+      (sd && sd.sources || []).forEach(s=>{
+        if(s && typeof s.content==='string' && s.content.length>20000){
+          s.content=s.content.slice(0,20000);
+          s.truncated=true;
+          changed=true;
+        }
+      });
+    }
+  }
+  if(step===2){
+    for(const id in (state.study||{})){
+      const sd=state.study[id];
+      (sd && sd.sources || []).forEach(s=>{
+        if(s && typeof s.content==='string' && s.content.length>4000){
+          s.content=s.content.slice(0,4000);
+          s.truncated=true;
+          changed=true;
+        }
+      });
+    }
+  }
+  if(step===3){
+    // Last resort: drop screen-time history and keep only a snippet of each source
+    if(state.screentime && typeof state.screentime==='object'){
+      const keys=Object.keys(state.screentime).sort();
+      while(keys.length>2){ delete state.screentime[keys.shift()]; changed=true; }
+    }
+    for(const id in (state.study||{})){
+      const sd=state.study[id];
+      (sd && sd.sources || []).forEach(s=>{
+        if(s && typeof s.content==='string' && s.content.length>500){
+          s.content=s.content.slice(0,500);
+          s.truncated=true;
+          changed=true;
+        }
+      });
+      if(sd && Array.isArray(sd.chat) && sd.chat.length){ sd.chat=[]; changed=true; }
+    }
+  }
+  return changed;
+}
+
+let _storageWarned=false;
+function saveState(){
+  for(let step=0; step<=4; step++){
+    try{
+      localStorage.setItem('kalam_data', JSON.stringify(state));
+      if(state.settings.storage==='firebase' && window._fbDb){ syncFirebase(); }
+      return true;
+    }catch(e){
+      if(!_isQuotaError(e)){
+        console.error('saveState failed', e);
+        if(typeof toast==='function') toast('Could not save your changes.','error');
+        return false;
+      }
+      _pruneStateForStorage(step);
+      if(step===4){
+
+        if(!_storageWarned && typeof toast==='function'){
+          _storageWarned=true;
+          toast('Storage is full — remove some uploaded sources to keep saving.','error');
+        }
+        console.error('saveState: storage quota exceeded', e);
+        return false;
+      }
+
+    }
+  }
+  return false;
+}
+
 function loadState(){
   const raw = localStorage.getItem('kalam_data');
   if(raw){
@@ -8383,10 +8474,12 @@ try{ startCompanionBridge(); }catch(e){}
 const _origSaveState = saveState;
 let _extSyncDebounce = 0;
 saveState = function(){
-  _origSaveState.apply(this, arguments);
+  const ok = _origSaveState.apply(this, arguments);
   if(_extSyncDebounce) clearTimeout(_extSyncDebounce);
   _extSyncDebounce = setTimeout(()=>{ try{ syncScheduleToExtension(); }catch(e){} }, 2000);
+  return ok;
 };
+
 
 init();
 </script>
