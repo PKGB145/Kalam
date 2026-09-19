@@ -34,7 +34,7 @@ window.addEventListener('load',function(){
   --accent-light: rgba(181,71,42,0.12);
   --accent-mid: rgba(181,71,42,0.25);
   --border: rgba(107,94,74,0.18);
-  --shadow: 0 1px 3px rgba(44,36,22,0.07);
+  --shadow: var(--shadow);
   --font: 'DM Sans', sans-serif;
   --font-size: 14px;
   --sidebar-width: 220px;
@@ -58,8 +58,8 @@ window.addEventListener('load',function(){
   --info-light: rgba(37,99,168,0.12);
   --info-mid: rgba(37,99,168,0.25);
   --neutral: rgba(107,94,74,0.12);
-  --neutral-dark: rgba(107,94,74,0.32);
-  --neutral-shadow: rgba(107,94,74,0.18);
+  --neutral-dark: var(--neutral-dark);
+  --neutral-shadow: var(--neutral-shadow);
 }
 
 /* ===== RESET ===== */
@@ -1093,17 +1093,6 @@ select.modal-input { cursor: pointer; }
 #page-dashboard .dash-scroll-sm { max-height: none; overflow-y: visible; }
 
 .dash-top-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
-.dash-workflow-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
-@media (max-width: 1100px){ .dash-workflow-row { grid-template-columns: 1fr; } }
-.wf-row { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
-.wf-row:last-child { border-bottom:none; }
-.wf-time { font-size:11px; color:var(--muted); min-width:92px; font-variant-numeric:tabular-nums; }
-.wf-flex { background:var(--accent-light); border-radius:var(--radius); padding:6px 8px; border-bottom:none; }
-.wf-pill { display:inline-block; font-size:9px; text-transform:uppercase; letter-spacing:.06em; padding:2px 6px; border-radius:6px; background:var(--neutral); color:var(--muted); margin-right:4px; }
-.wf-pill.subj { background:var(--info-light); color:var(--info); }
-.wf-pill.cat-Incomplete { background:var(--danger-light); color:var(--danger); }
-.wf-pill.cat-Revision { background:var(--warn-light); color:var(--warn); }
-.wf-pill.cat-CoachingHW { background:var(--accent-light); color:var(--accent); }
 .dash-mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 .dash-quote-row { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; margin-bottom: 20px; }
 @media (max-width: 900px){ .dash-quote-row { grid-template-columns: 1fr; } }
@@ -1314,9 +1303,9 @@ select.modal-input { cursor: pointer; }
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
     <span class="nav-label">Journal</span>
   </div>
-  <div class="nav-item" data-page="brainDump" data-label="Capture">
-    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8v7.4"/><path d="M5 6.4 8 9.4l3-3"/><path d="M2.2 10.6v2.2c0 .7.5 1.2 1.2 1.2h9.2c.7 0 1.2-.5 1.2-1.2v-2.2"/></svg>
-    <span class="nav-label">📥 Capture</span>
+  <div class="nav-item" data-page="brainDump" data-label="Brain Dump">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5C3.3 2.5 2 3.8 2 5.5c0 1 .5 1.9 1.3 2.4-.2.4-.3.8-.3 1.3 0 1.5 1.2 2.8 2.8 2.8.4 0 .8-.1 1.1-.2.5.9 1.5 1.5 2.6 1.5 1.7 0 3-1.3 3-3 0-.3 0-.5-.1-.8.9-.5 1.6-1.4 1.6-2.5 0-1.7-1.3-3-3-3-.4 0-.7.1-1 .2C9.6 3 8.5 2.5 7.4 2.5c-.9 0-1.7.3-2.4.9z"/></svg>
+    <span class="nav-label">Brain Dump</span>
   </div>
   <div class="nav-item" data-page="shortcuts" data-label="Shortcuts">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.2"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.2"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.2"/></svg>
@@ -1407,32 +1396,6 @@ select.modal-input { cursor: pointer; }
         <div class="stat-card"><div class="stat-label">Tasks Done</div><div class="stat-value" id="stat-tasks">0/0</div></div>
         <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0</div></div>
       </div>
-
-      <!-- ACADEMIC WORKFLOW -->
-      <div class="dash-workflow-row" style="margin-bottom:20px;">
-        <div class="dash-section card" id="dash-top3-widget">
-          <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;font-size:13px;">🎯 Today's Top 3</div>
-            <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;" onclick="navigate('tasks')">All tasks</button>
-          </div>
-          <div class="dash-section-body"><div id="dash-top3-list"></div></div>
-        </div>
-        <div class="dash-section card" id="dash-incompletes-widget">
-          <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;font-size:13px;">🔴 Incompletes</div>
-            <span id="dash-incompletes-count" style="font-size:11px;color:var(--faint);"></span>
-          </div>
-          <div class="dash-section-body"><div id="dash-incompletes-list"></div></div>
-        </div>
-        <div class="dash-section card" id="dash-fixed-widget">
-          <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;font-size:13px;">🕒 Fixed Schedule</div>
-          </div>
-          <div class="dash-section-body"><div id="dash-fixed-list"></div></div>
-        </div>
-      </div>
-
-
 
       <!-- TOP ROW: Habits + Todo + Today's Agenda + Tasks -->
       <div class="dash-top-row" style="margin-bottom:20px;">
@@ -1713,34 +1676,6 @@ select.modal-input { cursor: pointer; }
 
     <!-- BRAIN DUMP -->
     <div class="page" id="page-brainDump">
-      <div class="card" style="padding:16px;margin-bottom:14px;">
-        <div class="card-title" style="margin-bottom:2px;">📥 Telegram Capture</div>
-        <div style="font-size:12px;color:var(--faint);margin-bottom:12px;">See homework in Telegram → capture it here → then stop checking Telegram.</div>
-        <textarea class="modal-input" id="cap-text" placeholder="e.g. PHY - Finish module 4 numericals" style="width:100%;min-height:70px;resize:vertical;margin-bottom:10px;" oninput="captureDetectSubject()"></textarea>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;">
-          <div>
-            <div class="modal-label">Task Type</div>
-            <select class="modal-input" id="cap-cat">
-              <option value="Coaching HW">Coaching HW</option>
-              <option value="School">School</option>
-              <option value="Incomplete">Incomplete</option>
-              <option value="Revision">Revision</option>
-            </select>
-          </div>
-          <div>
-            <div class="modal-label">Subject / Class</div>
-            <input class="modal-input" id="cap-subject" placeholder="PHY, M1, M2, C1, C2, SCH" oninput="this.dataset.touched='1'"/>
-          </div>
-          <div>
-            <div class="modal-label">Due date</div>
-            <input type="date" class="modal-input" id="cap-due"/>
-          </div>
-          <div>
-            <button class="btn btn-primary" style="width:100%;" onclick="addCaptureTask()">+ Add to Tasks</button>
-          </div>
-        </div>
-      </div>
-
       <div class="card" style="padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
         <div>
           <div class="card-title" style="margin-bottom:2px;">🧠 Brain Dump</div>
@@ -2780,8 +2715,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',brainDump:'📥 Capture',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',brainDump:'Capture homework fast — then get back to work',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2827,7 +2762,6 @@ function renderDashboard(){
   renderDashAgenda();
   try{ renderDashMiniCal(); }catch(e){}
   renderDashTodo();
-  try{ renderDashWorkflow(); }catch(e){}
   applyAllDashSections();
   initDashJournalWordCount();
   initDashJournal2WordCount();
@@ -3138,23 +3072,8 @@ function renderTasks(){
   renderTaskList('tasks-done-list',done,true);
   renderGoals();
 }
-const TASK_CATS=['Coaching HW','School','Incomplete','Revision'];
-function taskCat(t){ return (t&&t.category&&TASK_CATS.indexOf(t.category)>=0)?t.category:'School'; }
-function taskSubject(t){ return (t&&t.subject)?String(t.subject):''; }
-function catClass(c){ return 'cat-'+String(c||'').replace(/[^A-Za-z]/g,''); }
-function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-// Re-render every view that shows task data.
-function refreshTaskViews(){
-  try{ if(currentPage==='tasks') renderTasks(); }catch(e){}
-  try{ renderDashStats(); }catch(e){}
-  try{ renderDashTasks(); }catch(e){}
-  try{ renderDashWorkflow(); }catch(e){}
-  try{ if(currentPage==='dashboard'){ renderDashTodo(); renderDashAgenda(); renderDashMiniCal(); } }catch(e){}
-  try{ if(currentPage==='calendar') renderCalendar(); }catch(e){}
-}
 function renderTaskList(elId,tasks,isDone){
   const el=document.getElementById(elId);
-  if(!el) return;
   if(!tasks.length){ el.innerHTML='<div class="empty-state">'+( isDone?'No completed tasks.':'No pending tasks.')+'</div>'; return; }
   el.innerHTML=tasks.map(t=>`
     <div class="task-item">
@@ -3164,8 +3083,6 @@ function renderTaskList(elId,tasks,isDone){
       <div class="task-body">
         <div class="task-text ${t.done?'done':''}">${t.text}</div>
         <div class="task-meta">
-          <span class="wf-pill ${catClass(taskCat(t))}">${esc(taskCat(t))}</span>
-          ${taskSubject(t)?`<span class="wf-pill subj">${esc(taskSubject(t))}</span>`:''}
           ${t.tag?`<span class="tag-pill ${t.tag}">${t.tag}</span>`:''}
           ${t.priority?`<span class="priority-dot priority-${t.priority}"></span><span style="font-size:10px;color:var(--faint)">${t.priority}</span>`:''}
           ${t.due?`<span class="due-date ${isDue(t.due)?'overdue':''}">${fmtDate(t.due)}</span>`:''}
@@ -3183,20 +3100,18 @@ function toggleTask(id,fromDash=false){
   const t=state.tasks.find(x=>x.id===id);
   if(t){ t.done=!t.done; t.completedAt = t.done ? new Date().toISOString() : null; }
   saveState();
-  refreshTaskViews();
+  if(fromDash) renderDashboard();
+  else renderTasks();
 }
-function deleteTask(id){ const t=state.tasks.find(x=>x.id===id); if(t) gcalDeleteFor('task',t); state.tasks=state.tasks.filter(t=>t.id!==id); saveState(); refreshTaskViews(); toast('Task deleted'); }
-function clearCompletedTasks(){ state.tasks=state.tasks.filter(t=>!t.done); saveState(); refreshTaskViews(); toast('Cleared completed tasks'); }
+function deleteTask(id){ const t=state.tasks.find(x=>x.id===id); if(t) gcalDeleteFor('task',t); state.tasks=state.tasks.filter(t=>t.id!==id); saveState(); renderTasks(); toast('Task deleted'); }
+function clearCompletedTasks(){ state.tasks=state.tasks.filter(t=>!t.done); saveState(); renderTasks(); toast('Cleared completed tasks'); }
 let editingTaskId=null;
 function openAddTaskModal(){ editingTaskId=null; openModal('Add Task',taskModalBody(),'addTask'); }
 function openEditTaskModal(id){ editingTaskId=id; const t=state.tasks.find(x=>x.id===id); openModal('Edit Task',taskModalBody(t),'saveTask'); }
 function taskModalBody(t){
   const tagOpts=state.taskTags.map(tag=>`<option value="${tag}" ${t&&t.tag===tag?'selected':''}>${tag}</option>`).join('');
-  const catOpts=TASK_CATS.map(c=>`<option value="${c}" ${taskCat(t)===c?'selected':''}>${c}</option>`).join('');
   return `
-    <div class="modal-field"><div class="modal-label">Task</div><input class="modal-input" id="tm-text" value="${t?esc(t.text):''}"/></div>
-    <div class="modal-field"><div class="modal-label">Task Type</div><select class="modal-input" id="tm-category">${catOpts}</select></div>
-    <div class="modal-field"><div class="modal-label">Subject / Class</div><input class="modal-input" id="tm-subject" placeholder="PHY, M1, M2, C1, C2, SCH" value="${t?esc(taskSubject(t)):''}"/></div>
+    <div class="modal-field"><div class="modal-label">Task</div><input class="modal-input" id="tm-text" value="${t?t.text:''}"/></div>
     <div class="modal-field"><div class="modal-label">Tag</div><select class="modal-input" id="tm-tag"><option value="">None</option>${tagOpts}</select></div>
     <div class="modal-field"><div class="modal-label">Priority</div>
       <select class="modal-input" id="tm-priority">
@@ -3207,22 +3122,22 @@ function taskModalBody(t){
       </select>
     </div>
     <div class="modal-field"><div class="modal-label">Due Date</div><input type="date" class="modal-input" id="tm-due" value="${t&&t.due?t.due:''}"/></div>
-    <div class="modal-field"><div class="modal-label">Sub-tasks (one per line)</div><textarea class="modal-input" id="tm-subs">${t&&t.subtasks?esc(t.subtasks.join('\n')):''}</textarea></div>`;
+    <div class="modal-field"><div class="modal-label">Sub-tasks (one per line)</div><textarea class="modal-input" id="tm-subs">${t&&t.subtasks?t.subtasks.join('\n'):''}</textarea></div>`;
 }
 function addTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
-  const t={id:uid(),text,category:document.getElementById('tm-category')?.value||'School',subject:(document.getElementById('tm-subject')?.value||'').trim(),tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false};
+  const t={id:uid(),text,tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false};
   state.tasks.unshift(t);
-  saveState(); closeModal(); refreshTaskViews(); toast('Task added!','success');
+  saveState(); closeModal(); if(currentPage==='tasks') renderTasks(); if(currentPage==='dashboard') renderDashboard(); toast('Task added!','success');
   gcalPushItem('task',t);
 }
 function saveTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
   const t=state.tasks.find(x=>x.id===editingTaskId);
-  if(t){ t.text=text;t.category=document.getElementById('tm-category')?.value||'School';t.subject=(document.getElementById('tm-subject')?.value||'').trim();t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); gcalPushItem('task',t); }
-  saveState(); closeModal(); refreshTaskViews(); toast('Task updated!','success');
+  if(t){ t.text=text;t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); gcalPushItem('task',t); }
+  saveState(); closeModal(); renderTasks(); toast('Task updated!','success');
 }
 function renderGoals(){
   const el=document.getElementById('goals-list');
@@ -8414,126 +8329,6 @@ function checkHourlyReminders(){
 }
 
 // ===================== DASHBOARD: BRAIN DUMP QUICK + RECENT =====================
-// ===================== ACADEMIC WORKFLOW =====================
-const FIXED_SCHEDULE=[
-  {time:'05:30–07:00',label:'Physics',flex:false},
-  {time:'07:30–16:00',label:'School',flex:false},
-  {time:'16:00–19:00',label:'Flexible Work Window',flex:true},
-  {time:'19:00–20:15',label:'Maths',flex:false},
-  {time:'20:20–21:30',label:'Chemistry',flex:false}
-];
-function _wfScore(t){
-  const td=today();
-  let s=0;
-  if(t.due){
-    if(t.due<td) s+=60;              // overdue
-    else if(t.due===td) s+=45;       // due today
-    else s+=Math.max(0,20-((new Date(t.due)-new Date(td))/86400000));
-  }
-  s+=(t.priority==='high'?25:t.priority==='med'?14:t.priority==='low'?5:8);
-  const c=taskCat(t);
-  if(c==='Incomplete') s+=18;
-  else if(c==='Coaching HW') s+=12;
-  else if(c==='School') s+=10;
-  else s+=4;
-  return s;
-}
-function _wfTaskRow(t){
-  return '<div class="wf-row">'+
-    '<div class="task-check" style="flex-shrink:0;margin-top:2px;" onclick="toggleTask(\''+t.id+'\')"></div>'+
-    '<div style="flex:1;min-width:0;">'+
-      '<div style="font-size:13px;font-weight:500;color:var(--text);">'+esc(t.text)+'</div>'+
-      '<div style="margin-top:3px;">'+
-        '<span class="wf-pill '+catClass(taskCat(t))+'">'+esc(taskCat(t))+'</span>'+
-        (taskSubject(t)?'<span class="wf-pill subj">'+esc(taskSubject(t))+'</span>':'')+
-        (t.due?'<span style="font-size:10px;color:'+(t.due<today()?'var(--danger)':'var(--faint)')+';">'+fmtDate(t.due)+'</span>':'')+
-      '</div>'+
-    '</div>'+
-  '</div>';
-}
-function renderDashWorkflow(){
-  const pending=state.tasks.filter(t=>!t.done);
-  // --- Top 3 (max 1 Incomplete so a backlog can't take over) ---
-  const top3El=document.getElementById('dash-top3-list');
-  if(top3El){
-    const ranked=[...pending].sort((a,b)=>_wfScore(b)-_wfScore(a));
-    const picks=[]; let incCount=0;
-    for(const t of ranked){
-      if(picks.length>=3) break;
-      if(taskCat(t)==='Incomplete'){ if(incCount>=1) continue; incCount++; }
-      picks.push(t);
-    }
-    top3El.innerHTML=picks.length
-      ? picks.map(_wfTaskRow).join('')
-      : '<div class="empty-state" style="padding:8px 0;">Nothing pending — enjoy the flexible window. 🎉</div>';
-  }
-  // --- Incompletes ---
-  const incEl=document.getElementById('dash-incompletes-list');
-  const incAll=pending.filter(t=>taskCat(t)==='Incomplete');
-  if(incEl){
-    const show=incAll.slice(0,3);
-    incEl.innerHTML=(show.length
-      ? show.map(_wfTaskRow).join('')+'<div style="font-size:11px;color:var(--faint);margin-top:8px;">Clear one at a time.</div>'
-      : '<div class="empty-state" style="padding:8px 0;">No incompletes. Well done. ✅</div>')+
-      (incAll.length>3?'<button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:11px;" onclick="navigate(\'tasks\')">See all '+incAll.length+' in Tasks</button>':'');
-  }
-  const cEl=document.getElementById('dash-incompletes-count');
-  if(cEl) cEl.textContent=incAll.length?incAll.length+' open':'';
-  // --- Fixed schedule (context only, never turned into tasks) ---
-  const fx=document.getElementById('dash-fixed-list');
-  if(fx){
-    fx.innerHTML=FIXED_SCHEDULE.map(s=>
-      '<div class="wf-row'+(s.flex?' wf-flex':'')+'">'+
-        '<div class="wf-time">'+s.time+'</div>'+
-        '<div style="flex:1;font-size:13px;font-weight:'+(s.flex?'600':'500')+';color:'+(s.flex?'var(--accent)':'var(--text)')+';">'+s.label+'</div>'+
-      '</div>').join('');
-  }
-}
-// ===================== QUICK CAPTURE =====================
-const SUBJECT_PREFIXES=['PHY','M1','M2','C1','C2','SCH'];
-function captureParse(raw){
-  const s=String(raw||'').trim();
-  const m=s.match(/^([A-Za-z]{1,3}[0-9]?)\s*[-:–]\s*(.+)$/s);
-  if(m){
-    const p=m[1].toUpperCase();
-    if(SUBJECT_PREFIXES.indexOf(p)>=0) return {subject:p,text:m[2].trim()};
-  }
-  return {subject:'',text:s};
-}
-function captureDetectSubject(){
-  const ta=document.getElementById('cap-text'); const sub=document.getElementById('cap-subject');
-  if(!ta||!sub) return;
-  const {subject}=captureParse(ta.value);
-  if(subject && !sub.dataset.touched) sub.value=subject;
-}
-function addCaptureTask(){
-  const ta=document.getElementById('cap-text');
-  const raw=ta?ta.value.trim():'';
-  if(!raw){ toast('Type what you need to do','error'); return; }
-  const parsed=captureParse(raw);
-  const subEl=document.getElementById('cap-subject');
-  const category=document.getElementById('cap-cat')?.value||'Coaching HW';
-  const due=document.getElementById('cap-due')?.value||'';
-  const t={
-    id:uid(),
-    text:parsed.text||raw,
-    category,
-    subject:((subEl&&subEl.value.trim())||parsed.subject||''),
-    tag:'',
-    priority:(category==='Incomplete'?'high':'med'),
-    due,
-    subtasks:[],
-    done:false
-  };
-  state.tasks.unshift(t);
-  saveState();
-  if(ta) ta.value='';
-  if(subEl){ subEl.value=''; delete subEl.dataset.touched; }
-  const dueEl=document.getElementById('cap-due'); if(dueEl) dueEl.value='';
-  refreshTaskViews();
-  toast('Added to Tasks','success');
-  try{ gcalPushItem('task',t); }catch(e){}
-}
 function renderDashBrainDump(){
   const list = document.getElementById('dash-bd-list');
   if(!list) return;
