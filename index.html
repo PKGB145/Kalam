@@ -34,7 +34,7 @@ window.addEventListener('load',function(){
   --accent-light: rgba(181,71,42,0.12);
   --accent-mid: rgba(181,71,42,0.25);
   --border: rgba(107,94,74,0.18);
-  --shadow: var(--shadow);
+  --shadow: 0 1px 3px rgba(44,36,22,0.07);
   --font: 'DM Sans', sans-serif;
   --font-size: 14px;
   --sidebar-width: 220px;
@@ -58,8 +58,8 @@ window.addEventListener('load',function(){
   --info-light: rgba(37,99,168,0.12);
   --info-mid: rgba(37,99,168,0.25);
   --neutral: rgba(107,94,74,0.12);
-  --neutral-dark: var(--neutral-dark);
-  --neutral-shadow: var(--neutral-shadow);
+  --neutral-dark: rgba(107,94,74,0.32);
+  --neutral-shadow: rgba(107,94,74,0.18);
 }
 
 /* ===== RESET ===== */
@@ -1092,7 +1092,18 @@ select.modal-input { cursor: pointer; }
 #page-dashboard .dash-scroll,
 #page-dashboard .dash-scroll-sm { max-height: none; overflow-y: visible; }
 
-.dash-top-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
+.dash-top-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.dash-workflow-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 1100px){ .dash-workflow-row { grid-template-columns: 1fr; } }
+.wf-row { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.wf-row:last-child { border-bottom:none; }
+.wf-time { font-size:11px; color:var(--muted); min-width:92px; font-variant-numeric:tabular-nums; }
+.wf-flex { background:var(--accent-light); border-radius:var(--radius); padding:6px 8px; border-bottom:none; }
+.wf-pill { display:inline-block; font-size:9px; text-transform:uppercase; letter-spacing:.06em; padding:2px 6px; border-radius:6px; background:var(--neutral); color:var(--muted); margin-right:4px; }
+.wf-pill.subj { background:var(--info-light); color:var(--info); }
+.wf-pill.cat-Incomplete { background:var(--danger-light); color:var(--danger); }
+.wf-pill.cat-Revision { background:var(--warn-light); color:var(--warn); }
+.wf-pill.cat-CoachingHW { background:var(--accent-light); color:var(--accent); }
 .dash-mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 .dash-quote-row { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; margin-bottom: 20px; }
 @media (max-width: 900px){ .dash-quote-row { grid-template-columns: 1fr; } }
@@ -1304,7 +1315,7 @@ select.modal-input { cursor: pointer; }
     <span class="nav-label">Journal</span>
   </div>
   <div class="nav-item" data-page="brainDump" data-label="Brain Dump">
-    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5C3.3 2.5 2 3.8 2 5.5c0 1 .5 1.9 1.3 2.4-.2.4-.3.8-.3 1.3 0 1.5 1.2 2.8 2.8 2.8.4 0 .8-.1 1.1-.2.5.9 1.5 1.5 2.6 1.5 1.7 0 3-1.3 3-3 0-.3 0-.5-.1-.8.9-.5 1.6-1.4 1.6-2.5 0-1.7-1.3-3-3-3-.4 0-.7.1-1 .2C9.6 3 8.5 2.5 7.4 2.5c-.9 0-1.7.3-2.4.9z"/></svg>
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2a3 3 0 0 0-4 3 3 3 0 0 0 0 5 3 3 0 0 0 4 3M10 2a3 3 0 0 1 4 3 3 3 0 0 1 0 5 3 3 0 0 1-4 3M8 2v12M4 6h2M10 10h2"/></svg>
     <span class="nav-label">Brain Dump</span>
   </div>
   <div class="nav-item" data-page="shortcuts" data-label="Shortcuts">
@@ -1317,6 +1328,10 @@ select.modal-input { cursor: pointer; }
   </div>
 
   <div class="sidebar-section-label">Study</div>
+  <div class="nav-item" data-page="incompletes" data-label="Incompletes">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11h.01"/></svg>
+    <span class="nav-label">Incompletes</span>
+  </div>
   <div class="nav-item" data-page="study" data-label="Study Space">
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3l7-2 7 2v2L8 7 1 5V3z"/><path d="M4 6v5c0 1.1 1.8 2 4 2s4-.9 4-2V6"/></svg>
     <span class="nav-label">Study Space</span>
@@ -1397,7 +1412,7 @@ select.modal-input { cursor: pointer; }
         <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">0</div></div>
       </div>
 
-      <!-- TOP ROW: Habits + Todo + Today's Agenda + Tasks -->
+      <!-- TOP ROW: Habits + Incompletes + Today's Agenda + Tasks -->
       <div class="dash-top-row" style="margin-bottom:20px;">
         <!-- Habits -->
         <div class="dash-section card" id="dash-habits-widget">
@@ -1408,16 +1423,14 @@ select.modal-input { cursor: pointer; }
             <div id="dash-habits-list"></div>
           </div>
         </div>
-        <!-- Todo -->
-        <div class="dash-section card" id="dash-todo-widget">
+        <div class="dash-section card" id="dash-incompletes-widget">
           <div class="dash-section-header">
-            <div class="card-title" style="margin-bottom:0;">To-Do <span id="dash-todo-progress" style="font-size:11px;color:var(--faint);font-family:inherit;font-weight:400;"></span></div>
+            <div class="card-title" style="margin-bottom:0;">Incompletes</div>
+            <span id="dash-incompletes-count" style="font-size:11px;color:var(--faint);"></span>
           </div>
-          <div class="dash-section-body" id="dash-todo-body">
-            <div style="display:flex;gap:8px;margin-bottom:10px;">
-              <input class="search-input" id="dash-todo-input" placeholder="Add a todo and press Enter…" style="margin-bottom:0;flex:1;font-size:13px;" onkeydown="if(event.key==='Enter')addDashTodo()"/>
-            </div>
-            <div id="dash-todo-list"></div>
+          <div class="dash-section-body" id="dash-incompletes-body">
+            <div id="dash-incompletes-list"></div>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('incompletes')">View all →</button>
           </div>
         </div>
         <!-- Today's full agenda -->
@@ -1450,6 +1463,7 @@ select.modal-input { cursor: pointer; }
             <div class="card-title" style="margin-bottom:0;">Brain Dump</div>
             <div style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
               <span id="dash-jq-wordcount" style="font-size:12px;color:var(--faint);">0 words</span>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('brainDump')" title="Open Brain Dump" aria-label="Open Brain Dump">↗</button>
               <button class="btn btn-ghost btn-sm" onclick="clearDashJournalEditor()">Clear</button>
               <button class="btn btn-primary btn-sm" onclick="saveDashJournal()">Save</button>
             </div>
@@ -1673,6 +1687,29 @@ select.modal-input { cursor: pointer; }
       </div>
     </div>
 
+
+    <!-- INCOMPLETES -->
+    <div class="page" id="page-incompletes">
+      <div class="card" style="padding:16px;margin-bottom:14px;">
+        <div class="card-title" style="margin-bottom:2px;">🔴 Incompletes</div>
+        <div style="font-size:12px;color:var(--faint);margin-bottom:12px;">Work you left unfinished. Clear one at a time.</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;" class="inc-form">
+          <input class="modal-input" id="inc-text" placeholder="What's incomplete?" onkeydown="if(event.key==='Enter')addIncomplete()"/>
+          <input class="modal-input" id="inc-subject" placeholder="Subject (PHY, M1…)"/>
+          <input type="date" class="modal-input" id="inc-due"/>
+          <button class="btn btn-primary" onclick="addIncomplete()">+ Add</button>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;margin-bottom:14px;">
+        <div class="card-title" id="inc-open-title">Open</div>
+        <div id="inc-open-list"></div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div class="card-title">Cleared</div>
+        <div id="inc-done-list"></div>
+      </div>
+    </div>
+    <style>@media(max-width:700px){.inc-form{grid-template-columns:1fr!important;}}</style>
 
     <!-- BRAIN DUMP -->
     <div class="page" id="page-brainDump">
@@ -2241,12 +2278,10 @@ select.modal-input { cursor: pointer; }
           </div>
         </div>
         <div style="font-size:12px;color:var(--faint);padding:6px 0;line-height:1.8;">
-          <strong style="color:var(--muted);">Install (Chrome, Edge, Brave, Arc, Opera):</strong><br>
-          1. Download and unzip the file.<br>
-          2. Open <code>chrome://extensions</code> in your browser.<br>
-          3. Turn on <strong>Developer mode</strong> (top-right).<br>
-          4. Click <strong>Load unpacked</strong> and pick the unzipped folder.<br>
-          5. Reload Kalam — the status dot above turns green.<br><br>
+          <strong style="color:var(--muted);">Install:</strong><br>
+          Choose the Companion for your browser, unzip it, and load the folder from your browser's extensions page.<br>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="downloadCompanion('chromium')">Chromium browsers</button>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="downloadCompanion('firefox')">Firefox</button><br><br>
           <strong style="color:var(--muted);">What it adds:</strong> screen time across <em>every</em> tab and site you use (not just Kalam), split per app/site, and reminders that keep firing even when Kalam is closed.<br><br>
           <strong style="color:var(--muted);">Limits:</strong> it tracks browser activity only — native desktop apps like Word or games can't be seen by any website. Reminders run while your browser is open; quitting the browser entirely stops them.
         </div>
@@ -2715,8 +2750,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',brainDump:'Capture loose thoughts',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',incompletes:'Incompletes',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',incompletes:'Unfinished work, one at a time',brainDump:'Loose thoughts and ideas',ai:'Your study companion',settings:'Customise your experience'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2746,6 +2781,7 @@ function renderPage(page){
     case 'planner': renderPlanner(); break;
     case 'shortcuts': renderShortcuts(); break;
     case 'pomodoro': renderPomodoro(); break;
+    case 'incompletes': renderIncompletes(); break;
     case 'brainDump': renderBrainDump(); break;
     case 'ai': renderAI(); break;
     case 'settings': renderSettings(); break;
@@ -2761,7 +2797,7 @@ function renderDashboard(){
   try{ renderDashBrainDump(); }catch(e){}
   renderDashAgenda();
   try{ renderDashMiniCal(); }catch(e){}
-  renderDashTodo();
+  try{ renderDashWorkflow(); }catch(e){}
   applyAllDashSections();
   initDashJournalWordCount();
   initDashJournal2WordCount();
@@ -3072,8 +3108,24 @@ function renderTasks(){
   renderTaskList('tasks-done-list',done,true);
   renderGoals();
 }
+const TASK_CATS=['Coaching HW','School','Incomplete','Revision'];
+function taskCat(t){ return (t&&t.category&&TASK_CATS.indexOf(t.category)>=0)?t.category:'School'; }
+function taskSubject(t){ return (t&&t.subject)?String(t.subject):''; }
+function catClass(c){ return 'cat-'+String(c||'').replace(/[^A-Za-z]/g,''); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Re-render every view that shows task data.
+function refreshTaskViews(){
+  try{ if(currentPage==='tasks') renderTasks(); }catch(e){}
+  try{ renderDashStats(); }catch(e){}
+  try{ renderDashTasks(); }catch(e){}
+  try{ renderDashWorkflow(); }catch(e){}
+  try{ if(currentPage==='incompletes') renderIncompletes(); }catch(e){}
+  try{ if(currentPage==='dashboard'){ renderDashAgenda(); renderDashMiniCal(); } }catch(e){}
+  try{ if(currentPage==='calendar') renderCalendar(); }catch(e){}
+}
 function renderTaskList(elId,tasks,isDone){
   const el=document.getElementById(elId);
+  if(!el) return;
   if(!tasks.length){ el.innerHTML='<div class="empty-state">'+( isDone?'No completed tasks.':'No pending tasks.')+'</div>'; return; }
   el.innerHTML=tasks.map(t=>`
     <div class="task-item">
@@ -3083,6 +3135,8 @@ function renderTaskList(elId,tasks,isDone){
       <div class="task-body">
         <div class="task-text ${t.done?'done':''}">${t.text}</div>
         <div class="task-meta">
+          <span class="wf-pill ${catClass(taskCat(t))}">${esc(taskCat(t))}</span>
+          ${taskSubject(t)?`<span class="wf-pill subj">${esc(taskSubject(t))}</span>`:''}
           ${t.tag?`<span class="tag-pill ${t.tag}">${t.tag}</span>`:''}
           ${t.priority?`<span class="priority-dot priority-${t.priority}"></span><span style="font-size:10px;color:var(--faint)">${t.priority}</span>`:''}
           ${t.due?`<span class="due-date ${isDue(t.due)?'overdue':''}">${fmtDate(t.due)}</span>`:''}
@@ -3100,18 +3154,20 @@ function toggleTask(id,fromDash=false){
   const t=state.tasks.find(x=>x.id===id);
   if(t){ t.done=!t.done; t.completedAt = t.done ? new Date().toISOString() : null; }
   saveState();
-  if(fromDash) renderDashboard();
-  else renderTasks();
+  refreshTaskViews();
 }
-function deleteTask(id){ const t=state.tasks.find(x=>x.id===id); if(t) gcalDeleteFor('task',t); state.tasks=state.tasks.filter(t=>t.id!==id); saveState(); renderTasks(); toast('Task deleted'); }
-function clearCompletedTasks(){ state.tasks=state.tasks.filter(t=>!t.done); saveState(); renderTasks(); toast('Cleared completed tasks'); }
+function deleteTask(id){ const t=state.tasks.find(x=>x.id===id); if(t) gcalDeleteFor('task',t); state.tasks=state.tasks.filter(t=>t.id!==id); saveState(); refreshTaskViews(); toast('Task deleted'); }
+function clearCompletedTasks(){ state.tasks=state.tasks.filter(t=>!t.done); saveState(); refreshTaskViews(); toast('Cleared completed tasks'); }
 let editingTaskId=null;
 function openAddTaskModal(){ editingTaskId=null; openModal('Add Task',taskModalBody(),'addTask'); }
 function openEditTaskModal(id){ editingTaskId=id; const t=state.tasks.find(x=>x.id===id); openModal('Edit Task',taskModalBody(t),'saveTask'); }
 function taskModalBody(t){
   const tagOpts=state.taskTags.map(tag=>`<option value="${tag}" ${t&&t.tag===tag?'selected':''}>${tag}</option>`).join('');
+  const catOpts=TASK_CATS.map(c=>`<option value="${c}" ${taskCat(t)===c?'selected':''}>${c}</option>`).join('');
   return `
-    <div class="modal-field"><div class="modal-label">Task</div><input class="modal-input" id="tm-text" value="${t?t.text:''}"/></div>
+    <div class="modal-field"><div class="modal-label">Task</div><input class="modal-input" id="tm-text" value="${t?esc(t.text):''}"/></div>
+    <div class="modal-field"><div class="modal-label">Task Type</div><select class="modal-input" id="tm-category">${catOpts}</select></div>
+    <div class="modal-field"><div class="modal-label">Subject / Class</div><input class="modal-input" id="tm-subject" placeholder="PHY, M1, M2, C1, C2, SCH" value="${t?esc(taskSubject(t)):''}"/></div>
     <div class="modal-field"><div class="modal-label">Tag</div><select class="modal-input" id="tm-tag"><option value="">None</option>${tagOpts}</select></div>
     <div class="modal-field"><div class="modal-label">Priority</div>
       <select class="modal-input" id="tm-priority">
@@ -3122,22 +3178,22 @@ function taskModalBody(t){
       </select>
     </div>
     <div class="modal-field"><div class="modal-label">Due Date</div><input type="date" class="modal-input" id="tm-due" value="${t&&t.due?t.due:''}"/></div>
-    <div class="modal-field"><div class="modal-label">Sub-tasks (one per line)</div><textarea class="modal-input" id="tm-subs">${t&&t.subtasks?t.subtasks.join('\n'):''}</textarea></div>`;
+    <div class="modal-field"><div class="modal-label">Sub-tasks (one per line)</div><textarea class="modal-input" id="tm-subs">${t&&t.subtasks?esc(t.subtasks.join('\n')):''}</textarea></div>`;
 }
 function addTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
-  const t={id:uid(),text,tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false};
+  const t={id:uid(),text,category:document.getElementById('tm-category')?.value||'School',subject:(document.getElementById('tm-subject')?.value||'').trim(),tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false};
   state.tasks.unshift(t);
-  saveState(); closeModal(); if(currentPage==='tasks') renderTasks(); if(currentPage==='dashboard') renderDashboard(); toast('Task added!','success');
+  saveState(); closeModal(); refreshTaskViews(); toast('Task added!','success');
   gcalPushItem('task',t);
 }
 function saveTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
   const t=state.tasks.find(x=>x.id===editingTaskId);
-  if(t){ t.text=text;t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); gcalPushItem('task',t); }
-  saveState(); closeModal(); renderTasks(); toast('Task updated!','success');
+  if(t){ t.text=text;t.category=document.getElementById('tm-category')?.value||'School';t.subject=(document.getElementById('tm-subject')?.value||'').trim();t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); gcalPushItem('task',t); }
+  saveState(); closeModal(); refreshTaskViews(); toast('Task updated!','success');
 }
 function renderGoals(){
   const el=document.getElementById('goals-list');
@@ -4626,6 +4682,29 @@ function _examCardHTML(e){
     </div>
   </div>`;
 }
+function _examGroupsHTML(exams){
+  const groups=[];
+  const byTitle=new Map();
+  exams.forEach(e=>{
+    const title=(e.title||'Exam').trim()||'Exam';
+    const key=title.toLocaleLowerCase();
+    let group=byTitle.get(key);
+    if(!group){
+      group={title, exams:[]};
+      byTitle.set(key,group);
+      groups.push(group);
+    }
+    group.exams.push(e);
+  });
+  return groups.map(group=>`
+    <section style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 2px;border-bottom:1px solid var(--border);margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:600;">${esc(group.title)}</div>
+        <span style="font-size:10px;color:var(--faint);">${group.exams.length} exam${group.exams.length===1?'':'s'}</span>
+      </div>
+      ${group.exams.map(_examCardHTML).join('')}
+    </section>`).join('');
+}
 function renderExams(){
   if(!Array.isArray(state.exams)) state.exams=[];
   state.exams.forEach(_ensureExamShape);
@@ -4634,20 +4713,20 @@ function renderExams(){
   const td=today();
   const sorted=[...state.exams].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const upcoming=sorted.filter(e=>!e.date || e.date>=td);
-  const past=sorted.filter(e=>e.date && e.date<td).reverse();
+  const past=sorted.filter(e=>e.date && e.date<td);
   if(!sorted.length){
     list.innerHTML='<div class="empty-state"><div class="empty-state-icon">📝</div>No exams yet. Add your first one to track scores and trends.</div>';
   } else {
     const upcomingHTML=`
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:8px;">Upcoming exams · ${upcoming.length}</div>
-        ${upcoming.length?upcoming.map(_examCardHTML).join(''):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">Nothing coming up.</div>`}
+        ${upcoming.length?_examGroupsHTML(upcoming):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">Nothing coming up.</div>`}
       </div>`;
     const pastHTML=`
       <details style="margin-bottom:14px;" ${past.length?'':'open'}>
         <summary style="cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin-bottom:8px;user-select:none;list-style:none;">▸ Past exams · ${past.length}</summary>
         <div style="margin-top:8px;">
-          ${past.length?past.map(_examCardHTML).join(''):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">No past exams yet.</div>`}
+          ${past.length?_examGroupsHTML(past):`<div style="font-size:12px;color:var(--faint);padding:8px 0;">No past exams yet.</div>`}
         </div>
       </details>`;
     list.innerHTML = upcomingHTML + pastHTML;
@@ -6797,7 +6876,7 @@ function applyDashSection(section){
   if(icon){ icon.style.transform = collapsed ? 'rotate(-90deg)' : ''; }
 }
 function applyAllDashSections(){
-  ['habits','todo','journal','tasks','agenda'].forEach(s => applyDashSection(s));
+  ['habits','journal','tasks','agenda'].forEach(s => applyDashSection(s));
 }
 
 // Updated dashboard journal: always-visible inline editor with word count
@@ -7507,6 +7586,7 @@ function renderBrainDumpList(){
 function newBrainDump(){
   const d={id:uid(),title:'',body:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   state.brainDumps.unshift(d); saveState();
+  renderDashBrainDump();
   activeBrainDumpId=d.id; renderBrainDumpList();
   const t=document.getElementById('bd-title'); const b=document.getElementById('bd-body');
   if(t){ t.value=''; t.focus(); }
@@ -7540,14 +7620,15 @@ function brainDumpChanged(){
     state.brainDumps.unshift(d);
     activeBrainDumpId=d.id;
   }
+  const dumpId=activeBrainDumpId;
+  const title=t?.value||'';
+  const body=b?.value||'';
+  const dump=state.brainDumps.find(x=>x.id===dumpId);
+  if(dump){ dump.title=title; dump.body=body; dump.updatedAt=new Date().toISOString(); }
+  renderBrainDumpList(); renderDashBrainDump();
   if(_bdTimer) clearTimeout(_bdTimer);
   _bdTimer=setTimeout(()=>{
-    if(!activeBrainDumpId) return;
-    const d=state.brainDumps.find(x=>x.id===activeBrainDumpId); if(!d) return;
-    d.title=document.getElementById('bd-title').value;
-    d.body=document.getElementById('bd-body').value;
-    d.updatedAt=new Date().toISOString();
-    saveState(); renderBrainDumpList();
+    saveState();
   },500);
 }
 function deleteBrainDump(){
@@ -7556,6 +7637,7 @@ function deleteBrainDump(){
   state.brainDumps=state.brainDumps.filter(d=>d.id!==activeBrainDumpId);
   activeBrainDumpId=null; saveState();
   clearBrainDumpEditor(); renderBrainDumpList();
+  renderDashBrainDump();
   toast('Dump deleted');
 }
 function exportBrainDumpAsPdf(){
@@ -8155,14 +8237,16 @@ function renderExtStatus(){
     : 'Not installed — Kalam only tracks time spent in this tab.';
 }
 
-function downloadCompanion(){
-  fetch('/kalam-companion.zip')
+function downloadCompanion(browser){
+  const firefox=browser==='firefox';
+  const file=firefox?'/kalam-companion-firefox.zip':'/kalam-companion.zip';
+  fetch(file)
     .then(r=>{ if(!r.ok) throw new Error('Download failed: '+r.status); return r.blob(); })
     .then(b=>{
       const a=document.createElement('a');
-      a.href=URL.createObjectURL(b); a.download='kalam-companion.zip'; a.click();
+      a.href=URL.createObjectURL(b); a.download=firefox?'kalam-companion-firefox.zip':'kalam-companion.zip'; a.click();
       URL.revokeObjectURL(a.href);
-      toast('Companion downloaded — unzip it, then load it in chrome://extensions','success');
+      toast('Companion downloaded — unzip it and load it from your browser extensions page','success');
     })
     .catch(e=>toast(e.message,'error'));
 }
@@ -8329,6 +8413,149 @@ function checkHourlyReminders(){
 }
 
 // ===================== DASHBOARD: BRAIN DUMP QUICK + RECENT =====================
+// ===================== ACADEMIC WORKFLOW =====================
+const FIXED_SCHEDULE=[
+  {time:'05:30–07:00',label:'Physics',flex:false},
+  {time:'07:30–16:00',label:'School',flex:false},
+  {time:'16:00–19:00',label:'Flexible Work Window',flex:true},
+  {time:'19:00–20:15',label:'Maths',flex:false},
+  {time:'20:20–21:30',label:'Chemistry',flex:false}
+];
+function _wfScore(t){
+  const td=today();
+  let s=0;
+  if(t.due){
+    if(t.due<td) s+=60;              // overdue
+    else if(t.due===td) s+=45;       // due today
+    else s+=Math.max(0,20-((new Date(t.due)-new Date(td))/86400000));
+  }
+  s+=(t.priority==='high'?25:t.priority==='med'?14:t.priority==='low'?5:8);
+  const c=taskCat(t);
+  if(c==='Incomplete') s+=18;
+  else if(c==='Coaching HW') s+=12;
+  else if(c==='School') s+=10;
+  else s+=4;
+  return s;
+}
+function _wfTaskRow(t){
+  return '<div class="wf-row">'+
+    '<div class="task-check" style="flex-shrink:0;margin-top:2px;" onclick="toggleTask(\''+t.id+'\')"></div>'+
+    '<div style="flex:1;min-width:0;">'+
+      '<div style="font-size:13px;font-weight:500;color:var(--text);">'+esc(t.text)+'</div>'+
+      '<div style="margin-top:3px;">'+
+        '<span class="wf-pill '+catClass(taskCat(t))+'">'+esc(taskCat(t))+'</span>'+
+        (taskSubject(t)?'<span class="wf-pill subj">'+esc(taskSubject(t))+'</span>':'')+
+        (t.due?'<span style="font-size:10px;color:'+(t.due<today()?'var(--danger)':'var(--faint)')+';">'+fmtDate(t.due)+'</span>':'')+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+function renderIncompletes(){
+  const inc=state.tasks.filter(t=>taskCat(t)==='Incomplete');
+  const open=inc.filter(t=>!t.done).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  const done=inc.filter(t=>t.done);
+  const row=t=>'<div class="wf-row"><div class="task-check'+(t.done?' done':'')+'" style="flex-shrink:0;margin-top:2px;" onclick="toggleTask(\''+t.id+'\')"></div>'+
+    '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:var(--text);'+(t.done?'text-decoration:line-through;opacity:.6;':'')+'">'+esc(t.text)+'</div>'+
+    '<div style="margin-top:3px;">'+(taskSubject(t)?'<span class="wf-pill subj">'+esc(taskSubject(t))+'</span>':'')+
+    (t.due?'<span style="font-size:10px;color:'+(!t.done&&t.due<today()?'var(--danger)':'var(--faint)')+';">'+fmtDate(t.due)+'</span>':'')+'</div></div>'+
+    '<button class="btn btn-ghost btn-sm" onclick="openEditTaskModal(\''+t.id+'\')">Edit</button>'+
+    '<button class="btn btn-ghost btn-sm" onclick="deleteTask(\''+t.id+'\')">✕</button></div>';
+  const o=document.getElementById('inc-open-list'), d=document.getElementById('inc-done-list'), ti=document.getElementById('inc-open-title');
+  if(ti) ti.textContent='Open ('+open.length+')';
+  if(o) o.innerHTML=open.length?open.map(row).join(''):'<div class="empty-state" style="padding:8px 0;">No incompletes. Well done. ✅</div>';
+  if(d) d.innerHTML=done.length?done.map(row).join(''):'<div class="empty-state" style="padding:8px 0;">Nothing cleared yet.</div>';
+}
+function addIncomplete(){
+  const te=document.getElementById('inc-text'); const text=(te.value||'').trim(); if(!text) return;
+  const t={id:uid(),text,done:false,priority:'high',due:document.getElementById('inc-due').value||'',tag:'',category:'Incomplete',subject:(document.getElementById('inc-subject').value||'').trim().toUpperCase(),subtasks:[],createdAt:new Date().toISOString()};
+  state.tasks.unshift(t); saveState();
+  te.value=''; document.getElementById('inc-subject').value=''; document.getElementById('inc-due').value='';
+  refreshTaskViews(); renderIncompletes();
+  try{ gcalPushItem('task',t); }catch(e){}
+}
+function renderDashWorkflow(){
+  const pending=state.tasks.filter(t=>!t.done);
+  // --- Top 3 (max 1 Incomplete so a backlog can't take over) ---
+  const top3El=document.getElementById('dash-top3-list');
+  if(top3El){
+    const ranked=[...pending].sort((a,b)=>_wfScore(b)-_wfScore(a));
+    const picks=[]; let incCount=0;
+    for(const t of ranked){
+      if(picks.length>=3) break;
+      if(taskCat(t)==='Incomplete'){ if(incCount>=1) continue; incCount++; }
+      picks.push(t);
+    }
+    top3El.innerHTML=picks.length
+      ? picks.map(_wfTaskRow).join('')
+      : '<div class="empty-state" style="padding:8px 0;">Nothing pending — enjoy the flexible window. 🎉</div>';
+  }
+  // --- Incompletes ---
+  const incEl=document.getElementById('dash-incompletes-list');
+  const incAll=pending.filter(t=>taskCat(t)==='Incomplete').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  if(incEl){
+    const show=incAll.slice(0,3);
+    incEl.innerHTML=(show.length
+      ? show.map(_wfTaskRow).join('')+'<div style="font-size:11px;color:var(--faint);margin-top:8px;">Clear one at a time.</div>'
+      : '<div class="empty-state" style="padding:8px 0;">No incompletes. Well done. ✅</div>')+
+      '';
+  }
+  const cEl=document.getElementById('dash-incompletes-count');
+  if(cEl) cEl.textContent=incAll.length?incAll.length+' open':'';
+  // --- Fixed schedule (context only, never turned into tasks) ---
+  const fx=document.getElementById('dash-fixed-list');
+  if(fx){
+    fx.innerHTML=FIXED_SCHEDULE.map(s=>
+      '<div class="wf-row'+(s.flex?' wf-flex':'')+'">'+
+        '<div class="wf-time">'+s.time+'</div>'+
+        '<div style="flex:1;font-size:13px;font-weight:'+(s.flex?'600':'500')+';color:'+(s.flex?'var(--accent)':'var(--text)')+';">'+s.label+'</div>'+
+      '</div>').join('');
+  }
+}
+// ===================== QUICK CAPTURE =====================
+const SUBJECT_PREFIXES=['PHY','M1','M2','C1','C2','SCH'];
+function captureParse(raw){
+  const s=String(raw||'').trim();
+  const m=s.match(/^([A-Za-z]{1,3}[0-9]?)\s*[-:–]\s*(.+)$/s);
+  if(m){
+    const p=m[1].toUpperCase();
+    if(SUBJECT_PREFIXES.indexOf(p)>=0) return {subject:p,text:m[2].trim()};
+  }
+  return {subject:'',text:s};
+}
+function captureDetectSubject(){
+  const ta=document.getElementById('cap-text'); const sub=document.getElementById('cap-subject');
+  if(!ta||!sub) return;
+  const {subject}=captureParse(ta.value);
+  if(subject && !sub.dataset.touched) sub.value=subject;
+}
+function addCaptureTask(){
+  const ta=document.getElementById('cap-text');
+  const raw=ta?ta.value.trim():'';
+  if(!raw){ toast('Type what you need to do','error'); return; }
+  const parsed=captureParse(raw);
+  const subEl=document.getElementById('cap-subject');
+  const category=document.getElementById('cap-cat')?.value||'Coaching HW';
+  const due=document.getElementById('cap-due')?.value||'';
+  const t={
+    id:uid(),
+    text:parsed.text||raw,
+    category,
+    subject:((subEl&&subEl.value.trim())||parsed.subject||''),
+    tag:'',
+    priority:(category==='Incomplete'?'high':'med'),
+    due,
+    subtasks:[],
+    done:false
+  };
+  state.tasks.unshift(t);
+  saveState();
+  if(ta) ta.value='';
+  if(subEl){ subEl.value=''; delete subEl.dataset.touched; }
+  const dueEl=document.getElementById('cap-due'); if(dueEl) dueEl.value='';
+  refreshTaskViews();
+  toast('Added to Tasks','success');
+  try{ gcalPushItem('task',t); }catch(e){}
+}
 function renderDashBrainDump(){
   const list = document.getElementById('dash-bd-list');
   if(!list) return;
