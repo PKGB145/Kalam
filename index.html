@@ -2526,7 +2526,7 @@ let state = {
     eyeInterval: 20,
     firebase: null,
   },
-  taskTags: ['study','health','personal'],
+  taskTags: ['study','health','personal','projects'],
 };
 
 // keys excluded from export/import (session/transient state)
@@ -2658,6 +2658,8 @@ function loadState(){
       state = deepMerge(state, parsed);
     } catch(e){}
   }
+  // Migrate: make sure new tags/categories exist in previously saved state
+  if(Array.isArray(state.taskTags) && state.taskTags.indexOf('projects')<0) state.taskTags.push('projects');
   // Init + migrate study record for every subject (single source of truth)
   state.subjects.forEach(s => { ensureSubjectStudy(s.id); });
 }
@@ -3108,7 +3110,7 @@ function renderTasks(){
   renderTaskList('tasks-done-list',done,true);
   renderGoals();
 }
-const TASK_CATS=['Coaching HW','School','Incomplete','Revision'];
+const TASK_CATS=['Coaching HW','School','Incomplete','Revision','Personal'];
 function taskCat(t){ return (t&&t.category&&TASK_CATS.indexOf(t.category)>=0)?t.category:'School'; }
 function taskSubject(t){ return (t&&t.subject)?String(t.subject):''; }
 function catClass(c){ return 'cat-'+String(c||'').replace(/[^A-Za-z]/g,''); }
