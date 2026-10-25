@@ -358,6 +358,8 @@ a { text-decoration: none; color: inherit; }
 }
 .task-check:hover { border-color: var(--accent); }
 .task-check.done { background: var(--accent); border-color: var(--accent); color: var(--bg); font-size: 10px; }
+.task-check.sub-check { width: 14px; height: 14px; margin-top: 1px; }
+.task-check.sub-check.done { font-size: 8px; }
 .task-body { flex: 1; min-width: 0; }
 .task-text { font-size: 13.5px; font-weight: 500; }
 .task-text.done { text-decoration: line-through; color: var(--faint); }
@@ -1326,6 +1328,10 @@ select.modal-input { cursor: pointer; }
     <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="11.5" rx="1.5"/><path d="M1.5 7h13M5 1v4M11 1v4"/></svg>
     <span class="nav-label">Calendar</span>
   </div>
+  <div class="nav-item" data-page="screentime" data-label="Screen Time">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><path d="M8 3.5v1M6.5 12.5h3"/></svg>
+    <span class="nav-label">Screen Time</span>
+  </div>
 
   <div class="sidebar-section-label">Study</div>
   <div class="nav-item" data-page="incompletes" data-label="Incompletes">
@@ -1803,6 +1809,32 @@ select.modal-input { cursor: pointer; }
           </div>
           <div id="assignments-list"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- SCREEN TIME - StayFree-style usage stats -->
+    <div class="page" id="page-screentime">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;" id="st-stats-row"></div>
+      <div class="card" style="padding:16px;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:10px;">Day split</div>
+        <div id="st-cat-bar"></div>
+        <div id="st-cat-legend" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted);"></div>
+      </div>
+      <div class="card" style="padding:16px;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:10px;">Today — hour by hour</div>
+        <svg id="st-hourly-chart" width="100%" height="120" style="display:block;"></svg>
+      </div>
+      <div class="card" style="padding:16px;margin-bottom:14px;">
+        <div class="section-header" style="margin-bottom:10px;">
+          <div class="section-title">Apps &amp; sites today</div>
+          <button class="btn btn-ghost btn-sm" onclick="stAddSiteRule()">+ Add site rule</button>
+        </div>
+        <div id="st-apps-list"></div>
+      </div>
+      <div class="card" style="padding:16px;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:10px;">Last 7 days</div>
+        <svg id="st-week-chart" width="100%" height="110" style="display:block;"></svg>
+        <div id="st-week-list" style="margin-top:10px;"></div>
       </div>
     </div>
 
@@ -2293,6 +2325,12 @@ select.modal-input { cursor: pointer; }
       </div>
 
       <div class="settings-section">
+        <div class="settings-section-title">Screen Time — Categories &amp; Daily Limits</div>
+        <div style="font-size:12px;color:var(--faint);padding:4px 0 10px;line-height:1.7;">Group sites as Study, Distraction or Other and set daily limits. When a limit is crossed Kalam notifies you; 5 minutes past it you get a stronger take-a-break reminder — also in the background through the Companion.</div>
+        <div id="st-cfg-ui"></div>
+      </div>
+
+      <div class="settings-section">
         <div class="settings-section-title">Account</div>
         <div class="settings-row">
           <div>
@@ -2660,6 +2698,8 @@ function loadState(){
   }
   // Migrate: make sure new tags/categories exist in previously saved state
   if(Array.isArray(state.taskTags) && state.taskTags.indexOf('projects')<0) state.taskTags.push('projects');
+  // Migrate: subtasks become checkable objects {text, done}
+  (state.tasks||[]).forEach(t=>{ if(Array.isArray(t.subtasks)) t.subtasks=t.subtasks.map(subNorm); });
   // Init + migrate study record for every subject (single source of truth)
   state.subjects.forEach(s => { ensureSubjectStudy(s.id); });
 }
@@ -2752,8 +2792,8 @@ function updateTopbar(page){
   // Update profile name in topbar
   const pn=document.getElementById('topbar-profile-name');
   if(pn){ const active=getActiveProfile(); const prof=state.profiles&&state.profiles[active]; pn.textContent=(prof&&prof.name)||state.settings.name||'Me'; }
-  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',incompletes:'Incompletes',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings'};
-  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',incompletes:'Unfinished work, one at a time',brainDump:'Loose thoughts and ideas',ai:'Your study companion',settings:'Customise your experience'};
+  const titles={dashboard:'Dashboard',habits:'Habits',tasks:'Tasks & Goals',journal:'Journal',calendar:'Calendar',shortcuts:'Shortcuts',study:'Study Space',exams:'Exams',planner:'Study Planner',pomodoro:'Pomodoro',incompletes:'Incompletes',brainDump:'Brain Dump',ai:'AI Assistant',settings:'Settings',screentime:'Screen Time'};
+  const subtitles={dashboard:state.settings.name?getGreeting()+', '+state.settings.name+'! ✨':getGreeting()+'! Welcome to Kalam ✨',habits:'Track your daily habits',tasks:'Stay on top of your work',journal:'Write your thoughts',calendar:'Assignments & schedule',shortcuts:'Quick launch your apps and links',study:'Notes, flashcards, quizzes',exams:'Dates, portions, marks & trends',planner:'Plan your study sessions around your exams',pomodoro:'Stay focused',incompletes:'Unfinished work, one at a time',brainDump:'Loose thoughts and ideas',ai:'Your study companion',settings:'Customise your experience',screentime:'See where your day goes, app by app'};
   document.getElementById('page-title').textContent=titles[page]||page;
   document.getElementById('page-subtitle').textContent=subtitles[page]||'';
 }
@@ -2785,6 +2825,7 @@ function renderPage(page){
     case 'pomodoro': renderPomodoro(); break;
     case 'incompletes': renderIncompletes(); break;
     case 'brainDump': renderBrainDump(); break;
+    case 'screentime': renderScreenTimePage(); break;
     case 'ai': renderAI(); break;
     case 'settings': renderSettings(); break;
   }
@@ -3115,6 +3156,38 @@ function taskCat(t){ return (t&&t.category&&TASK_CATS.indexOf(t.category)>=0)?t.
 function taskSubject(t){ return (t&&t.subject)?String(t.subject):''; }
 function catClass(c){ return 'cat-'+String(c||'').replace(/[^A-Za-z]/g,''); }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// Subtasks are checkable: legacy string entries are normalised to {text, done}
+function subNorm(s){ return (s&&typeof s==='object')?{text:String(s.text||''),done:!!s.done}:{text:String(s==null?'':s),done:false}; }
+function taskSubs(t){ return (t&&Array.isArray(t.subtasks))?t.subtasks.map(subNorm):[]; }
+function subRingHtml(doneN,total){
+  if(!total) return '';
+  const C=2*Math.PI*10, pct=doneN/total, all=doneN>=total;
+  return '<svg width="30" height="30" viewBox="0 0 30 30" style="flex:0 0 30px;" title="Sub-tasks: '+doneN+'/'+total+'">'
+    +'<circle cx="15" cy="15" r="10" fill="none" stroke="var(--border)" stroke-width="3.5"/>'
+    +'<circle cx="15" cy="15" r="10" fill="none" stroke="'+(all?'#2e9e5b':'var(--accent)')+'" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="'+(pct*C).toFixed(2)+' '+C.toFixed(2)+'" transform="rotate(-90 15 15)"/>'
+    +'<text x="15" y="18" text-anchor="middle" font-size="8" font-weight="600" fill="var(--muted)">'+doneN+'/'+total+'</text></svg>';
+}
+function taskSubsHtml(t){
+  const subs=taskSubs(t);
+  if(!subs.length) return '';
+  const doneN=subs.filter(s=>s.done).length;
+  return '<div style="margin-top:6px;display:flex;align-items:flex-start;gap:8px;">'
+    +subRingHtml(doneN,subs.length)
+    +'<div style="flex:1;min-width:0;">'+subs.map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:7px;padding:2px 0 2px 2px;">
+        <div class="task-check sub-check ${s.done?'done':''}" onclick="toggleSubtask('${t.id}',${i})" style="${s.done?'background:var(--accent);border-color:var(--accent)':''}">${s.done?'✓':''}</div>
+        <div style="font-size:12px;color:${s.done?'var(--faint)':'var(--muted)'};${s.done?'text-decoration:line-through;':''}">${esc(s.text)}</div>
+      </div>`).join('')+'</div></div>';
+}
+function toggleSubtask(id,i){
+  const t=state.tasks.find(x=>x.id===id);
+  if(!t||!Array.isArray(t.subtasks)||!t.subtasks[i]) return;
+  t.subtasks[i]=subNorm(t.subtasks[i]);
+  t.subtasks[i].done=!t.subtasks[i].done;
+  saveState(); refreshTaskViews();
+  const subs=taskSubs(t);
+  if(subs.length&&subs.every(s=>s.done)) toast('All sub-tasks done — nice!','success');
+}
 // Re-render every view that shows task data.
 function refreshTaskViews(){
   try{ if(currentPage==='tasks') renderTasks(); }catch(e){}
@@ -3143,7 +3216,7 @@ function renderTaskList(elId,tasks,isDone){
           ${t.priority?`<span class="priority-dot priority-${t.priority}"></span><span style="font-size:10px;color:var(--faint)">${t.priority}</span>`:''}
           ${t.due?`<span class="due-date ${isDue(t.due)?'overdue':''}">${fmtDate(t.due)}</span>`:''}
         </div>
-        ${t.subtasks&&t.subtasks.length?`<div style="margin-top:6px;">${t.subtasks.map(s=>`<div style="font-size:12px;color:var(--faint);padding:2px 0 2px 14px;">· ${s}</div>`).join('')}</div>`:''}
+        ${taskSubsHtml(t)}
       </div>
       <div class="task-actions">
         <button class="btn-icon" onclick="openEditTaskModal('${t.id}')">✎</button>
@@ -3180,12 +3253,12 @@ function taskModalBody(t){
       </select>
     </div>
     <div class="modal-field"><div class="modal-label">Due Date</div><input type="date" class="modal-input" id="tm-due" value="${t&&t.due?t.due:''}"/></div>
-    <div class="modal-field"><div class="modal-label">Sub-tasks (one per line)</div><textarea class="modal-input" id="tm-subs">${t&&t.subtasks?esc(t.subtasks.join('\n')):''}</textarea></div>`;
+    <div class="modal-field"><div class="modal-label">Sub-tasks (one per line)</div><textarea class="modal-input" id="tm-subs">${t&&t.subtasks?esc(taskSubs(t).map(s=>s.text).join('\n')):''}</textarea></div>`;
 }
 function addTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
-  const t={id:uid(),text,category:document.getElementById('tm-category')?.value||'School',subject:(document.getElementById('tm-subject')?.value||'').trim(),tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean),done:false};
+  const t={id:uid(),text,category:document.getElementById('tm-category')?.value||'School',subject:(document.getElementById('tm-subject')?.value||'').trim(),tag:document.getElementById('tm-tag').value,priority:document.getElementById('tm-priority').value,due:document.getElementById('tm-due').value,subtasks:document.getElementById('tm-subs').value.split('\n').filter(Boolean).map(s=>({text:s,done:false})),done:false};
   state.tasks.unshift(t);
   saveState(); closeModal(); refreshTaskViews(); toast('Task added!','success');
   gcalPushItem('task',t);
@@ -3194,7 +3267,7 @@ function saveTask(){
   const text=document.getElementById('tm-text')?.value.trim();
   if(!text){ toast('Enter task text','error'); return; }
   const t=state.tasks.find(x=>x.id===editingTaskId);
-  if(t){ t.text=text;t.category=document.getElementById('tm-category')?.value||'School';t.subject=(document.getElementById('tm-subject')?.value||'').trim();t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean); gcalPushItem('task',t); }
+  if(t){ t.text=text;t.category=document.getElementById('tm-category')?.value||'School';t.subject=(document.getElementById('tm-subject')?.value||'').trim();t.tag=document.getElementById('tm-tag').value;t.priority=document.getElementById('tm-priority').value;t.due=document.getElementById('tm-due').value;const prevSubs=taskSubs(t);t.subtasks=document.getElementById('tm-subs').value.split('\n').filter(Boolean).map(s=>{const old=prevSubs.find(p=>p.text===s);return {text:s,done:old?old.done:false};}); gcalPushItem('task',t); }
   saveState(); closeModal(); refreshTaskViews(); toast('Task updated!','success');
 }
 function renderGoals(){
@@ -5917,7 +5990,7 @@ function getFallbackReply(text){
 // ===================== SETTINGS =====================
 function renderSettings(){
   document.getElementById('s-name').value=state.settings.name||'';
-  try{ renderExtStatus(); renderUsageBreakdown(); extRequestScreenTime(); }catch(e){}
+  try{ renderExtStatus(); renderUsageBreakdown(); renderStCfg(); extRequestScreenTime(); }catch(e){}
   const provEl=document.getElementById('s-ai-provider');
   if(provEl) provEl.value=state.settings.aiProvider||'builtin';
   checkApiKey();
@@ -6767,7 +6840,7 @@ function _gcalEventFromTask(t){
   // Tasks: all-day event on due date
   return {
     summary:'📋 '+t.text,
-    description:'Kalam task'+(t.priority?' · '+t.priority+' priority':'')+(t.tag?' · '+t.tag:'')+(t.subtasks&&t.subtasks.length?'\n\nSubtasks:\n- '+t.subtasks.join('\n- '):''),
+    description:'Kalam task'+(t.priority?' · '+t.priority+' priority':'')+(t.tag?' · '+t.tag:'')+(t.subtasks&&t.subtasks.length?'\n\nSubtasks:\n- '+taskSubs(t).map(s=>s.text+(s.done?' (done)':'')).join('\n- '):''),
     start:{date:t.due},
     end:{date:t.due},
     extendedProperties:{private:{kalamType:'task',kalamId:t.id}},
@@ -8225,6 +8298,8 @@ function syncScheduleToExtension(){
       exams: (state.exams||[]).map(e=>({id:e.id, title:e.title||'Exam', date:e.date||''})),
       studyBlocks: (((state.planner||{}).blocks)||[]).filter(b=>!b.done && b.date && b.start)
         .map(b=>({id:b.id, title:b.title||'Study', date:b.date, start:b.start})),
+      limits: (function(){ const o={}; try{ const l=stCfg().limits; for(const k of Object.keys(l)){ const m=parseInt(l[k],10)||0; if(m>0) o[k]=m; } }catch(e){} return o; })(),
+      cats: (function(){ try{ return stCfg().cats||{}; }catch(e){ return {}; } })(),
     };
     extPost({type:'kalam:sync-schedule', payload});
   }catch(e){}
@@ -8275,7 +8350,7 @@ function renderUsageBreakdown(){
     el.innerHTML = 'No activity recorded yet — give it a few minutes.';
     return;
   }
-  const days = Object.keys(extScreenTime).sort().reverse().slice(0,7);
+  const days = Object.keys(extScreenTime).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort().reverse().slice(0,7);
   el.innerHTML = days.map(day=>{
     const rec = extScreenTime[day] || {total:0, apps:{}};
     const apps = Object.entries(rec.apps||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);
@@ -8297,6 +8372,279 @@ function renderUsageBreakdown(){
         </div>`).join('') : '<div style="font-size:11px;">No activity.</div>'}
     </div>`;
   }).join('');
+}
+
+// ===================== SCREEN TIME PAGE (StayFree-style) =====================
+const ST_STUDY_DEFAULTS=['docs.google.com','classroom.google.com','drive.google.com','scholar.google.com','khanacademy.org','github.com','stackoverflow.com','wikipedia.org','notion.so','quizlet.com','physicswallah.live','pw.live','desmos.com','overleaf.com'];
+const ST_DISTRACT_DEFAULTS=['youtube.com','youtu.be','instagram.com','facebook.com','netflix.com','reddit.com','x.com','twitter.com','tiktok.com','hotstar.com','primevideo.com','twitch.tv','snapchat.com','pinterest.com','discord.com','quora.com'];
+const ST_CAT_LABELS={study:'Study',distraction:'Distraction',other:'Other'};
+const ST_CAT_COLORS={study:'#2e9e5b',distraction:'#d9534f',other:'#b08d57'};
+
+function stCfg(){
+  if(!state.settings.screenTimeCfg||typeof state.settings.screenTimeCfg!=='object') state.settings.screenTimeCfg={cats:{},limits:{}};
+  const c=state.settings.screenTimeCfg;
+  if(!c.cats||typeof c.cats!=='object') c.cats={};
+  if(!c.limits||typeof c.limits!=='object') c.limits={};
+  return c;
+}
+function _stMatch(dom,site){ if(!dom||!site) return false; return dom===site||dom.endsWith('.'+site)||site.endsWith('.'+dom); }
+function catOf(dom){
+  const cats=stCfg().cats;
+  if(cats[dom]) return cats[dom];
+  for(const s of Object.keys(cats)){ if(_stMatch(dom,s)) return cats[s]; }
+  for(const s of ST_STUDY_DEFAULTS){ if(_stMatch(dom,s)) return 'study'; }
+  for(const s of ST_DISTRACT_DEFAULTS){ if(_stMatch(dom,s)) return 'distraction'; }
+  return 'other';
+}
+function limitOf(dom){
+  const limits=stCfg().limits;
+  for(const k of Object.keys(limits)){ if(_stMatch(dom,k)) return parseInt(limits[k],10)||0; }
+  return 0;
+}
+function stSetCat(i,cat){
+  const dom=window._stSites&&window._stSites[i]; if(!dom) return;
+  stCfg().cats[dom]=cat; saveState(); syncScheduleToExtension();
+  if(currentPage==='screentime') renderScreenTimePage();
+  if(currentPage==='settings') renderStCfg();
+  toast('Category saved for '+dom,'success');
+}
+function stSetLimit(i,val){
+  const dom=window._stSites&&window._stSites[i]; if(!dom) return;
+  const mins=parseInt(val,10)||0;
+  if(mins>0) stCfg().limits[dom]=mins; else delete stCfg().limits[dom];
+  saveState(); syncScheduleToExtension();
+  if(currentPage==='screentime') renderScreenTimePage();
+  toast(mins>0?('Daily limit set: '+dom+' → '+mins+' min'):('Daily limit removed for '+dom),'success');
+}
+function stAddSiteRule(){
+  openModal('Add site rule',
+    '<div class="modal-field"><div class="modal-label">Site (e.g. youtube.com)</div><input class="modal-input" id="st-new-site" placeholder="youtube.com"/></div>'
+    +'<div class="modal-field"><div class="modal-label">Category</div><select class="modal-input" id="st-new-cat"><option value="distraction">Distraction</option><option value="study">Study</option><option value="other">Other</option></select></div>'
+    +'<div class="modal-field"><div class="modal-label">Daily limit in minutes (optional)</div><input class="modal-input" id="st-new-limit" type="number" min="0" placeholder="e.g. 30"/></div>',
+    ()=>{
+      const site=(document.getElementById('st-new-site').value||'').trim().toLowerCase().replace(/^www\./,'');
+      if(!site){ toast('Enter a site first','error'); return; }
+      const cat=document.getElementById('st-new-cat').value;
+      const mins=parseInt(document.getElementById('st-new-limit').value,10)||0;
+      stCfg().cats[site]=cat;
+      if(mins>0) stCfg().limits[site]=mins;
+      saveState(); syncScheduleToExtension();
+      if(currentPage==='screentime') renderScreenTimePage();
+      if(currentPage==='settings') renderStCfg();
+      closeModal();
+      toast('Rule added for '+site,'success');
+    });
+}
+
+function stTodayRec(){
+  if(!extScreenTime) return null;
+  return extScreenTime[_stDayKey()]||{total:0,apps:{},hours:{}};
+}
+function _stStatCard(label,val,sub){
+  return '<div class="card" style="flex:1;min-width:150px;padding:14px 16px;">'
+    +'<div style="font-size:11px;color:var(--faint);margin-bottom:4px;">'+label+'</div>'
+    +'<div style="font-size:20px;font-weight:700;color:var(--text);">'+val+'</div>'
+    +(sub?'<div style="font-size:11px;color:var(--faint);margin-top:2px;">'+sub+'</div>':'')+'</div>';
+}
+function stRenderHourly(hours){
+  const svg=document.getElementById('st-hourly-chart'); if(!svg) return;
+  const now=new Date().getHours();
+  const vals=[]; let max=60;
+  for(let h=0;h<24;h++){ const v=(hours&&hours[h])||0; vals.push(v); if(v>max) max=v; }
+  const W=svg.clientWidth||600,H=110,pad=6,gap=3;
+  const bw=(W-pad*2-gap*23)/24;
+  let html='';
+  vals.forEach((v,h)=>{
+    const hgt=v>0?Math.max(3,(v/max)*(H-26)):2;
+    const x=pad+h*(bw+gap), y=H-16-hgt;
+    html+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+hgt+'" rx="2" fill="var(--accent)" opacity="'+(h===now?'1':(v>0?'0.55':'0.15'))+'"/>';
+    if(h%3===0){ const lab=(h%12===0?12:h%12)+(h<12?'a':'p'); html+='<text x="'+(x+bw/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="8" fill="var(--faint)">'+lab+'</text>'; }
+  });
+  svg.innerHTML=html;
+}
+function stRenderWeekChart(dayKeys){
+  const svg=document.getElementById('st-week-chart'); if(!svg) return;
+  const days=dayKeys.map(k=>({k,secs:((extScreenTime[k]||{}).total||0)}));
+  if(!days.length){ svg.innerHTML=''; return; }
+  const max=Math.max(60,...days.map(d=>d.secs));
+  const W=svg.clientWidth||600,H=100,pad=8,gap=6;
+  const bw=Math.min(60,(W-pad*2-gap*(days.length-1))/days.length);
+  let html='';
+  days.forEach((d,i)=>{
+    const hgt=Math.max(2,(d.secs/max)*(H-24));
+    const x=pad+i*(bw+gap), y=H-16-hgt;
+    html+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+hgt+'" rx="3" fill="var(--accent)" opacity="'+(i===days.length-1?'1':'0.55')+'"/>';
+    const label=d.k===_stDayKey()?'Today':new Date(d.k+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short'});
+    html+='<text x="'+(x+bw/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="9" fill="var(--faint)">'+label+'</text>';
+  });
+  svg.innerHTML=html;
+}
+function renderScreenTimePage(){
+  const statsRow=document.getElementById('st-stats-row'); if(!statsRow) return;
+  const catBar=document.getElementById('st-cat-bar'), catLegend=document.getElementById('st-cat-legend');
+  const appsEl=document.getElementById('st-apps-list'), weekList=document.getElementById('st-week-list');
+  if(!extPresent||!extScreenTime||!Object.keys(extScreenTime).length){
+    _ensureScreenTime();
+    const today=(state.screenTime&&state.screenTime.secondsToday)||0;
+    statsRow.innerHTML=_stStatCard('Today — this tab only',_fmtMins(today),'Install the Companion for all-app stats');
+    if(catBar) catBar.innerHTML='';
+    if(catLegend) catLegend.innerHTML='';
+    if(appsEl) appsEl.innerHTML='<div class="empty-state" style="padding:16px;">Install Kalam Companion (Settings → Companion) to see every site and app, set categories and daily limits.</div>';
+    if(weekList) weekList.innerHTML='';
+    const hsvg=document.getElementById('st-hourly-chart');
+    if(hsvg) hsvg.innerHTML='<text x="50%" y="60" text-anchor="middle" font-size="11" fill="var(--faint)">Hour-by-hour view needs the Companion extension</text>';
+    const wk=document.getElementById('st-week-chart');
+    if(wk){
+      const hist=(state.screenTime&&state.screenTime.history)||{};
+      const days=[]; for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const k=_stDayKey(d); days.push({k,secs:(i===0?today:(hist[k]||0))}); }
+      const max=Math.max(60,...days.map(d=>d.secs));
+      const W=wk.clientWidth||600,H=100,pad=8,gap=6;
+      const bw=(W-pad*2-gap*(days.length-1))/7;
+      let html='';
+      days.forEach((d,i)=>{
+        const hgt=Math.max(2,(d.secs/max)*(H-24));
+        const x=pad+i*(bw+gap);
+        html+='<rect x="'+x+'" y="'+(H-16-hgt)+'" width="'+bw+'" height="'+hgt+'" rx="3" fill="var(--accent)" opacity="'+(i===6?'1':'0.55')+'"/>';
+        const label=d.k===_stDayKey()?'Today':new Date(d.k+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short'});
+        html+='<text x="'+(x+bw/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="9" fill="var(--faint)">'+label+'</text>';
+      });
+      wk.innerHTML=html;
+    }
+    return;
+  }
+  const rec=stTodayRec();
+  const dayKeys=Object.keys(extScreenTime).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  const last7=dayKeys.slice(-7);
+  const weekSecs=last7.reduce((a,k)=>a+(((extScreenTime[k]||{}).total)||0),0);
+  const avg=last7.length?Math.round(weekSecs/last7.length):0;
+  const apps=Object.entries(rec.apps||{}).sort((a,b)=>b[1]-a[1]);
+  const top=apps[0];
+  statsRow.innerHTML=_stStatCard('Today',_fmtMins(rec.total||0),'across all sites')
+    +_stStatCard('This week',_fmtMins(weekSecs),last7.length+' day'+(last7.length===1?'':'s')+' tracked')
+    +_stStatCard('Daily average',_fmtMins(avg),'last 7 days')
+    +_stStatCard('Most used',top?_prettyApp(top[0]):'—',top?_fmtMins(top[1]):'');
+  const catTotals={study:0,distraction:0,other:0};
+  apps.forEach(([d,s])=>{ catTotals[catOf(d)]+=s; });
+  const total=Math.max(1, apps.reduce((a,[,s])=>a+s,0));
+  if(catBar){
+    catBar.innerHTML='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--border);">'
+      +['study','distraction','other'].filter(c=>catTotals[c]>0).map(c=>'<div style="width:'+((catTotals[c]/total)*100).toFixed(1)+'%;background:'+ST_CAT_COLORS[c]+';"></div>').join('')+'</div>';
+  }
+  if(catLegend){
+    catLegend.innerHTML=['study','distraction','other'].map(c=>'<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:50%;background:'+ST_CAT_COLORS[c]+';display:inline-block;"></span>'+ST_CAT_LABELS[c]+' · '+_fmtMins(catTotals[c])+' ('+Math.round(catTotals[c]/total*100)+'%)</span>').join('');
+  }
+  stRenderHourly(rec.hours||{});
+  window._stSites=apps.map(a=>a[0]);
+  if(appsEl){
+    if(!apps.length) appsEl.innerHTML='<div class="empty-state">No activity recorded yet today.</div>';
+    else{
+      const mx=apps[0][1];
+      appsEl.innerHTML=apps.map(([dom,secs],i)=>{
+        const lim=limitOf(dom);
+        const cat=catOf(dom);
+        const over=lim>0&&secs>=lim*60;
+        const barW=(secs/mx*100).toFixed(1);
+        const barColor=over?'#d9534f':ST_CAT_COLORS[cat];
+        return '<div style="padding:8px 0;border-bottom:1px solid var(--border);">'
+          +'<div style="display:flex;align-items:center;gap:8px;">'
+          +'<div style="flex:0 0 120px;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+esc(dom)+'">'+_prettyApp(dom)+'</div>'
+          +'<div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">'
+          +'<div style="height:100%;width:'+barW+'%;background:'+barColor+';border-radius:3px;"></div></div>'
+          +'<div style="flex:0 0 52px;text-align:right;font-size:11px;color:var(--muted);">'+_fmtMins(secs)+'</div>'
+          +'<select onchange="stSetCat('+i+',this.value)" style="font-size:10px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--muted);padding:2px 4px;">'
+          +['study','distraction','other'].map(c=>'<option value="'+c+'"'+(cat===c?' selected':'')+'>'+ST_CAT_LABELS[c]+'</option>').join('')+'</select>'
+          +'<input type="number" min="0" value="'+(lim||'')+'" placeholder="—" onchange="stSetLimit('+i+',this.value)" title="Daily limit (minutes)" style="width:52px;font-size:10px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);padding:2px 4px;"/>'
+          +'</div>'
+          +(lim>0?'<div style="font-size:10px;color:'+(over?'#d9534f':'var(--faint)')+';margin-top:3px;padding-left:128px;">Limit '+lim+' min · '+(over?('used up — '+Math.round((secs-lim*60)/60)+' min over'):(Math.min(100,Math.round(secs/(lim*60)*100))+'% used'))+'</div>':'')
+          +'</div>';
+      }).join('');
+    }
+  }
+  stRenderWeekChart(last7);
+  if(weekList){
+    weekList.innerHTML=last7.slice().reverse().map(k=>{
+      const r=extScreenTime[k]||{total:0,apps:{}};
+      const label=k===_stDayKey()?'Today':new Date(k+'T12:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+      const topA=Object.entries(r.apps||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([d,s])=>_prettyApp(d)+' '+_fmtMins(s)).join(' · ');
+      return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">'
+        +'<div style="flex:0 0 110px;color:var(--text);">'+label+'</div>'
+        +'<div style="flex:1;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(topA||'—')+'</div>'
+        +'<div style="flex:0 0 60px;text-align:right;color:var(--muted);">'+_fmtMins(r.total||0)+'</div></div>';
+    }).join('');
+  }
+}
+
+// ---- Settings: categories & limits table ----
+function renderStCfg(){
+  const el=document.getElementById('st-cfg-ui'); if(!el) return;
+  const cfg=stCfg();
+  const sites=new Set(Object.keys(cfg.cats));
+  Object.keys(cfg.limits).forEach(s=>sites.add(s));
+  ST_STUDY_DEFAULTS.concat(ST_DISTRACT_DEFAULTS).forEach(s=>sites.add(s));
+  if(extScreenTime){ const rec=stTodayRec(); Object.keys(rec.apps||{}).forEach(s=>sites.add(s)); }
+  window._stSites=Array.from(sites).sort();
+  if(!window._stSites.length){ el.innerHTML='<div style="font-size:12px;color:var(--faint);">No site rules yet.</div>'; return; }
+  el.innerHTML=window._stSites.map((dom,i)=>{
+    const cat=catOf(dom); const lim=limitOf(dom);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">'
+      +'<div style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);">'+esc(dom)+'</div>'
+      +'<select onchange="stSetCat('+i+',this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--muted);padding:3px 6px;">'
+      +['study','distraction','other'].map(c=>'<option value="'+c+'"'+(cat===c?' selected':'')+'>'+ST_CAT_LABELS[c]+'</option>').join('')+'</select>'
+      +'<input type="number" min="0" value="'+(lim||'')+'" placeholder="no limit" onchange="stSetLimit('+i+',this.value)" title="Daily limit (minutes)" style="width:76px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);padding:3px 6px;"/>'
+      +'</div>';
+  }).join('')
+  +'<div style="margin-top:10px;"><button class="btn btn-ghost btn-sm" onclick="stAddSiteRule()">+ Add site rule</button></div>';
+}
+
+// ---- Daily limit enforcement (notify first, stronger take-a-break later) ----
+let stNotified={};
+function stNotifyLimit(dom,strong,overSecs,limSecs){
+  const mins=Math.round(overSecs/60);
+  const title=strong?'Kalam — time to take a break':'Kalam — limit reached';
+  const body=strong
+    ? mins+' min past your '+Math.round(limSecs/60)+' min '+_prettyApp(dom)+' limit. Close it and take a break.'
+    : _prettyApp(dom)+' daily limit ('+Math.round(limSecs/60)+' min) is used up. Time to wrap up.';
+  try{ if(typeof Notification!=='undefined'&&Notification.permission==='granted') new Notification(title,{body,tag:'kalam-limit-'+dom}); }catch(e){}
+  toast(body,strong?'error':'');
+}
+function stShowLimitOverlay(dom,overSecs,limSecs){
+  const old=document.getElementById('st-limit-overlay'); if(old) old.remove();
+  const el=document.createElement('div');
+  el.id='st-limit-overlay';
+  el.style.cssText='position:fixed;inset:0;z-index:3500;background:rgba(30,24,16,0.82);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+  el.innerHTML='<div style="background:var(--card);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,0.35);padding:32px 36px;max-width:420px;text-align:center;">'
+    +'<div style="font-size:44px;margin-bottom:10px;">⏳</div>'
+    +'<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">Time\u2019s up on '+esc(_prettyApp(dom))+'</div>'
+    +'<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">You\u2019re '+Math.round(overSecs/60)+' minutes past your '+Math.round(limSecs/60)+' minute limit. Close the tab, stretch, and come back fresh — your study plan is waiting.</div>'
+    +'<button class="btn btn-primary" onclick="document.getElementById(\'st-limit-overlay\').remove()">Okay, taking a break</button></div>';
+  document.body.appendChild(el);
+}
+function stCheckLimits(){
+  if(!extPresent||!extScreenTime) return;
+  const rec=stTodayRec(); if(!rec) return;
+  const limits=stCfg().limits;
+  const now=Date.now();
+  const cur=(extScreenTime.cur&&now-(extScreenTime.curTs||0)<3*60*1000)?extScreenTime.cur:null;
+  Object.keys(limits).forEach(dom=>{
+    const limMin=parseInt(limits[dom],10)||0; if(limMin<=0) return;
+    let used=0;
+    Object.keys(rec.apps||{}).forEach(k=>{ if(_stMatch(k,dom)) used+=rec.apps[k]; });
+    const limSecs=limMin*60, over=used-limSecs;
+    if(over<0){ delete stNotified[dom]; return; }
+    const last=stNotified[dom]||0;
+    const onIt=cur&&_stMatch(cur,dom);
+    if(over<5*60){
+      if(now-last>30*60*1000){ stNotifyLimit(dom,false,over,limSecs); stNotified[dom]=now; }
+    } else if(onIt){
+      if(now-last>4*60*1000){ stShowLimitOverlay(dom,over,limSecs); stNotified[dom]=now; }
+    } else {
+      if(now-last>15*60*1000){ stNotifyLimit(dom,true,over,limSecs); stNotified[dom]=now; }
+    }
+  });
+}
+function startLimitWatch(){
+  setInterval(stCheckLimits,30000);
+  setTimeout(stCheckLimits,8000);
 }
 
 // ===================== FULL-SCREEN REMINDER =====================
@@ -8699,6 +9047,8 @@ if(_origExportData){
 
 // Companion extension bridge: device-wide screen time + background reminders
 try{ startCompanionBridge(); }catch(e){}
+// StayFree-style daily limit enforcement (in-app notifications + take-a-break overlay)
+try{ startLimitWatch(); }catch(e){}
 // Keep the extension's reminder schedule in step with app data
 const _origSaveState = saveState;
 let _extSyncDebounce = 0;
